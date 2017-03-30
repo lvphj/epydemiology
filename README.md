@@ -4,7 +4,7 @@ Library of python code for epidemiologists – eventually
 ## phjOddsRatio()
 ### Function description
 #### Introduction
-This function can be used to calculate odds ratios and 95% confidence intervals for case-control studies. The function is passed a Pandas dataframe containing the data together with the name of the 'case' variable and the name of the potential risk factor variable. The function returns a Pandas dataframe based on a 2 x 2 or n x 2 contingency table together with columns containing the odds, odds ratios and 95% confidence intervals (Woolf).
+This function can be used to calculate odds ratios and 95% confidence intervals for case-control studies. The function is passed a Pandas dataframe containing the data together with the name of the 'case' variable and the name of the potential risk factor variable. The function returns a Pandas dataframe based on a 2 x 2 or n x 2 contingency table together with columns containing the odds, odds ratios and 95% confidence intervals (Woolf). Rows that contain a missing value in either the case variable or the risk factor variable are removed before calculations are made.
 
 ### Description of function parameters
 The function takes the following parameters:
@@ -40,3 +40,24 @@ Pandas dataframe containing a cross-tabulation of the case and risk factor varib
 
 ### Other notes
 None
+
+### Example
+An example of the function in use is given below:
+
+```python
+tempDF = pd.DataFrame({'caseN':[1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0],
+                       'caseA':['y','y','y','y','y','y','y','y','n','n','n','n','n','n','n','n','n','n','n','n'],
+                       'catN':[1,2,3,2,3,4,3,2,3,4,3,2,1,2,1,2,3,2,3,4],
+                       'catA':['a','a','b','b','c','d','a','c','c','d','a','b','c','a','d','a','b','c','a','d'],
+                       'floatN':[1.2,4.3,2.3,4.3,5.3,4.3,2.4,6.5,4.5,7.6,5.6,5.6,4.8,5.2,7.4,5.4,6.5,5.7,6.8,4.5]})
+
+phjORTable = phjOddsRatio( phjTempDF = tempDF,
+                           phjCaseVarName = 'caseA',
+                           phjCaseValue = 'y',
+                           phjRiskFactorVarName = 'catA',
+                           phjRiskFactorBaseValue = 'a')
+
+pd.options.display.float_format = '{:,.3f}'.format
+
+print(phjORTable)
+```
