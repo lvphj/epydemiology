@@ -4,7 +4,7 @@ Library of python code for epidemiologists – eventually
 ## phjOddsRatio()
 ### Function description
 #### Introduction
-This function can be used to calculate odds ratios and 95% confidence intervals for case-control studies.
+This function can be used to calculate odds ratios and 95% confidence intervals for case-control studies. The function is pass a Pandas dataframe containing the data together with the name of the 'case' variable and potential risk factor variable. The function returns a Pandas dataframe based on a 2 x 2 or n x 2 contingency table together with columns containing the odds, odds ratio and 95% confidence intervals (Woolf).
 
 ### Description of function parameters
 The function takes the following parameters:
