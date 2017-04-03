@@ -15,13 +15,13 @@ setup(
     packages = find_packages(),
     # packages = ['epydemiology'], # this must be the same as the name above
     # packages=find_packages(exclude=[list_of_things_to_exclude]),
-    version = '0.1.1b',
+    version = '0.1.2',
     description = 'A library of Python code for epidemiologists',
     long_description = long_description,
     author = 'Phil Jones',
     author_email = 'phjones@me.com',
     url = 'https://github.com/lvphj/epydemiology', # use the URL to the github repo
-    download_url = 'https://github.com/lvphj/epydemiology/archive/0.1.1b.tar.gz',
+    download_url = 'https://github.com/lvphj/epydemiology/archive/0.1.2.tar.gz',
     license = 'MIT',
     keywords = ['epidemiology','case-control study','odds ratio','relative risk','risk ratio'],
     classifiers = [# How mature is this project? Common values are
