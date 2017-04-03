@@ -1,8 +1,13 @@
 from setuptools import setup
-from pypandoc import convert_file
+import pypandoc
 
-#: Converts the Markdown README in the RST format that PyPi expects.
-long_description = convert_file('README.md','rst')
+# Converts the Markdown README in the RST format that PyPi expects.
+# Had some issues with pypandoc. Needed to install pandoc first.
+# In the meantime, catch exceptions as follows:
+try:
+    long_description = pypandoc.convert('README.md', 'rst')
+except (IOError, ImportError):
+    long_description = ''
 
 setup(
     name = 'epydemiology',
