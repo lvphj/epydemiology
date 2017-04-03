@@ -1,4 +1,5 @@
 from setuptools import setup
+from setuptools import find_packages
 import pypandoc
 
 # Converts the Markdown README in the RST format that PyPi expects.
