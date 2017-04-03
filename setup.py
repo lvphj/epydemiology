@@ -1,6 +1,7 @@
 from setuptools import setup
 from pypandoc import convert_file
 
+#: Converts the Markdown README in the RST format that PyPi expects.
 long_description = convert_file('README.md','rst')
 
 setup(
