@@ -1,10 +1,14 @@
-from distutils.core import setup
+from setuptools import setup
+from pypandoc import convert_file
+
+long_description = convert_file('README.md','rst')
+
 setup(
     name = 'epydemiology',
     packages = ['epydemiology'], # this must be the same as the name above
     version = '0.1.0',
-    description = 'Python code for epidemiology',
-    long_description = 'A library of Python functions for epidemiologist to select case-control datasets, calculate odds ratios and other features.',
+    description = 'A library of Python code for epidemiologists',
+    long_description = long_description,
     author = 'Phil Jones',
     author_email = 'phjones@me.com',
     url = 'https://github.com/lvphj/epydemiology', # use the URL to the github repo
