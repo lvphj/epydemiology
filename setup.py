@@ -14,7 +14,7 @@ setup(
     packages = find_packages(),
     # packages = ['epydemiology'], # this must be the same as the name above
     # packages=find_packages(exclude=[list_of_things_to_exclude]),
-    version = '0.1.0',
+    version = '0.1.1',
     description = 'A library of Python code for epidemiologists',
     long_description = long_description,
     author = 'Phil Jones',
