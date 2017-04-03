@@ -7,6 +7,7 @@ long_description = convert_file('README.md','rst')
 setup(
     name = 'epydemiology',
     packages = ['epydemiology'], # this must be the same as the name above
+    # packages=find_packages(exclude=[list_of_things_to_exclude]),
     version = '0.1.0',
     description = 'A library of Python code for epidemiologists',
     long_description = long_description,
@@ -34,6 +35,5 @@ setup(
                    'Programming Language :: Python :: 3',
                    'Programming Language :: Python :: 3.4',
                    ],
-    packages=find_packages(exclude=None),
     install_requires=['pandas>=0.19.2'],
 )
