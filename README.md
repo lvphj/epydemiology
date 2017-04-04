@@ -88,7 +88,41 @@ An example of the function in use is given below:
 import pandas as pd
 import epydemiology as epy
 
+casesDF = pd.DataFrame({'animalID':[1,2,3,4,5],'var1':[43,45,34,45,56],'sp':['dog','dog','dog','dog','dog']})
+potControlsDF = pd.DataFrame({'animalID':[11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
+                              'var1':[34,54,34,23,34,45,56,67,56,67,78,98,65,54,34,76,87,56,45,34],
+                              'sp':['dog','cat','dog','dog','cat','dog','cat','dog','cat','dog','dog','dog','dog',
+                                    'cat','dog','cat','dog','dog','dog','cat']})
 
+print("This dataframe contains all the cases of disease\n")
+print(casesDF)
+print("\n")
+print("This dataframe contains all the animals you could potentially use as controls\n")
+print(potControlsDF)
+
+# Selecting unmatched controls
+unmatchedDF = phjSelectCaseControlDataset(phjCasesDF = casesDF,
+                                          phjPotentialControlsDF = potControlsDF,
+                                          phjUniqueIdentifierVarName = 'animalID',
+                                          phjMatchingVariablesList = None,
+                                          phjControlsPerCaseInt = 2,
+                                          phjPrintResults = False)
+
+print("\n")
+print("Unmatched dataset")
+print(unmatchedDF)
+
+# Selecting controls that are matched to cases on variable 'sp'
+matchedDF = phjSelectCaseControlDataset(phjCasesDF = casesDF,
+                                        phjPotentialControlsDF = potControlsDF,
+                                        phjUniqueIdentifierVarName = 'animalID',
+                                        phjMatchingVariablesList = ['sp'],
+                                        phjControlsPerCaseInt = 2,
+                                        phjPrintResults = False)
+
+print("\n")
+print("Matched dataset")
+print(matchedDF)
 
 ```
 
