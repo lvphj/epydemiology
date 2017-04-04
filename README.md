@@ -32,7 +32,8 @@ df = epy.phjSelectCaseControlDataset(phjCasesDF,
                                      phjUniqueIdentifierVarName,
                                      phjMatchingVariablesList = None,
                                      phjControlsPerCaseInt = 1,
-                                     phjPrintResults = False)```
+                                     phjPrintResults = False)
+```
 
 Python function to randomly select matched or unmatched case-control data.
 #### Description
