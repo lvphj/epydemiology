@@ -5,8 +5,10 @@ Library of python code for epidemiologists – eventually
 ```python
 pip install epydemiology as epy
 ```
+## Usage
 
-Functions can then be accessed using the following functions:
+The following functions are available:
+
 1. To select matched or unmatced case-control data:
 
 ```python
