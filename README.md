@@ -9,7 +9,7 @@ pip install epydemiology as epy
 
 The following functions are available:
 
-1. To select matched or unmatced case-control data:
+1. To select matched or unmatced case-control data (without replacement):
 
 ```python
 myDF = epy.phjSelectCaseControlDataset()
@@ -26,7 +26,7 @@ myDF = epy.phjRelativeRisk()
 ```
 
 ## Details of functions
-1. phjSelectCaseControlDataset()
+### 1. phjSelectCaseControlDataset()
 ```python
 df = epy.phjSelectCaseControlDataset(phjCasesDF,
                                      phjPotentialControlsDF,
@@ -55,7 +55,7 @@ The phjSelectCaseControlDataset() function proceeds as follows:
 7. Removes added control records from potential controls database so single case cannot be selected more than once
 8. Returns Pandas dataframe containing list of cases and controls. This dataframe only contains columns for unique identifier, case and group id. It will, therefore need to be merged with the full database to get and additional required columns.
 
-#### Description of function parameters
+#### Function parameters
 1. **phjCasesDF** Pandas dataframe containing list of cases.
 2. **phjPotentialControlsDF** Pandas dataframe containing a list of potential control cases.
 3. **phjUniqueIdentifierVarName** Name of variable that acts as a unique identifier (e.g. consulations ID number would be a good example). N.B. In some cases, the consultation number is not unique but has been entered several times in the database, sometimes in very quick succession (ms). Data must be cleaned to ensure that the unique identifier variable is, indeed, unique.
@@ -72,14 +72,29 @@ Pandas dataframe containing a column containing the unique identifier variable, 
 #### Other notes
 Setting phjPrintResults = True can cause problems when running script on Jupyiter-Notebook.
 
+#### Example
+An example of the function in use is given below:
+
+```python
+casesDF = pd.
+```
+
 ---
 
-## phjOddsRatio()
-### Function description
-#### Introduction
+### 2. phjOddsRatio()
+
+```python
+df = phjOddsRatio(phjTempDF,
+                  phjCaseVarName,
+                  phjCaseValue,
+                  phjRiskFactorVarName,
+                  phjRiskFactorBaseValue)
+```
+
+#### Description
 This function can be used to calculate odds ratios and 95% confidence intervals for case-control studies. The function is passed a Pandas dataframe containing the data together with the name of the 'case' variable and the name of the potential risk factor variable. The function returns a Pandas dataframe based on a 2 x 2 or n x 2 contingency table together with columns containing the odds, odds ratios and 95% confidence intervals (Woolf). Rows that contain a missing value in either the case variable or the risk factor variable are removed before calculations are made.
 
-### Description of function parameters
+#### Function parameters
 The function takes the following parameters:
 
 ```python
@@ -105,16 +120,16 @@ phjOddsRatio(phjTempDF,
 5. **phjRiskFactorBaseValue**
   * The level or stratum of the potential risk factor that will be used as the base level in the calculation of odds ratios.
 
-### Exceptions raised
+#### Exceptions raised
 None
 
-### Returns
+#### Returns
 Pandas dataframe containing a cross-tabulation of the case and risk factor varible. In addition, odds, odds ratios and 95% confidence interval (Woolf) of the odds ratio is presented.
 
-### Other notes
+#### Other notes
 None
 
-### Example
+#### Example
 An example of the function in use is given below:
 
 ```python
@@ -135,10 +150,21 @@ pd.options.display.float_format = '{:,.3f}'.format
 print(phjORTable)
 ```
 
-## phjRelativeRisk()
-### Function description
-#### Introduction
-### Description of function parameters
+---
+
+### 3. phjRelativeRisk()
+```python
+df = phjRelativeRisk(phjTempDF,
+                     phjCaseVarName,
+                     phjCaseValue,
+                     phjRiskFactorVarName,
+                     phjRiskFactorBaseValue)
+```
+
+#### Description
+
+
+#### Function parameters
 The function takes the following parameters:
 
 ```python
@@ -164,16 +190,16 @@ phjRelativeRisk(phjTempDF,
 5. **phjRiskFactorBaseValue**
   * The level or stratum of the potential risk factor that will be used as the base level in the calculation of odds ratios.
 
-### Exceptions raised
+#### Exceptions raised
 None
 
-### Returns
+#### Returns
 Pandas dataframe containing a cross-tabulation of the disease status and risk factor varible. In addition, risk, relative risk and 95% confidence interval of the relative risk is presented.
 
-### Other notes
+#### Other notes
 None
 
-### Example
+#### Example
 An example of the function in use is given below:
 
 ```python
