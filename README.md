@@ -59,12 +59,18 @@ The phjSelectCaseControlDataset() function proceeds as follows:
 #### Function parameters
 The function takes the following parameters:
 
-1. **phjCasesDF** Pandas dataframe containing list of cases.
-2. **phjPotentialControlsDF** Pandas dataframe containing a list of potential control cases.
-3. **phjUniqueIdentifierVarName** Name of variable that acts as a unique identifier (e.g. consulations ID number would be a good example). N.B. In some cases, the consultation number is not unique but has been entered several times in the database, sometimes in very quick succession (ms). Data must be cleaned to ensure that the unique identifier variable is, indeed, unique.
-4. **phjMatchingVariablesList** (Default = None.) List of variable names for which the cases and controls should be matched. Must be a list. The default is None. If 
-5. **phjControlsPerCaseInt** (Default = 1.) Number of controls that should be selected per case.
-6. **phjPrintResults** (Default= False.) Print verbose output during execution of scripts. If running on Jupyter-Notebook, setting PrintResults = True causes a lot a output and can cause problems connecting to kernel.
+1. **phjCasesDF**
+  * Pandas dataframe containing list of cases.
+2. **phjPotentialControlsDF**
+  * Pandas dataframe containing a list of potential control cases.
+3. **phjUniqueIdentifierVarName**
+  * Name of variable that acts as a unique identifier (e.g. consulations ID number would be a good example). N.B. In some cases, the consultation number is not unique but has been entered several times in the database, sometimes in very quick succession (ms). Data must be cleaned to ensure that the unique identifier variable is, indeed, unique.
+4. **phjMatchingVariablesList** (Default = None.)
+  * List of variable names for which the cases and controls should be matched. Must be a list. The default is None. If 
+5. **phjControlsPerCaseInt** (Default = 1.)
+  * Number of controls that should be selected per case.
+6. **phjPrintResults** (Default= False.)
+  * Print verbose output during execution of scripts. If running on Jupyter-Notebook, setting PrintResults = True causes a lot a output and can cause problems connecting to kernel.
 
 #### Exceptions raised
 None
