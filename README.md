@@ -3,19 +3,25 @@ Library of python code for epidemiologists – eventually
 
 ## Installation
 ```python
-pip install epydemiology
+pip install epydemiology as epy
 ```
 
-Functions can then be accessed using:
+Functions can then be accessed using the following functions:
+1. To select matched or unmatced case-control data:
 
 ```python
-myDF = phjSelectCaseControlDataset()
+myDF = epy.phjSelectCaseControlDataset()
 ```
-– select matched or unmatched case-control data.
+2. To calculate odds and odds ratios for case-control studies
 
-```myDF = phjOddsRatio()``` – calculate odds and odds ratio for case-control studies.
+```python
+myDF = epy.phjOddsRatio()
+```
+3. To calculate relative risks for cross-sectional or longitudinal studies
 
-```myDF = phjRelativeRisk()``` – calculate relative risks for cross-sectional or longitudinal studies.
+```python
+myDF = phjRelativeRisk()
+```
 
 
 ## phjSelectCaseControlDataset()
