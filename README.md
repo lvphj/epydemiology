@@ -26,6 +26,7 @@ myDF = epy.phjRelativeRisk()
 ```
 
 ## Details of functions
+1. phjSelectCaseControlDataset()
 ```python
 df = epy.phjSelectCaseControlDataset(phjCasesDF,
                                      phjPotentialControlsDF,
