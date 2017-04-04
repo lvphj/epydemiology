@@ -91,14 +91,15 @@ import epydemiology as epy
 casesDF = pd.DataFrame({'animalID':[1,2,3,4,5],'var1':[43,45,34,45,56],'sp':['dog','dog','dog','dog','dog']})
 potControlsDF = pd.DataFrame({'animalID':[11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
                               'var1':[34,54,34,23,34,45,56,67,56,67,78,98,65,54,34,76,87,56,45,34],
-                              'sp':['dog','cat','dog','dog','cat','dog','cat','dog','cat','dog','dog','dog','dog',
-                                    'cat','dog','cat','dog','dog','dog','cat']})
+                              'sp':['dog','cat','dog','dog','cat','dog','cat','dog','cat','dog',
+                                    'dog','dog','dog','cat','dog','cat','dog','dog','dog','cat']})
 
 print("This dataframe contains all the cases of disease\n")
 print(casesDF)
 print("\n")
 print("This dataframe contains all the animals you could potentially use as controls\n")
 print(potControlsDF)
+print("\n")
 
 # Selecting unmatched controls
 unmatchedDF = epy.phjSelectCaseControlDataset(phjCasesDF = casesDF,
@@ -108,9 +109,8 @@ unmatchedDF = epy.phjSelectCaseControlDataset(phjCasesDF = casesDF,
                                               phjControlsPerCaseInt = 2,
                                               phjPrintResults = False)
 
-print("\n")
-print("Unmatched dataset")
 print(unmatchedDF)
+print("\n")
 
 # Selecting controls that are matched to cases on variable 'sp'
 matchedDF = epy.phjSelectCaseControlDataset(phjCasesDF = casesDF,
@@ -120,14 +120,86 @@ matchedDF = epy.phjSelectCaseControlDataset(phjCasesDF = casesDF,
                                             phjControlsPerCaseInt = 2,
                                             phjPrintResults = False)
 
-print("\n")
-print("Matched dataset")
 print(matchedDF)
 
 ```
 
 Output
+```
+This dataframe contains all the cases of disease
 
+   animalID   sp  var1
+0         1  dog    43
+1         2  dog    45
+2         3  dog    34
+3         4  dog    45
+4         5  dog    56
+
+
+This dataframe contains all the animals you could potentially use as controls
+
+    animalID   sp  var1
+0         11  dog    34
+1         12  cat    54
+2         13  dog    34
+3         14  dog    23
+4         15  cat    34
+5         16  dog    45
+6         17  cat    56
+7         18  dog    67
+8         19  cat    56
+9         20  dog    67
+10        21  dog    78
+11        22  dog    98
+12        23  dog    65
+13        24  cat    54
+14        25  dog    34
+15        26  cat    76
+16        27  dog    87
+17        28  dog    56
+18        29  dog    45
+19        30  cat    34
+
+
+UNMATCHED CONTROLS
+
+    case  animalID
+0      1         1
+1      1         2
+2      1         3
+3      1         4
+4      1         5
+5      0        22
+6      0        13
+7      0        30
+8      0        18
+9      0        25
+10     0        28
+11     0        14
+12     0        15
+13     0        24
+14     0        19
+
+
+MATCHED CONTROLS
+
+   animalID group case   sp
+0         1     0    1  dog
+1        28     0    0  dog
+2        16     0    0  dog
+3         2     1    1  dog
+4        25     1    0  dog
+5        27     1    0  dog
+6         3     2    1  dog
+7        21     2    0  dog
+8        11     2    0  dog
+9         4     3    1  dog
+10       18     3    0  dog
+11       14     3    0  dog
+12        5     4    1  dog
+13       22     4    0  dog
+14       29     4    0  dog
+```
 
 ---
 
