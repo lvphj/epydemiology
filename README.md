@@ -1,11 +1,11 @@
 # epydemiology
 Library of python code for epidemiologists – eventually
 
-## Installation
+## A. Installation
 ```python
 pip install epydemiology as epy
 ```
-## Usage
+## B. Usage
 
 The following functions are available:
 
@@ -25,8 +25,9 @@ myDF = epy.phjOddsRatio()
 myDF = epy.phjRelativeRisk()
 ```
 
-## Details of functions
+## C. Details of functions
 ### 1. phjSelectCaseControlDataset()
+
 ```python
 df = epy.phjSelectCaseControlDataset(phjCasesDF,
                                      phjPotentialControlsDF,
@@ -56,6 +57,8 @@ The phjSelectCaseControlDataset() function proceeds as follows:
 8. Returns Pandas dataframe containing list of cases and controls. This dataframe only contains columns for unique identifier, case and group id. It will, therefore need to be merged with the full database to get and additional required columns.
 
 #### Function parameters
+The function takes the following parameters:
+
 1. **phjCasesDF** Pandas dataframe containing list of cases.
 2. **phjPotentialControlsDF** Pandas dataframe containing a list of potential control cases.
 3. **phjUniqueIdentifierVarName** Name of variable that acts as a unique identifier (e.g. consulations ID number would be a good example). N.B. In some cases, the consultation number is not unique but has been entered several times in the database, sometimes in very quick succession (ms). Data must be cleaned to ensure that the unique identifier variable is, indeed, unique.
@@ -76,7 +79,11 @@ Setting phjPrintResults = True can cause problems when running script on Jupyite
 An example of the function in use is given below:
 
 ```python
-casesDF = pd.
+import pandas as pd
+import epydemiology as epy
+
+
+
 ```
 
 ---
@@ -96,14 +103,6 @@ This function can be used to calculate odds ratios and 95% confidence intervals 
 
 #### Function parameters
 The function takes the following parameters:
-
-```python
-phjOddsRatio(phjTempDF,
-             phjCaseVarName,
-             phjCaseValue,
-             phjRiskFactorVarName,
-             phjRiskFactorBaseValue)
-```
 
 1. **phjTempDF**
   * This is a Pandas dataframe that contains the data to be analysed. One of the variables should be contain a variable indicating whether the row is a case or a control.
@@ -133,17 +132,20 @@ None
 An example of the function in use is given below:
 
 ```python
+import pandas as pd
+import epydemiology as epy
+
 tempDF = pd.DataFrame({'caseN':[1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0],
                        'caseA':['y','y','y','y','y','y','y','y','n','n','n','n','n','n','n','n','n','n','n','n'],
                        'catN':[1,2,3,2,3,4,3,2,3,4,3,2,1,2,1,2,3,2,3,4],
                        'catA':['a','a','b','b','c','d','a','c','c','d','a','b','c','a','d','a','b','c','a','d'],
                        'floatN':[1.2,4.3,2.3,4.3,5.3,4.3,2.4,6.5,4.5,7.6,5.6,5.6,4.8,5.2,7.4,5.4,6.5,5.7,6.8,4.5]})
 
-phjORTable = phjOddsRatio( phjTempDF = tempDF,
-                           phjCaseVarName = 'caseA',
-                           phjCaseValue = 'y',
-                           phjRiskFactorVarName = 'catA',
-                           phjRiskFactorBaseValue = 'a')
+phjORTable = epy.phjOddsRatio( phjTempDF = tempDF,
+                               phjCaseVarName = 'caseA',
+                               phjCaseValue = 'y',
+                               phjRiskFactorVarName = 'catA',
+                               phjRiskFactorBaseValue = 'a')
 
 pd.options.display.float_format = '{:,.3f}'.format
 
@@ -153,6 +155,7 @@ print(phjORTable)
 ---
 
 ### 3. phjRelativeRisk()
+
 ```python
 df = phjRelativeRisk(phjTempDF,
                      phjCaseVarName,
@@ -162,18 +165,10 @@ df = phjRelativeRisk(phjTempDF,
 ```
 
 #### Description
-
+This function can be used to calculate relative risk (risk ratios) and 95% confidence intervals for cross-sectional and longitudinal (cohort) studies. The function is passed a Pandas dataframe containing the data together with the name of the 'case' variable and the name of the potential risk factor variable. The function returns a Pandas dataframe based on a 2 x 2 or n x 2 contingency table together with columns containing the risk, risk ratios and 95% confidence intervals. Rows that contain a missing value in either the case variable or the risk factor variable are removed before calculations are made.
 
 #### Function parameters
 The function takes the following parameters:
-
-```python
-phjRelativeRisk(phjTempDF,
-                phjCaseVarName,
-                phjCaseValue,
-                phjRiskFactorVarName,
-                phjRiskFactorBaseValue)
-```
 
 1. **phjTempDF**
   * This is a Pandas dataframe that contains the data to be analysed. One of the variables should be contain a variable indicating whether the row has disease (diseased) or not (healthy).
@@ -203,17 +198,21 @@ None
 An example of the function in use is given below:
 
 ```python
+import pandas as pd
+import epydemiology as epy
+
+# Pretend this came from a cross-sectional study (even though it's the same example data as used for the case-control study above.
 tempDF = pd.DataFrame({'caseN':[1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0],
                        'caseA':['y','y','y','y','y','y','y','y','n','n','n','n','n','n','n','n','n','n','n','n'],
                        'catN':[1,2,3,2,3,4,3,2,3,4,3,2,1,2,1,2,3,2,3,4],
                        'catA':['a','a','b','b','c','d','a','c','c','d','a','b','c','a','d','a','b','c','a','d'],
                        'floatN':[1.2,4.3,2.3,4.3,5.3,4.3,2.4,6.5,4.5,7.6,5.6,5.6,4.8,5.2,7.4,5.4,6.5,5.7,6.8,4.5]})
 
-phjRRTable = phjRelativeRisk( phjTempDF = tempDF,
-                              phjCaseVarName = 'caseA',
-                              phjCaseValue = 'y',
-                              phjRiskFactorVarName = 'catA',
-                              phjRiskFactorBaseValue = 'a')
+phjRRTable = epy.phjRelativeRisk( phjTempDF = tempDF,
+                                  phjCaseVarName = 'caseA',
+                                  phjCaseValue = 'y',
+                                  phjRiskFactorVarName = 'catA',
+                                  phjRiskFactorBaseValue = 'a')
 
 pd.options.display.float_format = '{:,.3f}'.format
 
