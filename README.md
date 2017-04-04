@@ -22,14 +22,14 @@ myDF = epy.phjOddsRatio()
 3. To calculate relative risks for cross-sectional or longitudinal studies
 
 ```python
-myDF = phjRelativeRisk()
+myDF = epy.phjRelativeRisk()
 ```
 
-
-## phjSelectCaseControlDataset()
+## Details of functions
+### phjSelectCaseControlDataset()
 Python function to randomly select matched or unmatched case-control data.
-### Function description
-#### Introduction
+#### Description
+##### Introduction
 This function selects case-control datasets from the SAVSNET database. It receives, as parameters, two Pandas dataframes, one containing known cases and, the other, potential controls. The algorithm steps through each case in turn and selects the relevant number of control subjects from the second dataframe, matching on the list of variables. The function then adds the details of the case and the selected controls to a separate, pre-defined dataframe before moving onto the next case.
 
 Initially, the phjSelectCaseControlDataset() function calls phjParameterCheck() to check that passed parameters meet specified criteria (e.g. ensure lists are lists and ints are ints etc.). If all requirements are met, phjParameterCheck() returns True and phjSelectCaseControlDataset() continues.
