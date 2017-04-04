@@ -101,30 +101,33 @@ print("This dataframe contains all the animals you could potentially use as cont
 print(potControlsDF)
 
 # Selecting unmatched controls
-unmatchedDF = phjSelectCaseControlDataset(phjCasesDF = casesDF,
-                                          phjPotentialControlsDF = potControlsDF,
-                                          phjUniqueIdentifierVarName = 'animalID',
-                                          phjMatchingVariablesList = None,
-                                          phjControlsPerCaseInt = 2,
-                                          phjPrintResults = False)
+unmatchedDF = epy.phjSelectCaseControlDataset(phjCasesDF = casesDF,
+                                              phjPotentialControlsDF = potControlsDF,
+                                              phjUniqueIdentifierVarName = 'animalID',
+                                              phjMatchingVariablesList = None,
+                                              phjControlsPerCaseInt = 2,
+                                              phjPrintResults = False)
 
 print("\n")
 print("Unmatched dataset")
 print(unmatchedDF)
 
 # Selecting controls that are matched to cases on variable 'sp'
-matchedDF = phjSelectCaseControlDataset(phjCasesDF = casesDF,
-                                        phjPotentialControlsDF = potControlsDF,
-                                        phjUniqueIdentifierVarName = 'animalID',
-                                        phjMatchingVariablesList = ['sp'],
-                                        phjControlsPerCaseInt = 2,
-                                        phjPrintResults = False)
+matchedDF = epy.phjSelectCaseControlDataset(phjCasesDF = casesDF,
+                                            phjPotentialControlsDF = potControlsDF,
+                                            phjUniqueIdentifierVarName = 'animalID',
+                                            phjMatchingVariablesList = ['sp'],
+                                            phjControlsPerCaseInt = 2,
+                                            phjPrintResults = False)
 
 print("\n")
 print("Matched dataset")
 print(matchedDF)
 
 ```
+
+Output
+
 
 ---
 
@@ -192,6 +195,8 @@ pd.options.display.float_format = '{:,.3f}'.format
 print(phjORTable)
 ```
 
+Output
+
 ---
 
 ### 3. phjRelativeRisk()
@@ -258,3 +263,5 @@ pd.options.display.float_format = '{:,.3f}'.format
 
 print(phjRRTable)
 ```
+
+Output
