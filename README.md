@@ -1,10 +1,22 @@
 # epydemiology
 Library of python code for epidemiologists – eventually
 
-# phjSelectData.py
-Library of Python functions to randomly select datasets (e.g. matched case-control studies) from SAVSNET databases.
+## Installation
+'''python
+pip install epydemiology
+'''
+
+Functions can then be accessed using:
+
+'''myDF = phjSelectCaseControlDataset()''' – select matched or unmatched case-control data.
+
+myDF = phjOddsRatio() – calculate odds and odds ratio for case-control studies.
+
+myDF = phjRelativeRisk() – calculate relative risks for cross-sectional or longitudinal studies.
+
 
 ## phjSelectCaseControlDataset()
+Python function to randomly select matched or unmatched case-control data.
 ### Function description
 #### Introduction
 This function selects case-control datasets from the SAVSNET database. It receives, as parameters, two Pandas dataframes, one containing known cases and, the other, potential controls. The algorithm steps through each case in turn and selects the relevant number of control subjects from the second dataframe, matching on the list of variables. The function then adds the details of the case and the selected controls to a separate, pre-defined dataframe before moving onto the next case.
