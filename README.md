@@ -125,6 +125,7 @@ print(matchedDF)
 ```
 
 Output
+
 ```
 This dataframe contains all the cases of disease
 
@@ -269,6 +270,15 @@ print(phjORTable)
 
 Output
 
+```
+caseA  y  n  odds    or       95pcCI_Woolf
+catA                                      
+a      3  4 0.750 1.000                ---
+b      2  2 1.000 1.333  [0.1132, 15.7047]
+c      2  3 0.667 0.889   [0.0862, 9.1622]
+d      1  3 0.333 0.444   [0.0295, 6.7031]
+```
+
 ---
 
 ### 3. phjRelativeRisk()
@@ -337,3 +347,12 @@ print(phjRRTable)
 ```
 
 Output
+
+```
+caseA  y  n  risk    rr            95pcCI
+catA                                     
+a      3  4 0.429 1.000               ---
+b      2  2 0.500 1.167  [0.3177, 4.2844]
+c      2  3 0.400 0.933  [0.2365, 3.6828]
+d      1  3 0.250 0.583  [0.0872, 3.9031]
+```
