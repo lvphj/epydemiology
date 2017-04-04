@@ -26,7 +26,14 @@ myDF = epy.phjRelativeRisk()
 ```
 
 ## Details of functions
-### phjSelectCaseControlDataset()
+```python
+df = phjSelectCaseControlDataset(phjCasesDF,
+phjPotentialControlsDF,
+phjUniqueIdentifierVarName,
+phjMatchingVariablesList = None,
+phjControlsPerCaseInt = 1,
+phjPrintResults = False)```
+
 Python function to randomly select matched or unmatched case-control data.
 #### Description
 ##### Introduction
