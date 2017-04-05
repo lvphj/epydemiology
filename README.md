@@ -221,7 +221,7 @@ This function can be used to calculate odds ratios and 95% confidence intervals 
 The function takes the following parameters:
 
 1. **phjTempDF**
-  * This is a Pandas dataframe that contains the data to be analysed. One of the variables should be contain a variable indicating whether the row is a case or a control.
+  * This is a Pandas dataframe that contains the data to be analysed. One of the columns should be a variable that indicates whether the row is a case or a control.
 
 2. **phjCaseVarName**
   * Name of the variable that indicates whether the row is a case or a control.
@@ -298,7 +298,7 @@ This function can be used to calculate relative risk (risk ratios) and 95% confi
 The function takes the following parameters:
 
 1. **phjTempDF**
-  * This is a Pandas dataframe that contains the data to be analysed. One of the variables should be contain a variable indicating whether the row has disease (diseased) or not (healthy).
+  * This is a Pandas dataframe that contains the data to be analysed. One of the columns should be a variable that indicates whether the row has disease (diseased) or not (healthy).
 
 2. **phjCaseVarName**
   * Name of the variable that indicates whether the row has disease or is healthy.
