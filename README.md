@@ -1,5 +1,5 @@
 # epydemiology
-Library of python code for epidemiologists – eventually
+Library of python code for epidemiologists – eventually.
 
 ## A. Installation
 ```python
