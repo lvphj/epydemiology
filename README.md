@@ -17,7 +17,7 @@ myDF = epy.phjReadDataFromExcelNamedCellRange()
 2. To load data from MySQL or SQL SERVER database into Pandas dataframe
 
 ```python
-myDF = epy.phjGetDatabaseData()
+myDF = epy.phjGetDataFromDatabase()
 ```
 
 3. To select matched or unmatced case-control data (without replacement):
@@ -74,11 +74,11 @@ Under construction.
 ```
 
 
-### 2. phjGetDatabaseData()
+### 2. phjGetDataFromDatabase()
 
 ```python
-df = epy.phjGetDatabaseData(phjQueryPathAndFileName = None,
-                            phjPrintResults = False)
+df = epy.phjGetDataFromDatabase(phjQueryPathAndFileName = None,
+                                phjPrintResults = False)
 ```
 
 Python function to read data from a MySQL or SQL SERVER database.
