@@ -1,5 +1,5 @@
 # epydemiology
-Library of python code for epidemiologists – eventually
+Library of python code for epidemiologists – eventually.
 
 ## A. Installation
 ```python
@@ -8,25 +8,67 @@ pip install epydemiology as epy
 ## B. Usage
 
 The following functions are available:
+1. To load data from a named Excel cell range
 
-1. To select matched or unmatced case-control data (without replacement):
+```python
+myDF = epy.phjReadDataFromExcelNamedCellRange()
+```
+
+2. To select matched or unmatced case-control data (without replacement):
 
 ```python
 myDF = epy.phjSelectCaseControlDataset()
 ```
-2. To calculate odds and odds ratios for case-control studies
+3. To calculate odds and odds ratios for case-control studies
 
 ```python
 myDF = epy.phjOddsRatio()
 ```
-3. To calculate relative risks for cross-sectional or longitudinal studies
+4. To calculate relative risks for cross-sectional or longitudinal studies
 
 ```python
 myDF = epy.phjRelativeRisk()
 ```
 
 ## C. Details of functions
-### 1. phjSelectCaseControlDataset()
+### 1. phjReadDataFromExcelNamedCellRange()
+
+```python
+df = phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = None,
+                                        phjExcelCellRangeName = None,
+                                        phjDatetimeFormat = "%Y-%m-%d %H:%M:%S",
+                                        phjMissingValue = "missing",
+                                        phjHeaderRow = False,
+                                        phjPrintResults = False)
+```
+
+Python function to read data from a named cell range in an Excel workbook.
+
+#### Description
+
+
+#### Function parameters
+
+
+
+#### Exceptions raised
+None
+
+#### Returns
+Pandas dataframe containing data read from named cell range.
+
+#### Other notes
+None.
+
+#### Example
+An example of the function in use is given below:
+
+```python
+Under construction.
+```
+
+
+### 2. phjSelectCaseControlDataset()
 
 ```python
 df = epy.phjSelectCaseControlDataset(phjCasesDF,
@@ -204,7 +246,7 @@ MATCHED CONTROLS
 
 ---
 
-### 2. phjOddsRatio()
+### 3. phjOddsRatio()
 
 ```python
 df = phjOddsRatio(phjTempDF,
@@ -281,7 +323,7 @@ d      1  3 0.333 0.444   [0.0295, 6.7031]
 
 ---
 
-### 3. phjRelativeRisk()
+### 4. phjRelativeRisk()
 
 ```python
 df = phjRelativeRisk(phjTempDF,
