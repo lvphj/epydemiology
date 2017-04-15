@@ -61,8 +61,8 @@ else:
 
 
 
-def phjGetDatabaseData(phjQueryPathAndFileName = None,
-					   phjPrintResults = False):
+def phjGetDataFromDatabase(phjQueryPathAndFileName = None,
+						   phjPrintResults = False):
 	
 	# Load SQL query from text file
 	phjTempQuery = phjReadQueryFromFile(phjQueryPathAndFileName = None,
