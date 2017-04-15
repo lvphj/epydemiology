@@ -14,17 +14,23 @@ The following functions are available:
 myDF = epy.phjReadDataFromExcelNamedCellRange()
 ```
 
-2. To select matched or unmatced case-control data (without replacement):
+2. To load data from MySQL or SQL SERVER database into Pandas dataframe
+
+```python
+myDF = epy.phjGetDatabaseData()
+```
+
+3. To select matched or unmatced case-control data (without replacement):
 
 ```python
 myDF = epy.phjSelectCaseControlDataset()
 ```
-3. To calculate odds and odds ratios for case-control studies
+4. To calculate odds and odds ratios for case-control studies
 
 ```python
 myDF = epy.phjOddsRatio()
 ```
-4. To calculate relative risks for cross-sectional or longitudinal studies
+5. To calculate relative risks for cross-sectional or longitudinal studies
 
 ```python
 myDF = epy.phjRelativeRisk()
@@ -68,7 +74,42 @@ Under construction.
 ```
 
 
-### 2. phjSelectCaseControlDataset()
+### 2. phjGetDatabaseData()
+
+```python
+df = epy.phjGetDatabaseData(phjQueryPathAndFileName = None,
+                            phjPrintResults = False)
+```
+
+Python function to read data from a MySQL or SQL SERVER database.
+
+#### Description
+
+
+#### Function parameters
+
+
+
+#### Exceptions raised
+None
+
+#### Returns
+Pandas dataframe containing data read from database.
+
+#### Other notes
+None.
+
+#### Example
+An example of the function in use is given below:
+
+```python
+Under construction.
+```
+
+
+
+
+### 3. phjSelectCaseControlDataset()
 
 ```python
 df = epy.phjSelectCaseControlDataset(phjCasesDF,
@@ -246,7 +287,7 @@ MATCHED CONTROLS
 
 ---
 
-### 3. phjOddsRatio()
+### 4. phjOddsRatio()
 
 ```python
 df = phjOddsRatio(phjTempDF,
@@ -323,7 +364,7 @@ d      1  3 0.333 0.444   [0.0295, 6.7031]
 
 ---
 
-### 4. phjRelativeRisk()
+### 5. phjRelativeRisk()
 
 ```python
 df = phjRelativeRisk(phjTempDF,
