@@ -13,7 +13,7 @@ except (IOError, ImportError):
 setup(name = 'epydemiology',
       packages = ['epydemiology'], # this must be the same as the name above
       # packages=find_packages(exclude=[list_of_things_to_exclude]),
-      version = '0.1.4',
+      version = '0.1.5',
       description = 'A library of Python code for epidemiologists',
       long_description = long_description,
       author = 'Phil Jones',
@@ -39,5 +39,5 @@ setup(name = 'epydemiology',
                      # that you indicate whether you support Python 2, Python 3 or both.
                      'Programming Language :: Python :: 3',
                      'Programming Language :: Python :: 3.4'],
-      install_requires=['pandas>=0.19.2'],
+      install_requires=['numpy','pandas>=0.19.2','openpyxl','pymysql'],
       )
