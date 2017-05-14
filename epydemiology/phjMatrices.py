@@ -47,6 +47,6 @@ def phjBinaryVarsToSquareMatrix(phjDataDF,
     	return phjTempMatrixDF
     	
     else:
-    	print('The phjOutputFormat parammeter was set to an unknown value (\'{0}\'). The return value was set to None.',format(phjOutputFormat))
+    	print('The phjOutputFormat parammeter was set to an unknown value (\'{0}\'). The return value was set to None.'.format(phjOutputFormat))
     	return None
     	
