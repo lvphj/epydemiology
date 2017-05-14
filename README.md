@@ -20,17 +20,23 @@ myDF = epy.phjReadDataFromExcelNamedCellRange()
 myDF = epy.phjGetDataFromDatabase()
 ```
 
-3. To select matched or unmatced case-control data (without replacement):
+3. To convert columns of binary data to a square matrix containing co-occurrences
+
+```python
+myArr = epy.phjBinaryVarsToSquareMatrix()
+```
+
+4. To select matched or unmatced case-control data (without replacement):
 
 ```python
 myDF = epy.phjSelectCaseControlDataset()
 ```
-4. To calculate odds and odds ratios for case-control studies
+5. To calculate odds and odds ratios for case-control studies
 
 ```python
 myDF = epy.phjOddsRatio()
 ```
-5. To calculate relative risks for cross-sectional or longitudinal studies
+6. To calculate relative risks for cross-sectional or longitudinal studies
 
 ```python
 myDF = epy.phjRelativeRisk()
@@ -108,8 +114,74 @@ Under construction.
 
 
 
+### 3. phjBinaryVarsToSquareMatrix()
 
-### 3. phjSelectCaseControlDataset()
+```python
+arr = phjBinaryVarsToSquareMatrix(phjDataDF,
+                                  phjColumnNamesList,
+                                  phjOutputFormat = 'arr',
+                                  phjPrintResults = False)
+```
+
+Function to produce a Numpy array from a group of binary variables to show co-occurrence.
+#### Description
+This function takes a number of variables containing binary data and returns a Numpy array representing a square matrix that shows co-occurrence of positive variables.
+
+#### Function parameters
+
+1. **phjDataDF**
+    * Pandas dataframe
+
+2. **phjColumnNamesList**
+    * A list of variable names contained in the dataframe that contains binary data.
+    
+3. **phjOutputFormat** (Default = 'arr')
+    * Output format. Default is a Numpy array ('arr'). Alternative is 'df' to return a Pandas dataframe.
+    
+4. **phjPrintResults** (Default = False.)
+  * Print verbose output during execution of scripts. If running on Jupyter-Notebook, setting PrintResults = True causes a lot a output and can cause problems connecting to kernel.
+
+#### Exceptions raised
+None
+
+#### Returns
+By default, function returns a Numpy array of a square matrix (phjOutputFormat = 'arr'). Matrix can be returned as a Pandas dataframe (phjOutputFormat = 'df').
+
+#### Other notes
+None
+
+#### Example
+
+````python
+import pandas as pd
+
+rawDataDF = pd.DataFrame({'a':[0,1,1,1,0,0,1,0],
+                          'b':[1,1,0,0,1,0,0,1],
+                          'c':[0,0,1,0,1,1,1,1],
+                          'd':[1,0,0,0,1,0,0,0],
+                          'e':[1,0,0,0,0,1,0,0]})
+
+columns = ['a','b','c','d','e']
+
+phjMatrix = phjBinaryVarsToSquareMatrix(phjDataDF = rawDataDF,
+                                        phjColumnNamesList = columns,
+                                        phjOutputFormat = 'arr',
+                                        phjPrintResults = False)
+                                        
+print(phjMatrix)
+```
+
+Output:
+
+```
+[[1 1 2 0 0]
+ [1 0 2 2 1]
+ [2 2 0 1 1]
+ [0 2 1 0 1]
+ [0 1 1 1 0]]
+```
+
+### 4. phjSelectCaseControlDataset()
 
 ```python
 df = epy.phjSelectCaseControlDataset(phjCasesDF,
@@ -287,7 +359,7 @@ MATCHED CONTROLS
 
 ---
 
-### 4. phjOddsRatio()
+### 5. phjOddsRatio()
 
 ```python
 df = phjOddsRatio(phjTempDF,
@@ -364,7 +436,7 @@ d      1  3 0.333 0.444   [0.0295, 6.7031]
 
 ---
 
-### 5. phjRelativeRisk()
+### 6. phjRelativeRisk()
 
 ```python
 df = phjRelativeRisk(phjTempDF,
