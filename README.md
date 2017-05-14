@@ -152,7 +152,7 @@ None
 
 #### Example
 
-````python
+```python
 import pandas as pd
 
 rawDataDF = pd.DataFrame({'a':[0,1,1,1,0,0,1,0],
