@@ -36,7 +36,10 @@ def phjBinaryVarsToSquareMatrix(phjDataDF,
         # For each row index, step through each column and add the data
         for oc in phjOtherCols:
             phjTempMatrixDF.loc[c,oc] = phjTempSer[oc]
-
+	
+	if phjPrintResults == True:
+		print(phjTempMatrixDF)
+		
     if phjOutputFormat == 'arr':
     	return phjTempMatrixDF.values
     	
