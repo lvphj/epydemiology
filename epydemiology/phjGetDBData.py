@@ -65,7 +65,7 @@ def phjGetDataFromDatabase(phjQueryPathAndFileName = None,
 						   phjPrintResults = False):
 	
 	# Load SQL query from text file
-	phjTempQuery = phjReadQueryFromFile(phjQueryPathAndFileName = None,
+	phjTempQuery = phjReadQueryFromFile(phjQueryPathAndFileName = phjQueryPathAndFileName,
 										phjMaxAttempts = 3,
 										phjPrintResults = phjPrintResults)
 	
