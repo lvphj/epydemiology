@@ -116,7 +116,7 @@ def phjBinaryVarsToSquareMatrix(phjDataDF,
     # Step through each variable in the list and create a series consisting
     # of all OTHER variables and the number of entries or those variables
     for c in phjColumnNamesList:
-        phjOtherCols = [i for i in columns if i!=c]
+        phjOtherCols = [i for i in phjColumnNamesList if i!=c]
         phjTempSer = phjTempDF.loc[(phjTempDF['rowSum']>1) & (phjTempDF[c]==1),phjOtherCols].sum(axis=0).astype(int)
         
         # For each row index, step through each column and add the data
