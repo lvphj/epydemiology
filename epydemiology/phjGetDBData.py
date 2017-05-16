@@ -260,3 +260,7 @@ def phjConnectToDatabase(phjDBName,
 			phjTempConnection = None
 			
 	return phjTempConnection
+
+
+if __name__ == '__main__':
+    main()
