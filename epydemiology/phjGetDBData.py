@@ -67,9 +67,9 @@ def phjGetDataFromDatabase(phjQueryPathAndFileName = None,
     phjAllowedAttempts = 3
     
     # Load SQL query from text file
-    phjTempQuery = phjReadQueryFromFile(phjQueryPathAndFileName = phjQueryPathAndFileName,
-                                        phjMaxAttempts = phjAllowedAttempts,
-                                        phjPrintResults = phjPrintResults)
+    phjTempQuery = phjReadTextFromFile(phjFilePathAndName = phjQueryPathAndFileName,
+                                       phjMaxAttempts = phjAllowedAttempts,
+                                       phjPrintResults = phjPrintResults)
     
     if phjTempQuery is not None:
         # Enter name of database (convert to lower case and remove white space)
@@ -112,40 +112,40 @@ def phjGetDataFromDatabase(phjQueryPathAndFileName = None,
 
 
 
-def phjReadQueryFromFile(phjQueryPathAndFileName = None,
-                         phjMaxAttempts = 3,
-                         phjPrintResults = False):
+def phjReadTextFromFile(phjFilePathAndName = None,
+                        phjMaxAttempts = 3,
+                        phjPrintResults = False):
     
     for i in range(phjMaxAttempts):
         
-        if (phjQueryPathAndFileName is None) or (i > 0):
-            phjQueryPathAndFileName = input('Enter path and filename for text file contains SQL query: ')
+        if (phjFilePathAndName is None) or (i > 0):
+            phjFilePathAndName = input('Enter path and filename for file containing text (e.g. query or regex): ')
         
         try:
-            phjTempFileObject = open(phjQueryPathAndFileName)
-            phjTempQuery = phjTempFileObject.read()
+            phjTempFileObject = open(phjFilePathAndName)
+            phjTempText = phjTempFileObject.read()
             phjTempFileObject.close()
             
             if phjPrintResults:
-                print('SQL query read from file:')
-                print(phjTempQuery)
+                print('Text read from file:')
+                print(phjTempText)
                 print('\n')
             
             break
         
         except FileNotFoundError as e:
             
-            print("\nA FileNotFoundError occurred.\nError number {0}: {1}. File named \'{2}\' does not exist at that location.".format(e.args[0],e.args[1],phjQueryPathAndFileName))
+            print("\nA FileNotFoundError occurred.\nError number {0}: {1}. File named \'{2}\' does not exist at that location.".format(e.args[0],e.args[1],phjFilePathAndName))
             
             if i < (phjMaxAttempts-1):
                 print('\nPlease re-enter path and filename details.\n')    # Only say 'Please try again' if not last attempt.
             
             else:
-                # If query file can't be found then set phjTempQuery to None
-                print('\nFailed to find file containing query after {0} attempts.\n'.format(i+1))
-                phjTempQuery = None
+                # If file can't be found then set phjTempText to None
+                print('\nFailed to find file containing text after {0} attempts.\n'.format(i+1))
+                phjTempText = None
     
-    return phjTempQuery
+    return phjTempText
 
 
 
