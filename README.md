@@ -20,23 +20,29 @@ myDF = epy.phjReadDataFromExcelNamedCellRange()
 myDF = epy.phjGetDataFromDatabase()
 ```
 
-3. To convert columns of binary data to a square matrix containing co-occurrences
+3. To load text from a text file (e.g. a SQL query or regular expression)
+
+```python
+myString = phjReadTextFromFile()
+```
+
+4. To convert columns of binary data to a square matrix containing co-occurrences
 
 ```python
 myArr = epy.phjBinaryVarsToSquareMatrix()
 ```
 
-4. To select matched or unmatced case-control data (without replacement):
+5. To select matched or unmatced case-control data (without replacement):
 
 ```python
 myDF = epy.phjSelectCaseControlDataset()
 ```
-5. To calculate odds and odds ratios for case-control studies
+6. To calculate odds and odds ratios for case-control studies
 
 ```python
 myDF = epy.phjOddsRatio()
 ```
-6. To calculate relative risks for cross-sectional or longitudinal studies
+7. To calculate relative risks for cross-sectional or longitudinal studies
 
 ```python
 myDF = epy.phjRelativeRisk()
@@ -114,7 +120,41 @@ Under construction.
 
 
 
-### 3. phjBinaryVarsToSquareMatrix()
+### 3. phjReadTextFromFile()
+
+```python
+myStr = phjReadTextFromFile(phjFilePathAndName = None,
+                            maxAttempts = 3,
+                            phjPrintResults = False)
+```
+
+#### Description
+
+
+#### Function parameters
+
+
+#### Exceptions raised
+
+
+#### Returns
+
+
+#### Other notes
+
+
+#### Example
+
+
+
+
+
+
+
+
+
+
+### 4. phjBinaryVarsToSquareMatrix()
 
 ```python
 arr = phjBinaryVarsToSquareMatrix(phjDataDF,
@@ -181,7 +221,7 @@ Output:
  [0 1 1 1 0]]
 ```
 
-### 4. phjSelectCaseControlDataset()
+### 5. phjSelectCaseControlDataset()
 
 ```python
 df = epy.phjSelectCaseControlDataset(phjCasesDF,
@@ -359,7 +399,7 @@ MATCHED CONTROLS
 
 ---
 
-### 5. phjOddsRatio()
+### 6. phjOddsRatio()
 
 ```python
 df = phjOddsRatio(phjTempDF,
@@ -436,7 +476,7 @@ d      1  3 0.333 0.444   [0.0295, 6.7031]
 
 ---
 
-### 6. phjRelativeRisk()
+### 7. phjRelativeRisk()
 
 ```python
 df = phjRelativeRisk(phjTempDF,
