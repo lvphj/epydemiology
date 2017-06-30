@@ -6,47 +6,6 @@ These functions take a dataframe containing postcode information and attempts
 to correct errors and extract outward (first half), inward (second half) and
 postcode area (first letters) components of the postcode.
 
-# EXAMPLE
-# =======
-myTestPostcodeDF = pd.DataFrame({'postcode': ['NP45DG',
-                                              'CH647TE',
-                                              'CH5 4HE',
-                                              'GIR 0AA',
-                                              'GIR0AB',
-                                              'NOR12A',
-                                              'W1A 1AA',
-                                              'missin',
-                                              'NP4  OGH',
-                                              'P012 OLL',
-                                              'p01s',
-                                              'ABCD',
-                                              '',
-                                              'B1    INJ']})
-
-# Following columns added for testing purposes - they should be removed because
-# they match column names that will be added by the function.
-myTestPostcodeDF['pcdClean'] = np.nan
-myTestPostcodeDF['pcd7'] = np.nan
-myTestPostcodeDF['postcodeOutward'] = np.nan
-myTestPostcodeDF['someOtherCol'] = np.nan
-
-print('\Start dataframe\n===============\n')
-print(myTestPostcodeDF)
-print('\n')
-
-phjNewDF = phjCleanUKPostcodeVariable(phjTempDF = myTestPostcodeDF,
-                                      phjOrigPostcodeVarName = 'postcode',
-                                      phjNewPostcodeVarName = 'pcdClean',
-                                      phjPostcodeFormatCheckVarName = 'pcdFormatCheck',
-                                      phjPostcode7VarName = 'pcd7',
-                                      phjPostcodeAreaVarName = 'pcdArea',
-                                      phjDropExisting = True,
-                                      phjPrintResults = True)
-
-print('\nReturned dataframe\n==================\n')
-print(phjNewDF)
-
-
 """
 
 # Import required packages
