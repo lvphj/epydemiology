@@ -106,8 +106,7 @@ def phjUKPostcodeBasicCleanUp(phjTempDF,
     # Empty cells should be replaced with np.nan
     phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].replace('',value=np.nan,regex=False)
     
-    # Strip white space from ends, white space from the middle and convert postcode text to all uppercase
-    phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].str.strip()
+    # Strip all non-word characters (including underscore) from the text and convert postcode text to all uppercase
     phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].replace('''[\W\s]+''',value='',regex=True)
     phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].str.upper()
     
