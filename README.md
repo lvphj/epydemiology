@@ -249,6 +249,8 @@ In many situations, postcodes are added to a database field to record people's a
 The names of the variables that will be created to contain the outward and inward components of the postcode are 'postcodeOutward' and 'postcodeInward'. These names are the names of the groups defined by the regular expression and are not user-definable.
 
 The regex used to determine whether postcodes are correctly formatted is a modified regex based on a regex published at https://en.wikipedia.org/wiki/Talk:Postcodes_in_the_United_Kingdom (accessed 22 Mar 2016). (This page is also stored locally as a PDF entitled, "Talk/Postcodes in the United Kingdom - Wikipedia, the free encyclopedia".)
+
+NOTE: This function does not check entered postcodes against a database of actual postcodes. In merely checks that the *format* of the entered postcode is correct. So, for example, AB12 3CD is a correctly formatted postcode but it may or may not actually exist.
   
 #### Function parameters
 The function takes the following parameters:
