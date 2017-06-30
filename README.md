@@ -8,19 +8,19 @@ pip install epydemiology as epy
 ## B. Usage
 
 The following functions are available:
-1. To load data from a named Excel cell range
+1. To load data from a named Excel cell range into a Pandas dataframe
 
 ```python
 myDF = epy.phjReadDataFromExcelNamedCellRange()
 ```
 
-2. To load data from MySQL or SQL SERVER database into Pandas dataframe
+2. To load data from a MySQL or SQL SERVER database into a Pandas dataframe
 
 ```python
 myDF = epy.phjGetDataFromDatabase()
 ```
 
-3. To load text from a text file (e.g. a SQL query or regular expression)
+3. To load text from a text file (e.g. a SQL query or regular expression) into a Python variable as a single string
 
 ```python
 myString = phjReadTextFromFile()
@@ -32,23 +32,23 @@ myString = phjReadTextFromFile()
 myArr = epy.phjBinaryVarsToSquareMatrix()
 ```
 
-5. To clean a column of UK postcodes
+5. To clean a column of UK postcodes in a Pandas dataframe
 
 ```python
 myDF = epy.phjCleanUKPostcodeVariable()
 ```
 
-6. To select matched or unmatced case-control data (without replacement):
+6. To select matched or unmatced case-control data (without replacement) from Pandas dataframes
 
 ```python
 myDF = epy.phjSelectCaseControlDataset()
 ```
-7. To calculate odds and odds ratios for case-control studies
+7. To calculate odds and odds ratios for case-control studies for data stored in Pandas dataframe
 
 ```python
 myDF = epy.phjOddsRatio()
 ```
-8. To calculate relative risks for cross-sectional or longitudinal studies
+8. To calculate relative risks for cross-sectional or longitudinal studies for data stored in Pandas dataframe
 
 ```python
 myDF = epy.phjRelativeRisk()
