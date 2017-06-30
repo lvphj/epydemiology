@@ -145,7 +145,7 @@ def phjUKPostcodeRegexDefinition(phjPrintResults = False):
                                                       (?:(?:E|N|NW|SE|SW|W)1|EC[1-4]|WC[12])[A-HJKMNPR-Y]|(?:SW|W)(?:[2-9]|[1-9][0-9])|EC[1-9][0-9]))    # Identifies the odd London-based postcodes
                                )'''
     
-    postcodeInwardRegex = '''(?P<postcodeInward>(?:(?<=NOR)\s*[0-9]{2}[A-Z]$) |      # Picks out the unusual format of old Norwich postcodes (including leading space)
+    postcodeInwardRegex = '''(?P<postcodeInward>(?<=NOR)(?:\s*[0-9]{2}[A-Z]$) |      # Picks out the unusual format of old Norwich postcodes (including leading space)
                                                 (?:[0-9][ABD-HJLNP-UW-Z]{2}$)        # Picks out standard number-letter-letter end of postcode
                              )'''
     
