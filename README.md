@@ -32,17 +32,23 @@ myString = phjReadTextFromFile()
 myArr = epy.phjBinaryVarsToSquareMatrix()
 ```
 
-5. To select matched or unmatced case-control data (without replacement):
+5. To clean a column of UK postcodes
+
+```python
+myDF = epy.phjCleanUKPostcodeVariable()
+```
+
+6. To select matched or unmatced case-control data (without replacement):
 
 ```python
 myDF = epy.phjSelectCaseControlDataset()
 ```
-6. To calculate odds and odds ratios for case-control studies
+7. To calculate odds and odds ratios for case-control studies
 
 ```python
 myDF = epy.phjOddsRatio()
 ```
-7. To calculate relative risks for cross-sectional or longitudinal studies
+8. To calculate relative risks for cross-sectional or longitudinal studies
 
 ```python
 myDF = epy.phjRelativeRisk()
@@ -221,7 +227,226 @@ Output:
  [0 1 1 1 0]]
 ```
 
-### 5. phjSelectCaseControlDataset()
+
+### 5. phjCleanUKPostcodeVariable()
+
+```python
+
+```
+
+Python function to clean and extract correctly formatted postcode data.
+#### Description
+In many situations, postcodes are added to a database field to record people's addresses. However, when entering postcodes by hand or transcribing from written notes, it is often the case that postcodes are entered incorrectly due to typing errors or because the postcode in question is not fully known. Consequently, a variable containing postcode information will contain many correct postcodes but also many incorrect or partial data points. This function seeks to extract correctly formatted postcodes and to correct some commonly occurring transcription errors in order to produce a correctly-formatted postcode. In addition, in situations where just the outward component (first half) of the postcode is recorded, the function will attempt to salvage just the outward component. Finally, the function extracts the postcode area (first 1 or 2 letters) of the postcode. The cleaned postcode (with no spaces and in 7-character format), the outward and inward components of the postcode and the postcode areas are all stored in new variables that are added to the original dataframe.
+
+The names of the variables that will be created to contain the outward and inward components of the postcode are 'postcodeOutward' and 'postcodeInward'. These names are the names of the groups defined by the regular expression and are not user-definable.
+
+The regex used to determine whether postcodes are correctly formatted is a modified regex based on a regex published at https://en.wikipedia.org/wiki/Talk:Postcodes_in_the_United_Kingdom (accessed 22 Mar 2016). (This page is also stored locally as a PDF entitled, "Talk/Postcodes in the United Kingdom - Wikipedia, the free encyclopedia".)
+  
+#### Function parameters
+The function takes the following parameters:
+
+1. **phjTempDF**
+    Pandas dataframe containing a variable that contains postcode information.
+
+2. **phjOrigPostcodeVarName** (default = 'postcode')
+    The name of the variable that contains postcode information.
+
+3. **phjNewPostcodeVarName** (default = 'postcodeClean')
+    The name of the variable that the function creates that will contain 'cleaned' postcode data.
+
+4. **phjPostcodeFormatCheckVarName** (default = ' postcodeFormatCheck')
+    A binary variable that the function will create that indicates whether the whole postcode (or, if only 2 to 4 characters are entered, the outward component of the postcode) is correctly formatted.
+
+5. **phjPostcode7VarName** (default = 'postcode7')
+    The name of the variable that the function creates that will contain 'cleaned' postcode data in 7-character format. Postcodes can contain 5 to 7 characters. In those postcodes that consist of 5 characters, the outward and inward components will be separated by 2 spaces, in those postcodes that consist of 6 characters, the outward and inward components will be separated by 1 spaces, and in those postcodes that consist of 7 characters there will be no spaces. This format is commonly used in lookup tables that link postcodes to other geographical information.
+
+6. **phjPostcodeAreaVarName** (default = 'postcodeArea')
+    The name of the variable that the function creates that will contain the postcode area (the first 1, 2 or, in very rare cases, 3 letters).
+
+7. **phjDropExisting** (default = False)
+    If set to True, the function will automatically drop any pre-existing columns that have the same name as those columns that need to be created. If set to False, the function will halt.
+
+8. **phjPrintResults** (default = False)
+    If set to True, the function will print information to screen as it proceeds.
+
+#### Exceptions raised
+None
+
+#### Returns
+By default, function returns the original dataframe with added columns containing postcode data.
+
+#### Other notes
+None
+
+#### Example
+
+```python
+# Create a test dataframe that contains a postcode variable and some other empty variables
+# that have the same names as the new variables that will be created. Setting the 'phjDropExisting'
+# variable to true will automatically drop pre-existing variables before running the function.
+# Some of the variables in the test dataframe are not duplicated and are present to show that the
+# function preserves those variables in tact.
+
+import numpy as np
+import pandas as pd
+import re
+
+# Create test dataframe
+myTestPostcodeDF = pd.DataFrame({'postcode': ['NP45DG',
+                                              'CH647TE',
+                                              'CH5 4HE',
+                                              'GIR 0AA',
+                                              'GIR0AB',
+                                              'NOR12A',
+                                              'W1A 1AA',
+                                              'missin',
+                                              'NP4  OGH',
+                                              'P012 OLL',
+                                              'p01s',
+                                              'ABCD',
+                                              '',
+                                              'B1    INJ'],
+                                 'pcdClean': np.nan,
+                                 'pcd7': np.nan,
+                                 'postcodeOutward': np.nan,
+                                 'someOtherCol': np.nan})
+
+# Run function to extract postcode data
+print('\nStart dataframe\n===============\n')
+print(myTestPostcodeDF)
+print('\n')
+
+myTestPostcodeDF = phjCleanUKPostcodeVariable(phjTempDF = myTestPostcodeDF,
+                                              phjOrigPostcodeVarName = 'postcode',
+                                              phjNewPostcodeVarName = 'pcdClean',
+                                              phjPostcodeFormatCheckVarName = 'pcdFormatCheck',
+                                              phjPostcode7VarName = 'pcd7',
+                                              phjPostcodeAreaVarName = 'pcdArea',
+                                              phjDropExisting = True,
+                                              phjPrintResults = True)
+
+print('\nReturned dataframe\n==================\n')
+print(myTestPostcodeDF)
+
+```
+```
+OUTPUT
+======
+
+Start dataframe
+===============
+
+    pcd7  pcdClean   postcode  postcodeOutward  someOtherCol
+0    NaN       NaN     NP45DG              NaN           NaN
+1    NaN       NaN    CH647TE              NaN           NaN
+2    NaN       NaN    CH5 4HE              NaN           NaN
+3    NaN       NaN    GIR 0AA              NaN           NaN
+4    NaN       NaN     GIR0AB              NaN           NaN
+5    NaN       NaN     NOR12A              NaN           NaN
+6    NaN       NaN    W1A 1AA              NaN           NaN
+7    NaN       NaN     missin              NaN           NaN
+8    NaN       NaN   NP4  OGH              NaN           NaN
+9    NaN       NaN   P012 OLL              NaN           NaN
+10   NaN       NaN       p01s              NaN           NaN
+11   NaN       NaN       ABCD              NaN           NaN
+12   NaN       NaN                         NaN           NaN
+13   NaN       NaN  B1    INJ              NaN           NaN
+
+
+Column 'pcdClean' needs to be added to the dataframe but the variable already exists; the pre-existing column has been reset.
+Column 'pcd7' needs to be added to the dataframe but the variable already exists; the pre-existing column has been reset.
+Column 'postcodeOutward' needs to be added to the dataframe but the variable already exists; the pre-existing column has been reset.
+
+Correctly and incorrectly formatted postcodes (BEFORE ERROR CORRECTION):
+True     6
+False    6
+Name: pcdFormatCheck, dtype: int64
+
+
+
+Correctly and incorrectly formatted postcodes (AFTER ERROR CORRECTION):
+True     9
+False    3
+Name: pcdFormatCheck, dtype: int64
+
+
+
+Final working postcode dataframe
+================================
+
+     postcode pcdClean pcdFormatCheck     pcd7 postcodeOutward postcodeInward  \
+0      NP45DG   NP45DG           True  NP4 5DG             NP4            5DG   
+1     CH647TE  CH647TE           True  CH647TE            CH64            7TE   
+2     CH5 4HE   CH54HE           True  CH5 4HE             CH5            4HE   
+3     GIR 0AA   GIR0AA           True  GIR 0AA             GIR            0AA   
+4      GIR0AB   GIR0AB          False      NaN             NaN            NaN   
+5      NOR12A   NOR12A           True  NOR 12A             NOR            12A   
+6     W1A 1AA   W1A1AA           True  W1A 1AA             W1A            1AA   
+7      missin      NaN          False      NaN             NaN            NaN   
+8    NP4  OGH   NP40GH           True  NP4 0GH             NP4            0GH   
+9    P012 OLL  PO120LL           True  PO120LL            PO12            0LL   
+10       p01s     PO15           True      NaN            PO15            NaN   
+11       ABCD     ABCD          False      NaN             NaN            NaN   
+12                 NaN          False      NaN             NaN            NaN   
+13  B1    INJ    B11NJ           True  B1  1NJ              B1            1NJ   
+
+   pcdArea  
+0       NP  
+1       CH  
+2       CH  
+3      GIR  
+4      NaN  
+5      NOR  
+6        W  
+7      NaN  
+8       NP  
+9       PO  
+10      PO  
+11     NaN  
+12     NaN  
+13       B  
+
+
+
+Returned dataframe
+==================
+
+     postcode  someOtherCol pcdClean pcdFormatCheck     pcd7 postcodeOutward  \
+0      NP45DG           NaN   NP45DG           True  NP4 5DG             NP4   
+1     CH647TE           NaN  CH647TE           True  CH647TE            CH64   
+2     CH5 4HE           NaN   CH54HE           True  CH5 4HE             CH5   
+3     GIR 0AA           NaN   GIR0AA           True  GIR 0AA             GIR   
+4      GIR0AB           NaN   GIR0AB          False      NaN             NaN   
+5      NOR12A           NaN   NOR12A           True  NOR 12A             NOR   
+6     W1A 1AA           NaN   W1A1AA           True  W1A 1AA             W1A   
+7      missin           NaN      NaN          False      NaN             NaN   
+8    NP4  OGH           NaN   NP40GH           True  NP4 0GH             NP4   
+9    P012 OLL           NaN  PO120LL           True  PO120LL            PO12   
+10       p01s           NaN     PO15           True      NaN            PO15   
+11       ABCD           NaN     ABCD          False      NaN             NaN   
+12                      NaN      NaN          False      NaN             NaN   
+13  B1    INJ           NaN    B11NJ           True  B1  1NJ              B1   
+
+   postcodeInward pcdArea  
+0             5DG      NP  
+1             7TE      CH  
+2             4HE      CH  
+3             0AA     GIR  
+4             NaN     NaN  
+5             12A     NOR  
+6             1AA       W  
+7             NaN     NaN  
+8             0GH      NP  
+9             0LL      PO  
+10            NaN      PO  
+11            NaN     NaN  
+12            NaN     NaN  
+13            1NJ       B  
+
+```
+
+
+### 6. phjSelectCaseControlDataset()
 
 ```python
 df = epy.phjSelectCaseControlDataset(phjCasesDF,
@@ -399,7 +624,7 @@ MATCHED CONTROLS
 
 ---
 
-### 6. phjOddsRatio()
+### 7. phjOddsRatio()
 
 ```python
 df = phjOddsRatio(phjTempDF,
@@ -476,7 +701,7 @@ d      1  3 0.333 0.444   [0.0295, 6.7031]
 
 ---
 
-### 7. phjRelativeRisk()
+### 8. phjRelativeRisk()
 
 ```python
 df = phjRelativeRisk(phjTempDF,
