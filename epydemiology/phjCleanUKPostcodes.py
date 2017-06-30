@@ -460,7 +460,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
                                phjPostcode7VarName = 'postcode7',
                                phjPostcodeAreaVarName = 'postcodeArea',
                                phjDropExisting = False,
-                               phjPrintResults = True):
+                               phjPrintResults = False):
     
     # Create a working DF containing postcode variable only
     phjTempWorkingDF = phjCreateWorkingPostcodeDF(phjTempDF = phjTempDF,
