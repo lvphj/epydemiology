@@ -231,6 +231,14 @@ Output:
 ### 5. phjCleanUKPostcodeVariable()
 
 ```python
+df = phjCleanUKPostcodeVariable(phjTempDF,
+                                phjOrigPostcodeVarName = 'postcode',
+                                phjNewPostcodeVarName = 'postcodeClean',
+                                phjPostcodeFormatCheckVarName = 'postcodeFormatCheck',
+                                phjPostcode7VarName = 'postcode7',
+                                phjPostcodeAreaVarName = 'postcodeArea',
+                                phjDropExisting = False,
+                                phjPrintResults = False)
 
 ```
 
@@ -246,28 +254,28 @@ The regex used to determine whether postcodes are correctly formatted is a modif
 The function takes the following parameters:
 
 1. **phjTempDF**
-    Pandas dataframe containing a variable that contains postcode information.
+  * Pandas dataframe containing a variable that contains postcode information.
 
 2. **phjOrigPostcodeVarName** (default = 'postcode')
-    The name of the variable that contains postcode information.
+  * The name of the variable that contains postcode information.
 
 3. **phjNewPostcodeVarName** (default = 'postcodeClean')
-    The name of the variable that the function creates that will contain 'cleaned' postcode data.
+  * The name of the variable that the function creates that will contain 'cleaned' postcode data. The postcodes containing in this column will contain no whitespace. Therefore, A1 2BC will be entered as A12BC.
 
 4. **phjPostcodeFormatCheckVarName** (default = ' postcodeFormatCheck')
-    A binary variable that the function will create that indicates whether the whole postcode (or, if only 2 to 4 characters are entered, the outward component of the postcode) is correctly formatted.
+  * A binary variable that the function will create that indicates whether the whole postcode (or, if only 2 to 4 characters are entered, the outward component of the postcode) is correctly formatted.
 
 5. **phjPostcode7VarName** (default = 'postcode7')
-    The name of the variable that the function creates that will contain 'cleaned' postcode data in 7-character format. Postcodes can contain 5 to 7 characters. In those postcodes that consist of 5 characters, the outward and inward components will be separated by 2 spaces, in those postcodes that consist of 6 characters, the outward and inward components will be separated by 1 spaces, and in those postcodes that consist of 7 characters there will be no spaces. This format is commonly used in lookup tables that link postcodes to other geographical information.
+  * The name of the variable that the function creates that will contain 'cleaned' postcode data in 7-character format. Postcodes can contain 5 to 7 characters. In those postcodes that consist of 5 characters, the outward and inward components will be separated by 2 spaces, in those postcodes that consist of 6 characters, the outward and inward components will be separated by 1 spaces, and in those postcodes that consist of 7 characters there will be no spaces. This format is commonly used in lookup tables that link postcodes to other geographical information.
 
 6. **phjPostcodeAreaVarName** (default = 'postcodeArea')
-    The name of the variable that the function creates that will contain the postcode area (the first 1, 2 or, in very rare cases, 3 letters).
+  * The name of the variable that the function creates that will contain the postcode area (the first 1, 2 or, in very rare cases, 3 letters).
 
 7. **phjDropExisting** (default = False)
-    If set to True, the function will automatically drop any pre-existing columns that have the same name as those columns that need to be created. If set to False, the function will halt.
+  * If set to True, the function will automatically drop any pre-existing columns that have the same name as those columns that need to be created. If set to False, the function will halt.
 
 8. **phjPrintResults** (default = False)
-    If set to True, the function will print information to screen as it proceeds.
+  * If set to True, the function will print information to screen as it proceeds.
 
 #### Exceptions raised
 None
