@@ -262,7 +262,7 @@ The function takes the following parameters:
   * The name of the variable that contains postcode information.
 
 3. **phjNewPostcodeVarName** (default = 'postcodeClean')
-  * The name of the variable that the function creates that will contain 'cleaned' postcode data. The postcodes containing in this column will contain no whitespace. Therefore, A1 2BC will be entered as A12BC.
+  * The name of the variable that the function creates that will contain 'cleaned' postcode data. The postcodes stored in this column will contain no whitespace. Therefore, A1 2BC will be entered as A12BC. Also, the 'cleaned' postcode may only be the outward component if that is the only corrected formatted data. If the use wants completed postcodes, use phjPostcode7VarName.
 
 4. **phjPostcodeFormatCheckVarName** (default = ' postcodeFormatCheck')
   * A binary variable that the function will create that indicates whether the whole postcode (or, if only 2 to 4 characters are entered, the outward component of the postcode) is correctly formatted.
