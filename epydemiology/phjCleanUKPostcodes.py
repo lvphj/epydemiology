@@ -40,6 +40,8 @@ else:
 # Define functions to check UK postcodes
 # ======================================
 
+# Creates working dafaframe if postcode variable exists and other variables either don't exist or can be deleted.
+# If not, the function returns None.
 def phjCreateWorkingPostcodeDF(phjTempDF,
                                phjOrigPostcodeVarName,
                                phjNewPostcodeVarName,
@@ -49,7 +51,7 @@ def phjCreateWorkingPostcodeDF(phjTempDF,
                                phjDropExisting = False,
                                phjPrintResults = False):
     
-    # Creates working directory if postcode variable exists and other variables either don't exist or can be deleted.
+    # Creates working dafaframe if postcode variable exists and other variables either don't exist or can be deleted.
 	# If not, the function returns None.
 
     # Check that named postcode variable actually exists...
@@ -106,8 +108,8 @@ def phjUKPostcodeBasicCleanUp(phjTempDF,
     # Empty cells should be replaced with np.nan
     phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].replace('',value=np.nan,regex=False)
     
-    # Strip all non-word characters (including underscore) from the text and convert postcode text to all uppercase
-    phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].replace('''[\W\s]+''',value='',regex=True)
+    # Strip white space from ends, white space from the middle and convert postcode text to all uppercase
+    phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].replace('''[\W_]+''',value='',regex=True)
     phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].str.upper()
     
     # Replace cells containing 'miss' and/or 'missing' and convert to np.nan.
@@ -217,9 +219,9 @@ def phjUKPostcodeFormatCheck(phjTempDF,
 
 
 def phjCorrectPostcodeErrors(x):
-    # Make sure value does not contain white space (this should have already been done
-    # but belt and braces)
-    x = re.sub(r'''[\W\s]+''','',x)
+    # Make sure value does not contain white space or punctuation (this should
+    #  have already been done but belt and braces)
+    x = re.sub(r'''[\W_]+''','',x)
     
     # Convert string to list
     phjStrList = list(x)
@@ -272,12 +274,15 @@ def phjCorrectPostcodeErrors(x):
             phjStrList[1] = phjPostcodeReplacementsDict['num2alpha'].get(phjStrList[1],phjStrList[1])
             phjStrList[2] = phjPostcodeReplacementsDict['alpha2num'].get(phjStrList[2],phjStrList[2])
             phjStrList[3] = phjPostcodeReplacementsDict['alpha2num'].get(phjStrList[3],phjStrList[3])
-            
-    if (len(x)>=2 and len(x)<=4):
+        
+        phjReturnStr = ''.join(phjStrList)
+        
+        
+    elif (len(x)>=2 and len(x)<=4):
         # This could be the outward part of the postcode
         # First character (index=0) should always be a letter; assume this is always entered as a letter.
         if len(x)==2:
-            # If string is 5 characters long then second character (index=1) should be a number
+            # If string is 2 characters long then second character (index=1) should be a number
             phjStrList[1] = phjPostcodeReplacementsDict['alpha2num'].get(phjStrList[1],phjStrList[1])
             
         elif len(x)==3:
@@ -292,9 +297,14 @@ def phjCorrectPostcodeErrors(x):
             phjStrList[1] = phjPostcodeReplacementsDict['num2alpha'].get(phjStrList[1],phjStrList[1])
             phjStrList[2] = phjPostcodeReplacementsDict['alpha2num'].get(phjStrList[2],phjStrList[2])
             phjStrList[3] = phjPostcodeReplacementsDict['alpha2num'].get(phjStrList[3],phjStrList[3])
-
             
-    return ''.join(phjStrList)
+        phjReturnStr = ''.join(phjStrList)
+        
+    else:
+        phjReturnStr = np.nan
+        
+        
+    return phjReturnStr
 
 
 
@@ -364,31 +374,34 @@ def phjSalvagePostcodeOutward(phjTempDF,
                               phjNewPostcodeVarName,
                               phjPostcodeFormatCheckVarName,
                               phjPrintResults):
-
-    # Retrieve list of names of regex groups
-    phjRegexGroupNamesList = phjGetPostcodeRegexGroupNamesList(phjPrintResults = False)
-    phjPostcodeOutwardVarName = phjRegexGroupNamesList[0]
     
     # Create a temporary dataframe containing incorrectly formatted postcodes only.
     # Common errors will be corrected and merged back to the original dataframe.
     phjTempUnformattedDF = phjTempDF.loc[(phjTempDF[phjPostcodeFormatCheckVarName] == False) &
                                          (phjTempDF[phjNewPostcodeVarName].notnull()),[phjNewPostcodeVarName,
-                                                                                       phjPostcodeFormatCheckVarName,
-                                                                                       phjPostcodeOutwardVarName]]
-
-    phjTempUnformattedDF[phjNewPostcodeVarName] = phjTempUnformattedDF[phjNewPostcodeVarName].map(lambda x: phjCorrectPostcodeErrors(x))
+                                                                                       phjPostcodeFormatCheckVarName]]
     
-    # Check if new postcode strings match the regex format
-    # and, if so, set phjPostcodeFormatCheckVarName to True
+    # Correct common errors in postcodes that are still recorded as incorrectly formatted
+    phjTempUnformattedDF[phjNewPostcodeVarName] = phjTempUnformattedDF.loc[phjTempUnformattedDF[phjPostcodeFormatCheckVarName] == False,
+                                                                               phjNewPostcodeVarName].map(lambda x: phjCorrectPostcodeErrors(x))
+
+    # Check if the incorrectly formatted postcode contains a valid outward postcode component at the start.
+    # If so, the phjPostcodeFormatCheckVarName variable will be set to True.
     phjTempUnformattedDF = phjUKPostcodeFormatCheck(phjTempDF = phjTempUnformattedDF,
                                                     phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                     phjPostcodeFormatCheckVarName = phjPostcodeFormatCheckVarName,
                                                     phjPostcodeComponent = 'outward',
                                                     phjPrintResults = False)
+
+    # Update phjPostcodeOutwardVarName with extracted contents of phjNewPostcodeVarName if format
+    # matches with outward regex
+    postcodeOutwardRegex, postcodeInwardRegex = phjUKPostcodeRegexDefinition(phjPrintResults = False)
+    postcodeOutwardRegex = re.compile(postcodeOutwardRegex,flags = re.I|re.X)
     
+    phjPostcodeOutwardDF = phjTempUnformattedDF.loc[phjTempUnformattedDF[phjPostcodeFormatCheckVarName] == True,phjNewPostcodeVarName].str.extract(postcodeOutwardRegex,
+                                                                                                                                                   expand = True)
     
-    # Update phjPostcodeOutwardVarName with contents of phjNewPostcodeVarName if format matches with outward regex
-    phjTempUnformattedDF[phjPostcodeOutwardVarName] = phjTempUnformattedDF.loc[phjTempUnformattedDF[phjPostcodeFormatCheckVarName] == True,phjNewPostcodeVarName]
+    phjTempUnformattedDF = phjTempUnformattedDF.join(phjPostcodeOutwardDF)
                                          
     # Update dataframe with newly corrected columns (phjNewPostcodeVarName and phjPostcodeFormatCheckVarName)
     phjTempDF.update(phjTempUnformattedDF)
@@ -418,7 +431,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
                                phjPostcode7VarName = 'postcode7',
                                phjPostcodeAreaVarName = 'postcodeArea',
                                phjDropExisting = False,
-                               phjPrintResults = False):
+                               phjPrintResults = True):
     
     # Create a working DF containing postcode variable only
     phjTempWorkingDF = phjCreateWorkingPostcodeDF(phjTempDF = phjTempDF,
@@ -450,6 +463,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
         if phjPrintResults == True:
             print("\nCorrectly and incorrectly formatted postcodes (BEFORE ERROR CORRECTION):")
             print(phjTempWorkingDF.loc[phjTempWorkingDF[phjNewPostcodeVarName].notnull(),phjPostcodeFormatCheckVarName].value_counts())
+            print(phjTempWorkingDF)
             print('\n')
 
         # Deal with postcode entries that do not match postcode regex (i.e. not formatted correctly)
@@ -462,6 +476,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
         if phjPrintResults == True:
             print("\nCorrectly and incorrectly formatted postcodes (AFTER ERROR CORRECTION):")
             print(phjTempWorkingDF.loc[phjTempWorkingDF[phjNewPostcodeVarName].notnull(),phjPostcodeFormatCheckVarName].value_counts())
+            print(phjTempWorkingDF)
             print('\n')
 
 
@@ -514,6 +529,19 @@ def phjCleanUKPostcodeVariable(phjTempDF,
                 phjTempDF = phjTempDF.drop(phjCol,axis=1)
                 
         phjTempDF = phjTempDF.join(phjTempWorkingDF)
+        
+        
+        # N.B. The DataFrame.update() function does not update a calling dataframe with new values
+        # if the new values are NaN. Consequently, values in the postcodeClean column would not
+        # be updated to NaN values if the postcode values were incorrectly formatted.
+        # This was reported as a bug but was actually the intended behaviour.
+        # The contents of postcodeClean is therefore re-created as a concatentation of the
+        # outward and inward parts of the postcode.
+        phjOutwardInwardNames = phjGetPostcodeRegexGroupNamesList(phjPrintResults = False)
+        phjScratchDF = phjTempDF[phjOutwardInwardNames].fillna('')
+        phjTempDF[phjNewPostcodeVarName] = phjScratchDF[phjOutwardInwardNames[0]] + phjScratchDF[phjOutwardInwardNames[1]]
+        phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].replace('',np.nan,regex=False)
+        
         
     return phjTempDF
 
