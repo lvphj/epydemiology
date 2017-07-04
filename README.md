@@ -262,21 +262,27 @@ The function takes the following parameters:
   * The name of the variable that contains postcode information.
 
 3. **phjNewPostcodeVarName** (default = 'postcodeClean')
-  * The name of the variable that the function creates that will contain 'cleaned' postcode data. The postcodes stored in this column will contain no whitespace. Therefore, A1 2BC will be entered as A12BC. Also, the 'cleaned' postcode may only be the outward component if that is the only corrected formatted data. If the use wants completed postcodes, use phjPostcode7VarName.
+  * The name of the variable that the function creates that will contain 'cleaned' postcode data. The postcodes stored in this column will contain no whitespace. Therefore, A1 2BC will be entered as A12BC. Also, the 'cleaned' postcode may only be the outward component if that is the only corrected formatted data. If the use wants to view only complete postcodes, use phjPostcode7VarName. Strings where no valid postcode data has been extracted will be stored as missing value string.
 
 4. **phjPostcodeFormatCheckVarName** (default = ' postcodeFormatCheck')
   * A binary variable that the function will create that indicates whether the whole postcode (or, if only 2 to 4 characters are entered, the outward component of the postcode) is correctly formatted.
 
-5. **phjPostcode7VarName** (default = 'postcode7')
+5. **phjMissingValueCode** (default = 'missing')
+  * String used to indicate a missing value. This can not be np.nan because DataFrame.update() function does not undate NaN values.
+  
+6. **phjPostcode7VarName** (default = 'postcode7')
   * The name of the variable that the function creates that will contain 'cleaned' postcode data in 7-character format. Postcodes can contain 5 to 7 characters. In those postcodes that consist of 5 characters, the outward and inward components will be separated by 2 spaces, in those postcodes that consist of 6 characters, the outward and inward components will be separated by 1 spaces, and in those postcodes that consist of 7 characters there will be no spaces. This format is commonly used in lookup tables that link postcodes to other geographical information.
 
-6. **phjPostcodeAreaVarName** (default = 'postcodeArea')
+7. **phjPostcodeAreaVarName** (default = 'postcodeArea')
   * The name of the variable that the function creates that will contain the postcode area (the first 1, 2 or, in very rare cases, 3 letters).
 
-7. **phjDropExisting** (default = False)
+8. **phjSalvageOutwardPostcodeComponent** (default = True)
+  * Indicates whether user wants to attempt to salvage some outward postcode components from postcode strings.
+  
+9. **phjDropExisting** (default = False)
   * If set to True, the function will automatically drop any pre-existing columns that have the same name as those columns that need to be created. If set to False, the function will halt.
 
-8. **phjPrintResults** (default = False)
+10. **phjPrintResults** (default = False)
   * If set to True, the function will print information to screen as it proceeds.
 
 #### Exceptions raised
@@ -306,8 +312,10 @@ myTestPostcodeDF = pd.DataFrame({'postcode': ['NP45DG',
                                               'CH647TE',
                                               'CH5 4HE',
                                               'GIR 0AA',
+                                              'NOT NOWN',
                                               'GIR0AB',
                                               'NOR12A',
+                                              'no idea',
                                               'W1A 1AA',
                                               'missin',
                                               'NP4  OGH',
@@ -315,7 +323,12 @@ myTestPostcodeDF = pd.DataFrame({'postcode': ['NP45DG',
                                               'p01s',
                                               'ABCD',
                                               '',
-                                              'B1    INJ'],
+                                              'ab123cd',
+                                              'un-known',
+                                              'B1    INJ',
+                                              'AB123CD',
+                                              'No idea what the postcode is',
+                                              '    ???NP4-5DG_*#   '],
                                  'pcdClean': np.nan,
                                  'pcd7': np.nan,
                                  'postcodeOutward': np.nan,
@@ -330,8 +343,10 @@ myTestPostcodeDF = phjCleanUKPostcodeVariable(phjTempDF = myTestPostcodeDF,
                                               phjOrigPostcodeVarName = 'postcode',
                                               phjNewPostcodeVarName = 'pcdClean',
                                               phjPostcodeFormatCheckVarName = 'pcdFormatCheck',
+                                              phjMissingValueCode = 'missing',
                                               phjPostcode7VarName = 'pcd7',
                                               phjPostcodeAreaVarName = 'pcdArea',
+                                              phjSalvageOutwardPostcodeComponent = True,
                                               phjDropExisting = True,
                                               phjPrintResults = True)
 
@@ -346,112 +361,127 @@ OUTPUT
 Start dataframe
 ===============
 
-    pcd7  pcdClean   postcode  postcodeOutward  someOtherCol
-0    NaN       NaN     NP45DG              NaN           NaN
-1    NaN       NaN    CH647TE              NaN           NaN
-2    NaN       NaN    CH5 4HE              NaN           NaN
-3    NaN       NaN    GIR 0AA              NaN           NaN
-4    NaN       NaN     GIR0AB              NaN           NaN
-5    NaN       NaN     NOR12A              NaN           NaN
-6    NaN       NaN    W1A 1AA              NaN           NaN
-7    NaN       NaN     missin              NaN           NaN
-8    NaN       NaN   NP4  OGH              NaN           NaN
-9    NaN       NaN   P012 OLL              NaN           NaN
-10   NaN       NaN       p01s              NaN           NaN
-11   NaN       NaN       ABCD              NaN           NaN
-12   NaN       NaN                         NaN           NaN
-13   NaN       NaN  B1    INJ              NaN           NaN
+    pcd7  pcdClean                      postcode  postcodeOutward  \
+0    NaN       NaN                        NP45DG              NaN   
+1    NaN       NaN                       CH647TE              NaN   
+2    NaN       NaN                       CH5 4HE              NaN   
+3    NaN       NaN                       GIR 0AA              NaN   
+4    NaN       NaN                      NOT NOWN              NaN   
+5    NaN       NaN                        GIR0AB              NaN   
+6    NaN       NaN                        NOR12A              NaN   
+7    NaN       NaN                       no idea              NaN   
+8    NaN       NaN                       W1A 1AA              NaN   
+9    NaN       NaN                        missin              NaN   
+10   NaN       NaN                      NP4  OGH              NaN   
+11   NaN       NaN                      P012 OLL              NaN   
+12   NaN       NaN                          p01s              NaN   
+13   NaN       NaN                          ABCD              NaN   
+14   NaN       NaN                                            NaN   
+15   NaN       NaN                       ab123cd              NaN   
+16   NaN       NaN                      un-known              NaN   
+17   NaN       NaN                     B1    INJ              NaN   
+18   NaN       NaN                       AB123CD              NaN   
+19   NaN       NaN  No idea what the postcode is              NaN   
+20   NaN       NaN              ???NP4-5DG_*#                 NaN   
+
+    someOtherCol  
+0            NaN  
+1            NaN  
+2            NaN  
+3            NaN  
+4            NaN  
+5            NaN  
+6            NaN  
+7            NaN  
+8            NaN  
+9            NaN  
+10           NaN  
+11           NaN  
+12           NaN  
+13           NaN  
+14           NaN  
+15           NaN  
+16           NaN  
+17           NaN  
+18           NaN  
+19           NaN  
+20           NaN  
 
 
 Column 'pcdClean' needs to be added to the dataframe but the variable already exists; the pre-existing column has been reset.
 Column 'pcd7' needs to be added to the dataframe but the variable already exists; the pre-existing column has been reset.
 Column 'postcodeOutward' needs to be added to the dataframe but the variable already exists; the pre-existing column has been reset.
-
-Correctly and incorrectly formatted postcodes (BEFORE ERROR CORRECTION):
-True     6
-False    6
-Name: pcdFormatCheck, dtype: int64
-
-
-
-Correctly and incorrectly formatted postcodes (AFTER ERROR CORRECTION):
-True     9
-False    3
-Name: pcdFormatCheck, dtype: int64
-
-
-
-Final working postcode dataframe
-================================
-
-     postcode pcdClean pcdFormatCheck     pcd7 postcodeOutward postcodeInward  \
-0      NP45DG   NP45DG           True  NP4 5DG             NP4            5DG   
-1     CH647TE  CH647TE           True  CH647TE            CH64            7TE   
-2     CH5 4HE   CH54HE           True  CH5 4HE             CH5            4HE   
-3     GIR 0AA   GIR0AA           True  GIR 0AA             GIR            0AA   
-4      GIR0AB   GIR0AB          False      NaN             NaN            NaN   
-5      NOR12A   NOR12A           True  NOR 12A             NOR            12A   
-6     W1A 1AA   W1A1AA           True  W1A 1AA             W1A            1AA   
-7      missin      NaN          False      NaN             NaN            NaN   
-8    NP4  OGH   NP40GH           True  NP4 0GH             NP4            0GH   
-9    P012 OLL  PO120LL           True  PO120LL            PO12            0LL   
-10       p01s     PO15           True      NaN            PO15            NaN   
-11       ABCD     ABCD          False      NaN             NaN            NaN   
-12                 NaN          False      NaN             NaN            NaN   
-13  B1    INJ    B11NJ           True  B1  1NJ              B1            1NJ   
-
-   pcdArea  
-0       NP  
-1       CH  
-2       CH  
-3      GIR  
-4      NaN  
-5      NOR  
-6        W  
-7      NaN  
-8       NP  
-9       PO  
-10      PO  
-11     NaN  
-12     NaN  
-13       B  
-
-
+                        postcode pcdClean pcdFormatCheck     pcd7
+0                         NP45DG   NP45DG           True  NP4 5DG
+1                        CH647TE  CH647TE           True  CH647TE
+2                        CH5 4HE   CH54HE           True  CH5 4HE
+3                        GIR 0AA   GIR0AA           True  GIR 0AA
+4                       NOT NOWN  missing          False      NaN
+5                         GIR0AB   GIR0AB          False      NaN
+6                         NOR12A   NOR12A           True  NOR 12A
+7                        no idea   NO1DEA          False      NaN
+8                        W1A 1AA   W1A1AA           True  W1A 1AA
+9                         missin  missing          False      NaN
+10                      NP4  OGH   NP40GH           True  NP4 0GH
+11                      P012 OLL  PO120LL           True  PO120LL
+12                          p01s     PO15          False      NaN
+13                          ABCD     ABCD          False      NaN
+14                                missing          False      NaN
+15                       ab123cd  AB123CD          False      NaN
+16                      un-known  missing          False      NaN
+17                     B1    INJ    B11NJ           True  B1  1NJ
+18                       AB123CD  AB123CD          False      NaN
+19  No idea what the postcode is  missing          False      NaN
+20              ???NP4-5DG_*#      NP45DG           True  NP4 5DG
 
 Returned dataframe
 ==================
 
-     postcode  someOtherCol pcdClean pcdFormatCheck     pcd7 postcodeOutward  \
-0      NP45DG           NaN   NP45DG           True  NP4 5DG             NP4   
-1     CH647TE           NaN  CH647TE           True  CH647TE            CH64   
-2     CH5 4HE           NaN   CH54HE           True  CH5 4HE             CH5   
-3     GIR 0AA           NaN   GIR0AA           True  GIR 0AA             GIR   
-4      GIR0AB           NaN   GIR0AB          False      NaN             NaN   
-5      NOR12A           NaN   NOR12A           True  NOR 12A             NOR   
-6     W1A 1AA           NaN   W1A1AA           True  W1A 1AA             W1A   
-7      missin           NaN      NaN          False      NaN             NaN   
-8    NP4  OGH           NaN   NP40GH           True  NP4 0GH             NP4   
-9    P012 OLL           NaN  PO120LL           True  PO120LL            PO12   
-10       p01s           NaN     PO15           True      NaN            PO15   
-11       ABCD           NaN     ABCD          False      NaN             NaN   
-12                      NaN      NaN          False      NaN             NaN   
-13  B1    INJ           NaN    B11NJ           True  B1  1NJ              B1   
+                        postcode  someOtherCol pcdClean pcdFormatCheck  \
+0                         NP45DG           NaN   NP45DG           True   
+1                        CH647TE           NaN  CH647TE           True   
+2                        CH5 4HE           NaN   CH54HE           True   
+3                        GIR 0AA           NaN   GIR0AA           True   
+4                       NOT NOWN           NaN  missing          False   
+5                         GIR0AB           NaN  missing          False   
+6                         NOR12A           NaN   NOR12A           True   
+7                        no idea           NaN  missing          False   
+8                        W1A 1AA           NaN   W1A1AA           True   
+9                         missin           NaN  missing          False   
+10                      NP4  OGH           NaN   NP40GH           True   
+11                      P012 OLL           NaN  PO120LL           True   
+12                          p01s           NaN     PO15           True   
+13                          ABCD           NaN  missing          False   
+14                                         NaN  missing          False   
+15                       ab123cd           NaN     AB12           True   
+16                      un-known           NaN  missing          False   
+17                     B1    INJ           NaN    B11NJ           True   
+18                       AB123CD           NaN     AB12           True   
+19  No idea what the postcode is           NaN  missing          False   
+20              ???NP4-5DG_*#              NaN   NP45DG           True   
 
-   postcodeInward pcdArea  
-0             5DG      NP  
-1             7TE      CH  
-2             4HE      CH  
-3             0AA     GIR  
-4             NaN     NaN  
-5             12A     NOR  
-6             1AA       W  
-7             NaN     NaN  
-8             0GH      NP  
-9             0LL      PO  
-10            NaN      PO  
-11            NaN     NaN  
-12            NaN     NaN  
-13            1NJ       B  
+       pcd7 postcodeOutward postcodeInward pcdArea  
+0   NP4 5DG             NP4            5DG      NP  
+1   CH647TE            CH64            7TE      CH  
+2   CH5 4HE             CH5            4HE      CH  
+3   GIR 0AA             GIR            0AA     GIR  
+4       NaN             NaN            NaN     NaN  
+5       NaN             NaN            NaN     NaN  
+6   NOR 12A             NOR            12A     NOR  
+7       NaN             NaN            NaN     NaN  
+8   W1A 1AA             W1A            1AA       W  
+9       NaN             NaN            NaN     NaN  
+10  NP4 0GH             NP4            0GH      NP  
+11  PO120LL            PO12            0LL      PO  
+12      NaN            PO15            NaN      PO  
+13      NaN             NaN            NaN     NaN  
+14      NaN             NaN            NaN     NaN  
+15      NaN            AB12            NaN      AB  
+16      NaN             NaN            NaN     NaN  
+17  B1  1NJ              B1            1NJ       B  
+18      NaN            AB12            NaN      AB  
+19      NaN             NaN            NaN     NaN  
+20  NP4 5DG             NP4            5DG      NP
 
 ```
 
