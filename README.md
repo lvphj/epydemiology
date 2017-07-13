@@ -235,10 +235,12 @@ df = phjCleanUKPostcodeVariable(phjTempDF,
                                 phjOrigPostcodeVarName = 'postcode',
                                 phjNewPostcodeVarName = 'postcodeClean',
                                 phjPostcodeFormatCheckVarName = 'postcodeFormatCheck',
+                                phjMissingValueCode = 'missing',
                                 phjPostcode7VarName = 'postcode7',
                                 phjPostcodeAreaVarName = 'postcodeArea',
+                                phjSalvageOutwardPostcodeComponent = True,
                                 phjDropExisting = False,
-                                phjPrintResults = False)
+                                phjPrintResults = True)
 
 ```
 
@@ -246,12 +248,56 @@ Python function to clean and extract correctly formatted postcode data.
 #### Description
 In many situations, postcodes are added to a database field to record people's addresses. However, when entering postcodes by hand or transcribing from written notes, it is often the case that postcodes are entered incorrectly due to typing errors or because the postcode in question is not fully known. Consequently, a variable containing postcode information will contain many correct postcodes but also many incorrect or partial data points. This function seeks to extract correctly formatted postcodes and to correct some commonly occurring transcription errors in order to produce a correctly-formatted postcode. In addition, in situations where just the outward component (first half) of the postcode is recorded, the function will attempt to salvage just the outward component. Finally, the function extracts the postcode area (first 1 or 2 letters) of the postcode. The cleaned postcode (with no spaces and in 7-character format), the outward and inward components of the postcode and the postcode areas are all stored in new variables that are added to the original dataframe.
 
-The names of the variables that will be created to contain the outward and inward components of the postcode are 'postcodeOutward' and 'postcodeInward'. These names are the names of the groups defined by the regular expression and are not user-definable.
+The regex used to determine whether postcodes are correctly formatted is a modified version of a regex published at https://en.wikipedia.org/wiki/Talk:Postcodes_in_the_United_Kingdom (accessed 22 Mar 2016). (This page is also stored locally as a PDF entitled, "Talk/Postcodes in the United Kingdom - Wikipedia, the free encyclopedia".)
 
-The regex used to determine whether postcodes are correctly formatted is a modified regex based on a regex published at https://en.wikipedia.org/wiki/Talk:Postcodes_in_the_United_Kingdom (accessed 22 Mar 2016). (This page is also stored locally as a PDF entitled, "Talk/Postcodes in the United Kingdom - Wikipedia, the free encyclopedia".)
-
-NOTE: This function does not check entered postcodes against a database of actual postcodes. In merely checks that the *format* of the entered postcode is correct. So, for example, AB12 3CD is a correctly formatted postcode but it may or may not actually exist.
+NOTE: This function does not check entered postcodes against a database of actual postcodes. In merely checks that the *format* of the entered postcode is correct. So, for example, AB12 5DG is a correctly formatted postcode but it may or may not actually exist.
   
+The function takes, as two of its arguments, a Pandas dataframe containing a column of postcode data, and the name of that postcode column. It returns the same dataframe with some additional, postcode-related columns. The additional columns returned are:
+
+i. 'postcodeClean' (column name is user-defined through phjNewPostcodeVarName argument)
+
+This variable will contain the correctly formatted components of the postcode, either the whole postcode or the outward component (first half of postcode). Postcodes that are incorrectly formatted or have been entered as missing values will contain the missing value code (e.g. 'missing').
+
+ii. 'postcodeFormatCheck' (column name is user-defined through phjPostcodeFormatCheckVarName argument)
+
+This is a binary variable that contains True if a correctly formatted postcode component can be extracted, either the whole postcode or the outward component only. Otherwise, it contains False.
+
+iii. 'postcode7' (column name is user-defined through the phjPostcode7VarName argument)
+
+This variable contains correctly formatted complete postcodes in 7-character format. For postcodes that contain 5 letters, the outward and inward components will be separated by 2 spaces; for postcodes that contain 6 letters, the outward and inward components will be separated by 1 space; and postcodes that contain 7 letters will contain no spaces. This format of postcodes is often used in postcode lookup tables.
+
+v. 'postcodeOutward' (defined as a group name in the regular expression and, therefore, not user-definable)
+
+This variable contains the outward component of the postcode (first half of postcode). It is possible that this variable may contain a correctly-formatted postcode string (2 to 4 characters) whilst the variable containing the inward postcode string contains the missing vaue code. 
+
+vi. 'postcodeInward' (defined as a group name in the regular expression and, therefore, not user-definable)
+
+This variable contains the inward component of the postcode (second half of postcode). It is possible that this variable may contain a missing value whilst the postcodeOutward variable contains a correctly-formatted postcode string (2 to 4 characters).
+
+vii. 'phjPostcodeArea' (column name is user-defined through the phjPostcodeAreaVarName argument)
+
+This variable contains the postcode area (first one or two letters) taken from correctly formatted outward postcode components.
+
+
+The function proceeds as follows:
+
+a. Postcodes data is cleaned by removing all spaces and punctuation marks and converting all letters to uppercase. Missing values and strings that cannot possibly be a postcode (e.g. all numeric data) are converted to the missing value code. The cleaned strings are stored temporarily in the postcodeClean variable.
+
+b. Correctly formatted postcodes (in postcodeClean column) are identified using the regular expression and the postcodeFormatCheck is set to True. Outward and inward components are extracted and stored in the relevant columns.
+
+c. Postcodes that are incorrectly formatted undergo an error-correction step where common typos and mis-transcriptions are corrected. After this process, the format of the corrected postcode is checked again using the regex and the postcodeFormatCheck variable set to True if necessary. Outward and inward components are extracted and stored in the relevant columns.
+
+d. If the phjSalvageOutwardPostcodeComponent arugment is set to True (default), the function attempts to salvage just the outward postcode component. The postcode string in the postcodeClean variable are tested using the outward component of the regex to determine if the first 2 to 4 characters represent a correctly formatted outward component of a postcode. If so, postcodeFormatCheck is set to True and the partial string is extracted and stored in the postcodeOutward column.
+
+e. Common typos and mis-transcriptions are corrected once again and the string tested against the regex to determine if the first 2 to 4 characters represent a correctly formatted outward component of a postcode. If so, postcodeFormatCheck is set to True and the partial string is extracted and stored in the postcodeOutward column.
+
+f. For any postcode strings that have not been identified as a complete or partial match to the postcode regex, the postcodeClean variable is set to the missing value code.
+
+g. The postcode area is extracted from the outwardPostcode variable and stored in the postcodeArea variable.
+
+h. The function returns the dataframe containing the additional columns.
+
+
 #### Function parameters
 The function takes the following parameters:
 
