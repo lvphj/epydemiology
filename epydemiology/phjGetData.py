@@ -168,8 +168,10 @@ def phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = None,
                 phjTempDestinations = phjTempCellRange.destinations
                 
                 for phjTempWorksheetName,phjTempCellRangeName in phjTempDestinations:
-                    print('Sheet = ',phjTempWorksheetName)
-                    print('Range = ',phjTempCellRangeName)
+                    if phjPrintResults:
+                        print('Worksheet name: ',phjTempWorksheetName)
+                        print('Cell range name: ',phjTempCellRangeName)
+                        print('\n')
                 
                 phjTempSheet = phjTempWorkbook[phjTempWorksheetName]
                 phjTempRange = phjTempSheet[phjTempCellRangeName]
