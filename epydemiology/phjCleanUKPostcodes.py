@@ -48,14 +48,12 @@ else:
     import epydemiology as epy
 
     
+# Checking that pyxdameraulevenshtein package is installed does not work using the
+# above method because attribute .DistributionNotFound is not present.
 try:
-    pkg_resources.get_distribution('pyxdameraulevenshtein')
-except pkg_resources.DistrbutionNotFound:
-    pyxdameraulevenshteinPresent = False
-    print("Error: pyxdameraulevenshtein package not available.")
-else:
-    pyxdameraulevenshteinPresent = True
-    import pyxdameraulevenshtein as pyxdl
+    import pyxdameraulevenshtein'
+except ImportError:
+    print("Error: pyxdameraulevenshtein package not installed. Some features may not be available.")
 
 
 
