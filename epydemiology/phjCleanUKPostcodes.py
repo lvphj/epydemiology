@@ -61,21 +61,21 @@ except ImportError:
 # Define functions to check UK postcodes
 # ======================================
 
-def phjCleanUKPostcode(phjTempDF,
-                       phjRealPostcodeSer = None,
-                       phjOrigPostcodeVarName = 'postcode',
-                       phjNewPostcodeVarName = 'postcodeClean',
-                       phjNewPostcodeStrLenVarName = 'postcodeCleanStrLen',
-                       phjPostcodeCheckVarName = 'postcodeCheck',
-                       phjMissingValueCode = 'missing',
-                       phjMinDamerauLevenshteinDistanceVarName = 'minDamLevDist',
-                       phjBestAlternativesVarName = 'bestAlternatives',
-                       phjPostcode7VarName = 'postcode7',
-                       phjPostcodeAreaVarName = 'postcodeArea',
-                       phjSalvageOutwardPostcodeComponent = True,
-                       phjCheckByOption = 'format',
-                       phjDropExisting = False,
-                       phjPrintResults = True):
+def phjCleanUKPostcodeVariable(phjTempDF,
+                               phjRealPostcodeSer = None,
+                               phjOrigPostcodeVarName = 'postcode',
+                               phjNewPostcodeVarName = 'postcodeClean',
+                               phjNewPostcodeStrLenVarName = 'postcodeCleanStrLen',
+                               phjPostcodeCheckVarName = 'postcodeCheck',
+                               phjMissingValueCode = 'missing',
+                               phjMinDamerauLevenshteinDistanceVarName = 'minDamLevDist',
+                               phjBestAlternativesVarName = 'bestAlternatives',
+                               phjPostcode7VarName = 'postcode7',
+                               phjPostcodeAreaVarName = 'postcodeArea',
+                               phjSalvageOutwardPostcodeComponent = True,
+                               phjCheckByOption = 'format',
+                               phjDropExisting = False,
+                               phjPrintResults = True):
     
     
     if phjMissingValueCode is None:
