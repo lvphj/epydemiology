@@ -105,14 +105,14 @@ def phjCalculateBinomialProportions(phjTempDF,
         phjReliabilityCoefficient = norm.ppf(1 - ((1 - phjConfidenceIntervalLevel)/2))
         
         # Calculate confidence interval
-        phjCIColumnTitle = str(int(phjConfidenceIntervalLevel *100)) + 'ci'
-        phjPropDF[phjCIColumnTitle] = phjReliabilityCoefficient * phjPropDF['stderr']
+        phjCIColumnName = str(int(phjConfidenceIntervalLevel *100)) + 'ci'
+        phjPropDF[phjCIColumnName] = phjReliabilityCoefficient * phjPropDF['stderr']
         
         # Calculate uppper and lower CI limits
-        phjPropDF['lowCILimit'] = phjPropDF['proportion'] - phjPropDF[phjCIColumnTitle]
-        phjPropDF['uppCILimit'] = phjPropDF['proportion'] + phjPropDF[phjCIColumnTitle]
-
-
+        phjPropDF['lowCILimit'] = phjPropDF['proportion'] - phjPropDF[phjCIColumnName]
+        phjPropDF['uppCILimit'] = phjPropDF['proportion'] + phjPropDF[phjCIColumnName]
+        
+        
     else:
         phjPropDF['stderr'] = np.nan
         
@@ -126,6 +126,7 @@ def phjCalculateBinomialProportions(phjTempDF,
         phjPlotProportions(phjTempDF = phjPropDF,
                            phjGroupVarName = phjGroupVarName,
                            phjGroupsToPlotList = 'all',
+                           phjCIColumnName = phjCIColumnName,
                            phjGraphTitle = phjGraphTitle)
     
     
@@ -155,13 +156,8 @@ def phjCountSuccesses(x,
 def phjPlotProportions(phjTempDF,
                        phjGroupVarName = None,
                        phjGroupsToPlotList = None,
+                       phjCIColumnName = None,
                        phjGraphTitle = None):
-    
-    print(phjTempDF)
-    phjErrors = phjTempDF[['var','95ci']]
-    phjErrors = phjErrors.set_index('var')
-    print('Errors')
-    print(phjErrors)
     
     # Plot graphs
     # ===========
@@ -173,14 +169,14 @@ def phjPlotProportions(phjTempDF,
                            kind = 'bar',
                            title = 'Proportions',
                            legend = False,
-                           yerr = phjErrors)
+                           yerr = phjCIColumnName)
         else:
             phjTempDF.plot(x = 'var',
                            y = 'proportion',
                            kind = 'bar',
                            title = phjGraphTitle,
                            legend = False,
-                           yerr = phjErrors)
+                           yerr = phjCIColumnName)
     
     else:
         if phjGroupsToPlotList == 'all':
@@ -193,13 +189,15 @@ def phjPlotProportions(phjTempDF,
                                                                           y = 'proportion',
                                                                           kind = 'bar',
                                                                           title = 'Group ' + i,
-                                                                          legend = False)
+                                                                          legend = False,
+                                                                          yerr = phjCIColumnName)
                 else:
                     phjTempDF.loc[phjTempDF[phjGroupVarName] == i,:].plot(x = 'var',
                                                                           y = 'proportion',
                                                                           kind = 'bar',
                                                                           title = phjGraphTitle,
-                                                                          legend = False)
+                                                                          legend = False,
+                                                                          yerr = phjCIColumnName)
 
             plt.show()
 
