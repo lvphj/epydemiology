@@ -100,12 +100,12 @@ def phjCalculateBinomialProportions(phjTempDF,
     if phjSortProportions != False:
         if phjSortProportions == 'asc':
             phjPropDF = phjPropDF.sort_values(by = 'proportion',
-                                              axis = 0
+                                              axis = 0,
                                               ascending = True)
                                               
         elif phjSortProportions == 'desc':
             phjPropDF = phjPropDF.sort_values(by = 'proportion',
-                                              axis = 0
+                                              axis = 0,
                                               ascending = False)
             
         else:
