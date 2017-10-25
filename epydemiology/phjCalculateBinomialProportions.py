@@ -73,6 +73,7 @@ def phjCalculateBinomialProportions(phjTempDF,
                                     phjConfidenceIntervalLevel = 0.95,
                                     phjPlotResults = True,
                                     phjGroupsToPlotList = 'all',
+                                    phjSortProportions = False,
                                     phjGraphTitle = None,
                                     phjPrintResults = False):
     
@@ -96,6 +97,20 @@ def phjCalculateBinomialProportions(phjTempDF,
     
     phjPropDF['proportion'] = phjPropDF['success'] / phjPropDF['count']
     
+    if phjSortProportions != False:
+        if phjSortProportions == 'asc':
+            phjPropDF = phjPropDF.sort_values(by = 'proportion',
+                                              axis = 0
+                                              ascending = True)
+                                              
+        elif phjSortProportions == 'desc':
+            phjPropDF = phjPropDF.sort_values(by = 'proportion',
+                                              axis = 0
+                                              ascending = False)
+            
+        else:
+            print('Option for sorting does not exist.')
+            
     
     if phjConfidenceIntervalType == 'normal':
         # Calculate standard error
