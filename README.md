@@ -790,8 +790,27 @@ Binomial data structure                                   Multinomial data struc
                                                           | 25 |   np.nan  |   terrier |
                                                           | 26 |   np.nan  |   spaniel |
                                                           ------------------------------
-                                
-                            
+
+In both datasets, missing values can be entered either as np.nan or as a missing value string such as 'missing' which is then defined when the function is called.
+
+These example datasets can be produced using the following Python code
+```
+```python
+import numpy as np
+import pandas as pd
+
+binomDataDF = pd.DataFrame({'id':[1,2,3,4,5,6,7,8,9,10],
+                            'group':['case','case','control','case','control','control','case','case','control','case'],
+                            'A':['yes','yes','no','no','no','no','no','yes','missing','yes'],
+                            'B':['no',np.nan,'missing','yes','yes','yes','yes','no','no','no'],
+                            'C':['yes','yes','yes',np.nan,'no','yes','yes','yes','no','no']})
+
+multinomDataDF = pd.DataFrame({'id':[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26],
+                               'group':['case','case','case','control','control','case','case','case','control','control','control','control','case','case','case','control','control','control','control','case','case','case','case','case',np.nan,np.nan],
+                               'category':[np.nan,'spaniel','missing','terrier','collie','labrador','labrador','collie','spaniel','spaniel','labrador','collie','terrier','terrier','terrier','collie','labrador','labrador','labrador','spaniel','spaniel','collie','collie','collie','terrier','spaniel']})
+```
+```
+The output summary tables in each case would be very similar.                       
 ```
 
 
