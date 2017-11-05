@@ -43,12 +43,23 @@ myDF = epy.phjCleanUKPostcodeVariable()
 ```python
 myDF = epy.phjSelectCaseControlDataset()
 ```
-7. To calculate odds and odds ratios for case-control studies for data stored in Pandas dataframe
+7. To calculate and plot a series of binomial proportions
+
+```python
+myDF = epy.phjCalculateBinomialProportions()
+```
+8. To calculate and plot multinomial proportions
+
+```python
+myDF = epy.phjCalculateMultinomialProportions()
+```
+
+9. To calculate odds and odds ratios for case-control studies for data stored in Pandas dataframe
 
 ```python
 myDF = epy.phjOddsRatio()
 ```
-8. To calculate relative risks for cross-sectional or longitudinal studies for data stored in Pandas dataframe
+10. To calculate relative risks for cross-sectional or longitudinal studies for data stored in Pandas dataframe
 
 ```python
 myDF = epy.phjRelativeRisk()
@@ -231,16 +242,21 @@ Output:
 ### 5. phjCleanUKPostcodeVariable()
 
 ```python
-df = phjCleanUKPostcodeVariable(phjTempDF,
+df = phjCleanUKPostcodeVariable(phjCleanUKPostcodeVariable(phjTempDF,
+                                phjRealPostcodeSer = None,
                                 phjOrigPostcodeVarName = 'postcode',
                                 phjNewPostcodeVarName = 'postcodeClean',
-                                phjPostcodeFormatCheckVarName = 'postcodeFormatCheck',
+                                phjNewPostcodeStrLenVarName = 'postcodeCleanStrLen',
+                                phjPostcodeCheckVarName = 'postcodeCheck',
                                 phjMissingValueCode = 'missing',
+                                phjMinDamerauLevenshteinDistanceVarName = 'minDamLevDist',
+                                phjBestAlternativesVarName = 'bestAlternatives',
                                 phjPostcode7VarName = 'postcode7',
                                 phjPostcodeAreaVarName = 'postcodeArea',
                                 phjSalvageOutwardPostcodeComponent = True,
+                                phjCheckByOption = 'format',
                                 phjDropExisting = False,
-                                phjPrintResults = True)
+                                phjPrintResults = True))
 
 ```
 
@@ -248,10 +264,10 @@ Python function to clean and extract correctly formatted postcode data.
 #### Description
 In many situations, postcodes are added to a database field to record people's addresses. However, when entering postcodes by hand or transcribing from written notes, it is often the case that postcodes are entered incorrectly due to typing errors or because the postcode in question is not fully known. Consequently, a variable containing postcode information will contain many correct postcodes but also many incorrect or partial data points. This function seeks to extract correctly formatted postcodes and to correct some commonly occurring transcription errors in order to produce a correctly-formatted postcode. In addition, in situations where just the outward component (first half) of the postcode is recorded, the function will attempt to salvage just the outward component. Finally, the function extracts the postcode area (first 1 or 2 letters) of the postcode. The cleaned postcode (with no spaces and in 7-character format), the outward and inward components of the postcode and the postcode areas are all stored in new variables that are added to the original dataframe.
 
+This function uses one of two methods to extract postcode information: i) checking the postcode is correctly 'formatted' using a regex; ii) comparing the postcode to a database of all known postcodes and, if the postcode does not exist, determining the most likely alternatives based on Damerau-Levenshtein distance and on the physical position of inserted or transposed characters on the keyboard.
+
 The regex used to determine whether postcodes are correctly formatted is a modified version of a regex published at https://en.wikipedia.org/wiki/Talk:Postcodes_in_the_United_Kingdom (accessed 22 Mar 2016). (This page is also stored locally as a PDF entitled, "Talk/Postcodes in the United Kingdom - Wikipedia, the free encyclopedia".)
 
-NOTE: This function does not check entered postcodes against a database of actual postcodes. In merely checks that the *format* of the entered postcode is correct. So, for example, AB12 5DG is a correctly formatted postcode but it may or may not actually exist.
-  
 The function takes, as two of its arguments, a Pandas dataframe containing a column of postcode data, and the name of that postcode column. It returns the same dataframe with some additional, postcode-related columns. The additional columns returned are:
 
 i. 'postcodeClean' (column name is user-defined through phjNewPostcodeVarName argument)
@@ -709,8 +725,246 @@ MATCHED CONTROLS
 ```
 
 ---
+### 7. phjCalculateBinomialProportions()
+```python
+df = phjCalculateBinomialProportions(phjTempDF,
+                                     phjColumnsList = None,
+                                     phjSuccess = 'yes',
+                                     phjGroupVarName = None,
+                                     phjMissingValue = 'missing',
+                                     phjBinomialConfIntMethod = 'normal',
+                                     phjAlpha = 0.05,
+                                     phjPlotProportions = True,
+                                     phjGroupsToPlotList = 'all',
+                                     phjSortProportions = False,
+                                     phjGraphTitle = None,
+                                     phjPrintResults = False)
+```
+### 8. phjCalculateMultinomialProportions()
+```python
+df = phjCalculateMultinomialProportions(phjTempDF,
+                                        phjCategoryVarName = None,
+                                        phjCategoriesToPlotList = 'all',
+                                        phjGroupVarName = None,
+                                        phjMissingValue = 'missing',
+                                        phjMultinomialConfIntMethod = 'goodman',
+                                        phjAlpha = 0.05,
+                                        phjPlotRelFreq = True,
+                                        phjGroupsToPlotList = 'all',
+                                        phjGraphTitle = None,
+                                        phjPrintResults = False)
+```
 
-### 7. phjOddsRatio()
+#### Description
+
+The above two functions – ``` phjCalculateBinomialProportions() and phjCalculateMultinomialProportions() ``` – are closely related and will be discussed and described together.
+
+The functions can be used to rapidly summarise and visualise two common-encountered (at least, in my research) types of the data. The first summarises data which consists of rows of data (representing individuals) and a series of binomial (dummy-esque) variables indicating whether a characteristic is present or absent (see below). The categories are not necessarily mutually exclusive and each variable is considered as an individual characteristic. The confidence intervals for each category are calculated as individual binomial intervals (using StatsModels functions).
+
+The second data structure consists of rows of data (representing individuals) and a single variable which contains numerous categories. In this case, all the categories are mutually exclusive. The proportions (or relative frequencies) are calculated for each category level and the confidence intervals are calculated as multinomial intervals (using StatsModels functions).
+
+The series of binomial data might take the form shown on the left whilst the multinomial dataset might take the form shown on the right below:
+
+```
+Binomial data structure                                   Multinomial data structure
+------------------------------------------------          ------------------------------
+| id |    group  |       A |       B |       C |          | id |    group  |  category |
+|----|-----------|---------|---------|---------|          |----|-----------|-----------|
+|  1 |     case  |     yes |      no |     yes |          |  1 |     case  |    np.nan |
+|  2 |     case  |     yes |  np.nan |     yes |          |  2 |     case  |   spaniel |
+|  3 |  control  |      no | missing |     yes |          |  3 |     case  |   missing |
+|  4 |     case  |      no |     yes |  np.nan |          |  4 |  control  |   terrier |
+|  5 |  control  |      no |     yes |      no |          |  5 |  control  |    collie |
+|  6 |  control  |      no |     yes |     yes |          |  6 |     case  |  labrador |
+|  7 |     case  |      no |     yes |     yes |          |  7 |     case  |  labrador |
+|  8 |     case  |     yes |      no |     yes |          |  8 |     case  |    collie |
+|  9 |  control  | missing |      no |      no |          |  9 |  control  |   spaniel |
+| 10 |     case  |     yes |      no |      no |          | 10 |  control  |   spaniel |
+------------------------------------------------          | 11 |  control  |  labrador |
+                                                          | 12 |  control  |    collie |
+                                                          | 13 |     case  |   terrier |
+                                                          | 14 |     case  |   terrier |
+                                                          | 15 |     case  |   terrier |
+                                                          | 16 |  control  |    collie |
+                                                          | 17 |  control  |  labrador |
+                                                          | 18 |  control  |  labrador |
+                                                          | 19 |  control  |  labrador |
+                                                          | 20 |     case  |   spaniel |
+                                                          | 21 |     case  |   spaniel |
+                                                          | 22 |     case  |    collie |
+                                                          | 23 |     case  |    collie |
+                                                          | 24 |     case  |    collie |
+                                                          | 25 |   np.nan  |   terrier |
+                                                          | 26 |   np.nan  |   spaniel |
+                                                          ------------------------------
+
+```
+
+In both datasets, missing values can be entered either as np.nan or as a missing value string such as 'missing' which is then defined when the function is called.
+
+These example datasets can be produced using the following Python code:
+
+```python
+import numpy as np
+import pandas as pd
+
+binomDataDF = pd.DataFrame({'id':[1,2,3,4,5,6,7,8,9,10],
+                            'group':['case','case','control','case','control','control','case','case','control','case'],
+                            'A':['yes','yes','no','no','no','no','no','yes','missing','yes'],
+                            'B':['no',np.nan,'missing','yes','yes','yes','yes','no','no','no'],
+                            'C':['yes','yes','yes',np.nan,'no','yes','yes','yes','no','no']})
+
+multinomDataDF = pd.DataFrame({'id':[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26],
+                               'group':['case','case','case','control','control','case','case','case','control','control','control','control','case','case','case','control','control','control','control','case','case','case','case','case',np.nan,np.nan],
+                               'category':[np.nan,'spaniel','missing','terrier','collie','labrador','labrador','collie','spaniel','spaniel','labrador','collie','terrier','terrier','terrier','collie','labrador','labrador','labrador','spaniel','spaniel','collie','collie','collie','terrier','spaniel']})
+```
+
+The output summary tables in each case would be very similar:
+```
+    Summary table for multinomial proportions
+    
+    |---------|---------------|---------------|---------------|---------------|
+    |         |    case_count | control_count |     case_prop |  control_prop |
+    |---------|---------------|---------------|---------------|---------------|
+    | spaniel |               |               |               |               |
+    |---------|---------------|---------------|---------------|---------------|
+    | terrier |               |               |               |               |
+    |---------|---------------|---------------|------ --------|---------------|
+    | labrador|               |               |               |               |
+    |---------|---------------|---------------|---------------|---------------|
+    | collie  |               |               |               |               |
+    |---------|---------------|---------------|---------------|---------------|
+    
+    * The 'count' columns give the absolute counts.
+      The 'prop' columns give the proportion of the total.
+    
+    
+    Summary table for binomial proportions
+    
+    |-----|---------------|-----------------|---------------|---------------|---------------|---------------|
+    |     |  case_success | control_success |    case_total | control_total |     case_prop |  control_prop |
+    |-----|---------------|-----------------|---------------|---------------|---------------|---------------|
+    |   A |               |                 |               |               |               |               |
+    |-----|---------------|-----------------|---------------|---------------|---------------|---------------|
+    |   B |               |                 |               |               |               |               |
+    |-----|---------------|-----------------|------ --------|---------------|---------------|---------------|
+    |   C |               |                 |               |               |               |               |
+    |-----|---------------|-----------------|---------------|---------------|---------------|---------------|
+    
+    * The 'success' columns give the number of 'successes' in each variable.
+      The 'total' columns give the total number of rows (missing values excluded) for each variable.
+      The 'prop' columns give the proportion of successes.
+```
+
+The confidence intervals (either binomial or multinomial) are added to the table as separate columns containing lower and upper limits.
+
+And the data would be plotted in a similar fashion (although the method used to calculate the error bars would be different).
+```
+     R  |           |-|                                 |           |-|             
+     e  |           |/|-|                               |           |/|-|           |/| case
+     l  |     |-|   |/| |           |-|               P |     |-|   |/| |           
+        |     | |   |/| |           |/|-|             r |     | |   |/| |           | | control
+     F  |   |-| |   |/| |     |-|   |/| |       OR    o |   |-| |   |/| |     |-|   
+     r  |   |/| |   |/| |   |-| |   |/| |             p |   |/| |   |/| |   |-| |   
+     e  |   |/| |   |/| |   |/| |   |/| |               |   |/| |   |/| |   |/| |   
+     q  |-----------------------------------            |---------------------------
+             spn     ter     lab     col                      A       B       C
+
+```
+
+#### Function parameters
+
+The phjCalculateBinomialProportions() function takes the following parameters:
+
+1. **phjTempDF**
+
+
+2. **phjColumnsList = None**
+
+
+3. **phjSuccess = 'yes'**
+
+
+4. **phjGroupVarName = None**
+
+
+5. **phjMissingValue = 'missing'**
+
+
+6. **phjBinomialConfIntMethod = 'normal'**
+
+
+7. **phjAlpha = 0.05**
+
+
+8. **phjPlotProportions = True**
+
+
+9. **phjGroupsToPlotList = 'all'**
+
+
+10. **phjSortProportions = False**
+
+
+11. **phjGraphTitle = None**
+
+
+12. **phjPrintResults = False**
+
+
+
+
+The phjCalculateMultinomialProportions() function takes the following parameters:
+
+1. **phjTempDF**
+
+
+2. **phjCategoryVarName = None**
+
+
+3. **phjCategoriesToPlotList = 'all'**
+
+
+4. **phjGroupVarName = None**
+
+
+5. **phjMissingValue = 'missing'**
+
+
+6. **phjMultinomialConfIntMethod = 'goodman'**
+
+
+7. **phjAlpha = 0.05**
+
+
+8. **phjPlotRelFreq = True**
+
+
+9. **phjGroupsToPlotList = 'all'**
+
+
+10. **phjGraphTitle = None**
+
+
+11. **phjPrintResults = False**
+
+
+#### Exceptions raised
+None
+
+#### Returns
+Pandas dataframe containing a table of proportions and confidence intervals.
+
+#### Other notes
+None
+
+#### Example
+An example of the function in use is given below:
+
+
+
+---
+### 9. phjOddsRatio()
 
 ```python
 df = phjOddsRatio(phjTempDF,
@@ -787,7 +1041,7 @@ d      1  3 0.333 0.444   [0.0295, 6.7031]
 
 ---
 
-### 8. phjRelativeRisk()
+### 10. phjRelativeRisk()
 
 ```python
 df = phjRelativeRisk(phjTempDF,
