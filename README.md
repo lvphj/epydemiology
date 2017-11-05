@@ -750,6 +750,8 @@ df = phjCalculateMultinomialProportions(phjTempDF,
                                         phjPrintResults = False)
 ```
 
+#### Description
+
 The above two functions – ``` phjCalculateBinomialProportions() and phjCalculateMultinomialProportions() ``` – are closely related and will be discussed and described together.
 
 The functions can be used to rapidly summarise and visualise two common-encountered (at least, in my research) types of the data. The first summarises data which consists of rows of data (representing individuals) and a series of binomial (dummy-esque) variables indicating whether a characteristic is present or absent (see below). The categories are not necessarily mutually exclusive and each variable is considered as an individual characteristic. The confidence intervals for each category are calculated as individual binomial intervals (using StatsModels functions).
@@ -864,6 +866,96 @@ And the data would be plotted in a similar fashion (although the method used to 
              spn     ter     lab     col                      A       B       C
 
 ```
+
+#### Function parameters
+
+The phjCalculateBinomialProportions() function takes the following parameters:
+
+1. **phjTempDF**
+
+
+2. **phjColumnsList = None**
+
+
+3. **phjSuccess = 'yes'**
+
+
+4. **phjGroupVarName = None**
+
+
+5. **phjMissingValue = 'missing'**
+
+
+6. **phjBinomialConfIntMethod = 'normal'**
+
+
+7. **phjAlpha = 0.05**
+
+
+8. **phjPlotProportions = True**
+
+
+9. **phjGroupsToPlotList = 'all'**
+
+
+10. **phjSortProportions = False**
+
+
+11. **phjGraphTitle = None**
+
+
+12. **phjPrintResults = False**
+
+
+
+
+The phjCalculateMultinomialProportions() function takes the following parameters:
+
+1. **phjTempDF**
+
+
+2. **phjCategoryVarName = None**
+
+
+3. **phjCategoriesToPlotList = 'all'**
+
+
+4. **phjGroupVarName = None**
+
+
+5. **phjMissingValue = 'missing'**
+
+
+6. **phjMultinomialConfIntMethod = 'goodman'**
+
+
+7. **phjAlpha = 0.05**
+
+
+8. **phjPlotRelFreq = True**
+
+
+9. **phjGroupsToPlotList = 'all'**
+
+
+10. **phjGraphTitle = None**
+
+
+11. **phjPrintResults = False**
+
+
+#### Exceptions raised
+None
+
+#### Returns
+Pandas dataframe containing a table of proportions and confidence intervals.
+
+#### Other notes
+None
+
+#### Example
+An example of the function in use is given below:
+
 
 
 ---
