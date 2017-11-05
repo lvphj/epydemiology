@@ -43,119 +43,16 @@ else:
 import collections
 
 
-'''
-========================================================
-Calculate relative frequencies (multinomial proportions)
-========================================================
-Calculate relative frequencies for a variable with 2 or more categories over
-several levels of a grouping variable. As an example, the dateframe may take the
-following structure:
 
-      group  |  category
-    ---------|---------
-       case  |  np.nan
-       case  |  spaniel
-       case  |  missing
-    control  |  terrier
-    control  |  collie
-       case  |  labrador
-       case  |  labrador
-       case  |  collie
-    control  |  spaniel
-    control  |  spaniel
-    control  |  labrador
-    control  |  collie
-       case  |  terrier
-       case  |  terrier
-       case  |  terrier
-    control  |  collie
-    control  |  labrador
-    control  |  labrador
-    control  |  labrador
-       case  |  spaniel
-       case  |  spaniel
-       case  |  collie
-       case  |  collie
-       case  |  collie
-     np.nan  |  terrier
-     np.nan  |  spaniel
-       
-This example dataframe can be created using:
-
-    import numpy as np
-    import pandas as pd
-    
-    phjTempDF = pd.DataFrame({'group':['case','case','case','control','control','case','case','case','control','control','control','control','case','case','case','control','control','control','control','case','case','case','case','case',np.nan,np.nan],
-                              'category':[np.nan,'spaniel','missing','terrier','collie','labrador','labrador','collie','spaniel','spaniel','labrador','collie','terrier','terrier','terrier','collie','labrador','labrador','labrador','spaniel','spaniel','collie','collie','collie','terrier','spaniel']})
-
-    
-The aim is to return a dataframe containing the relative frequencies of each breed
-in the case and control groups, as follows:
-    
-    |---------|--------------|-----------------|--------------|-----------------|
-    |   index | case_absfreq | control_absfreq | case_relfreq | control_relfreq |
-    |---------|--------------|-----------------|--------------|-----------------|
-    | spaniel |              |                 |              |                 |
-    |---------|--------------|-----------------|--------------|-----------------|
-    | terrier |              |                 |              |                 |
-    |---------|--------------|-----------------|--------------|-----------------|
-    | labrador|              |                 |              |                 |
-    |---------|--------------|-----------------|--------------|-----------------|
-    | collie  |              |                 |              |                 |
-    |---------|--------------|-----------------|--------------|-----------------|
-    
-And then to plot a bar chart of the relative frequencies (together with simultaneous,
-confidence intervals):
-    
-     R  |           |-|                     
-     e  |           |/|-|                   
-     l  |     |-|   |/| |           |-|     
-        |     | |   |/| |           |/|-|   
-     F  |   |-| |   |/| |     |-|   |/| |   
-     r  |   |/| |   |/| |   |-| |   |/| |   
-     e  |   |/| |   |/| |   |/| |   |/| |   
-     q  |-----------------------------------
-             spn     ter     lab     col
-    
-    
-An example of the function being used is shown below:
-    
-    phjRelFreqDF = phjCalculateMultinomialProportions(phjTempDF = tempDF,
-                                                      phjCategoryVarName = 'category',
-                                                      phjGroupVarName = 'group',
-                                                      phjPlotRelFreq = True,
-                                                      phjCategoriesToPlotList = 'all',
-                                                      phjGraphTitle = 'Relative frequencies',
-                                                      phjPrintResults = True)
-
-Where:
-    phjTempDF = Pandas dataframe containing the raw data
-    
-    phjCategoryVarName = name of column with category data (e.g. breeds of dogs) (default = None)
-    
-    phjGroupVarName = name of column with group indicators (e.g. 'case' and 'control') (default = None)
-    
-    phjPlotRelFreq = plot a bar chart of relative frequencies (default = False)
-    
-    phjCategoriesToPlotList = list of categories to include in the plot (default = 'all')
-    
-    phjGraphTitle = Title of graph (default = None)
-    
-    phjPrintResutls = print important outputs (default = False)
-    
-'''
-
+# ==============
 # Main functions
 # ==============
-
+#
+# Calculate relative frequencies (multinomial proportions)
+# ========================================================
+#
 # Calculates relative frequencies and multinomial confidence intervals
 # --------------------------------------------------------------------
-# This function calcalates proportions, simultaneous confidence intervals for a categorical
-# variable and plots bar charts with asymmetrical error bars.
-
-# Main function
-# =============
-
 # This function calcalates proportions, simultaneous confidence intervals for a categorical
 # variable and plots bar charts with asymmetrical error bars.
 
@@ -300,41 +197,34 @@ def phjCalculateMultinomialProportions(phjTempDF,
 
 
 
-'''
-==============================
-Calculate binomial proportions
-==============================
+# Calculate binomial proportions
+# ==============================
+#
+# This function calculates the binomial proportions of a series of binomial variables
+# for each level of a given group variable. The dataframe has the following format:
+#
+#         group     A    B    C
+#     0      g1   yes   no  yes
+#     1      g1   yes  NaN  yes
+#     2      g2    no  NaN  yes
+#     3      g1    no  yes  NaN
+#     4      g2    no  yes   no
+#     5      g2    no  yes  yes
+#     6      g1    no  yes  yes
+#     7      g1   yes   no  yes
+#     8      g2   NaN   no   no
+#     9      g1   yes   no   no
+#
+#  ...and produces the following dataframe:
+#
+#     group   var   count   success   propn
+#        g1     A       6         4    0.66
+#        g1     B       5         2    0.40
+#        g1     C       5         4    0.80
+#        g2     A       3         0    0.00
+#        g2     B       4         2    0.50
+#        g2     C       4         2    0.50
 
-This function calculates the binomial proportions of a series of binomial variables
-for each level of a given group variable. The dataframe has the following format:
-
-        group     A    B    C
-    0      g1   yes   no  yes
-    1      g1   yes  NaN  yes
-    2      g2    no  NaN  yes
-    3      g1    no  yes  NaN
-    4      g2    no  yes   no
-    5      g2    no  yes  yes
-    6      g1    no  yes  yes
-    7      g1   yes   no  yes
-    8      g2   NaN   no   no
-    9      g1   yes   no   no
-
- ...and produces the following dataframe:
-
-    group   var   count   success   propn
-       g1     A       6         4    0.66
-       g1     B       5         2    0.40
-       g1     C       5         4    0.80
-       g2     A       3         0    0.00
-       g2     B       4         2    0.50
-       g2     C       4         2    0.50
-    
-    
-1. NEED TO CHECK that all variables in var list are in the dataframe.
-2. NEED TO CHECK that group var is not included in list of columns
-3. IF GROUPS TO PLOT IS A LIST AND GROUP VAR NAME IS NONE THEN CHECK
-'''
 
 def phjCalculateBinomialProportions(phjTempDF,
                                     phjColumnsList = None,
@@ -348,6 +238,11 @@ def phjCalculateBinomialProportions(phjTempDF,
                                     phjSortProportions = False,
                                     phjGraphTitle = None,
                                     phjPrintResults = False):
+    
+    # Error checking required:
+    # 1. NEED TO CHECK that all variables in var list are in the dataframe.
+    # 2. NEED TO CHECK that group var is not included in list of columns
+    # 3. IF GROUPS TO PLOT IS A LIST AND GROUP VAR NAME IS NONE THEN CHECK
     
     
     # Set default suffixes and join strings to create column names
@@ -451,6 +346,7 @@ def phjCalculateBinomialProportions(phjTempDF,
         phjPropDF = phjPropDF.unstack(level = 0)
         phjPropDF = phjPropDF.swaplevel(i = -1, j = 0, axis = 1)
     
+    
     # Flatten dataframe multi-index columns to be the following format:
     #    groupName_columnHeading
     # This only needs to be done if there are 2 more groups. If only one group,
@@ -467,14 +363,8 @@ def phjCalculateBinomialProportions(phjTempDF,
             print(phjPropDF)
     
     
-#    if phjPlotResults == True:
-#        phjPlotProportions(phjTempDF = phjPropDF,
-#                           phjGroupVarName = phjGroupVarName,
-#                           phjGroupsToPlotList = 'all',
-#                           phjCIColumnName = phjCIColumnName,
-#                           phjGraphTitle = phjGraphTitle)
 
-    # Plot bar chart of relative frequencies
+# Plot bar chart of relative frequencies
     if phjPlotProportions == True:
         
         # Plot chart
@@ -493,7 +383,7 @@ def phjCalculateBinomialProportions(phjTempDF,
 
 
 
-
+# ====================
 # Supporting functions
 # ====================
 
