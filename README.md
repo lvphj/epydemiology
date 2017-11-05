@@ -52,6 +52,7 @@ myDF = epy.phjCalculateBinomialProportions()
 
 ```python
 myDF = epy.phjCalculateMultinomialProportions()
+```
 
 9. To calculate odds and odds ratios for case-control studies for data stored in Pandas dataframe
 
@@ -719,8 +720,83 @@ MATCHED CONTROLS
 ```
 
 ---
+### 7. phjCalculateBinomialProportions()
+```python
+df = phjCalculateBinomialProportions(phjTempDF,
+                                     phjColumnsList = None,
+                                     phjSuccess = 'yes',
+                                     phjGroupVarName = None,
+                                     phjMissingValue = 'missing',
+                                     phjBinomialConfIntMethod = 'normal',
+                                     phjAlpha = 0.05,
+                                     phjPlotProportions = True,
+                                     phjGroupsToPlotList = 'all',
+                                     phjSortProportions = False,
+                                     phjGraphTitle = None,
+                                     phjPrintResults = False)
+```
+### 8. phjCalculateMultinomialProportions()
+```python
+df = phjCalculateMultinomialProportions(phjTempDF,
+                                        phjCategoryVarName = None,
+                                        phjCategoriesToPlotList = 'all',
+                                        phjGroupVarName = None,
+                                        phjMissingValue = 'missing',
+                                        phjMultinomialConfIntMethod = 'goodman',
+                                        phjAlpha = 0.05,
+                                        phjPlotRelFreq = True,
+                                        phjGroupsToPlotList = 'all',
+                                        phjGraphTitle = None,
+                                        phjPrintResults = False)
+```
 
-### 7. phjOddsRatio()
+The above two functions – ``` phjCalculateBinomialProportions() and phjCalculateMultinomialProportions() ``` – are closely related and will be discussed and described together.
+
+The functions can be used to rapidly summarise and visualise two common-encountered (at least, in my research) types of the data. The first summarises data which consists of rows of data (representing individuals) and a series of binomial (dummy-esque) variables indicating whether a characteristic is present or absent (see below). The categories are not necessarily mutually exclusive and each variable is considered as an individual characteristic. The confidence intervals for each category are calculated as individual binomial intervals (using StatsModels functions).
+
+The second data structure consists of rows of data (representing individuals) and a single variable which contains numerous categories. In this case, all the categories are mutually exclusive. The proportions (or relative frequencies) are calculated for each category level and the confidence intervals are calculated as multinomial intervals (using StatsModels functions).
+
+The series of binomial data might take the form shown on the left whilst the multinomial dataset might take the form shown on the right below:
+
+```
+Binomial data structure                                   Multinomial data structure
+------------------------------------------------          ------------------------------
+| id |    group  |       A |       B |       C |          | id |    group  |  category |
+|----|-----------|---------|---------|---------|          |----|-----------|-----------|
+|  1 |     case  |     yes |      no |     yes |          |  1 |     case  |    np.nan |
+|  2 |     case  |     yes |  np.nan |     yes |          |  2 |     case  |   spaniel |
+|  3 |  control  |      no | missing |     yes |          |  3 |     case  |   missing |
+|  4 |     case  |      no |     yes |  np.nan |          |  4 |  control  |   terrier |
+|  5 |  control  |      no |     yes |      no |          |  5 |  control  |    collie |
+|  6 |  control  |      no |     yes |     yes |          |  6 |     case  |  labrador |
+|  7 |     case  |      no |     yes |     yes |          |  7 |     case  |  labrador |
+|  8 |     case  |     yes |      no |     yes |          |  8 |     case  |    collie |
+|  9 |  control  | missing |      no |      no |          |  9 |  control  |   spaniel |
+| 10 |     case  |     yes |      no |      no |          | 10 |  control  |   spaniel |
+------------------------------------------------          | 11 |  control  |  labrador |
+                                                          | 12 |  control  |    collie |
+                                                          | 13 |     case  |   terrier |
+                                                          | 14 |     case  |   terrier |
+                                                          | 15 |     case  |   terrier |
+                                                          | 16 |  control  |    collie |
+                                                          | 17 |  control  |  labrador |
+                                                          | 18 |  control  |  labrador |
+                                                          | 19 |  control  |  labrador |
+                                                          | 20 |     case  |   spaniel |
+                                                          | 21 |     case  |   spaniel |
+                                                          | 22 |     case  |    collie |
+                                                          | 23 |     case  |    collie |
+                                                          | 24 |     case  |    collie |
+                                                          | 25 |   np.nan  |   terrier |
+                                                          | 26 |   np.nan  |   spaniel |
+                                                          ------------------------------
+                                
+                            
+```
+
+
+---
+### 9. phjOddsRatio()
 
 ```python
 df = phjOddsRatio(phjTempDF,
@@ -797,7 +873,7 @@ d      1  3 0.333 0.444   [0.0295, 6.7031]
 
 ---
 
-### 8. phjRelativeRisk()
+### 10. phjRelativeRisk()
 
 ```python
 df = phjRelativeRisk(phjTempDF,
