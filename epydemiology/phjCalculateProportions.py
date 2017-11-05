@@ -64,6 +64,7 @@ def phjCalculateMultinomialProportions(phjTempDF,
                                        phjMultinomialConfIntMethod = 'goodman',
                                        phjAlpha = 0.05,
                                        phjPlotRelFreq = True,
+                                       phjGroupsToPlotList = 'all',   # Currently not implemented
                                        phjGraphTitle = None,
                                        phjPrintResults = False):
     
