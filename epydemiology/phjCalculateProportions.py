@@ -44,9 +44,9 @@ import collections
 
 
 '''
-==============================
-Calculate relative frequencies
-==============================
+========================================================
+Calculate relative frequencies (multinomial proportions)
+========================================================
 Calculate relative frequencies for a variable with 2 or more categories over
 several levels of a grouping variable. As an example, the dateframe may take the
 following structure:
@@ -120,13 +120,13 @@ confidence intervals):
     
 An example of the function being used is shown below:
     
-    phjRelFreqDF = phjCalculateRelativeFrequencies(phjTempDF = tempDF,
-                                                   phjCategoryVarName = 'category',
-                                                   phjGroupVarName = 'group',
-                                                   phjPlotRelFreq = True,
-                                                   phjCategoriesToPlotList = 'all',
-                                                   phjGraphTitle = 'Relative frequencies',
-                                                   phjPrintResults = True)
+    phjRelFreqDF = phjCalculateMultinomialProportions(phjTempDF = tempDF,
+                                                      phjCategoryVarName = 'category',
+                                                      phjGroupVarName = 'group',
+                                                      phjPlotRelFreq = True,
+                                                      phjCategoriesToPlotList = 'all',
+                                                      phjGraphTitle = 'Relative frequencies',
+                                                      phjPrintResults = True)
 
 Where:
     phjTempDF = Pandas dataframe containing the raw data
@@ -159,16 +159,16 @@ Where:
 # This function calcalates proportions, simultaneous confidence intervals for a categorical
 # variable and plots bar charts with asymmetrical error bars.
 
-def phjCalculateRelativeFrequencies(phjTempDF,
-                                    phjCategoryVarName = None,
-                                    phjCategoriesToPlotList = 'all',
-                                    phjGroupVarName = None,
-                                    phjMissingValue = 'missing',
-                                    phjMultinomialConfIntMethod = 'goodman',
-                                    phjAlpha = 0.05,
-                                    phjPlotRelFreq = True,
-                                    phjGraphTitle = None,
-                                    phjPrintResults = False):
+def phjCalculateMultinomialProportions(phjTempDF,
+                                       phjCategoryVarName = None,
+                                       phjCategoriesToPlotList = 'all',
+                                       phjGroupVarName = None,
+                                       phjMissingValue = 'missing',
+                                       phjMultinomialConfIntMethod = 'goodman',
+                                       phjAlpha = 0.05,
+                                       phjPlotRelFreq = True,
+                                       phjGraphTitle = None,
+                                       phjPrintResults = False):
     
     
     # ERROR CHECKING
