@@ -43,12 +43,22 @@ myDF = epy.phjCleanUKPostcodeVariable()
 ```python
 myDF = epy.phjSelectCaseControlDataset()
 ```
-7. To calculate odds and odds ratios for case-control studies for data stored in Pandas dataframe
+7. To calculate and plot a series of binomial proportions
+
+```python
+myDF = epy.phjCalculateBinomialProportions()
+```
+8. To calculate and plot multinomial proportions
+
+```python
+myDF = epy.phjCalculateMultinomialProportions()
+
+9. To calculate odds and odds ratios for case-control studies for data stored in Pandas dataframe
 
 ```python
 myDF = epy.phjOddsRatio()
 ```
-8. To calculate relative risks for cross-sectional or longitudinal studies for data stored in Pandas dataframe
+10. To calculate relative risks for cross-sectional or longitudinal studies for data stored in Pandas dataframe
 
 ```python
 myDF = epy.phjRelativeRisk()
