@@ -242,16 +242,21 @@ Output:
 ### 5. phjCleanUKPostcodeVariable()
 
 ```python
-df = phjCleanUKPostcodeVariable(phjTempDF,
+df = phjCleanUKPostcodeVariable(phjCleanUKPostcodeVariable(phjTempDF,
+                                phjRealPostcodeSer = None,
                                 phjOrigPostcodeVarName = 'postcode',
                                 phjNewPostcodeVarName = 'postcodeClean',
-                                phjPostcodeFormatCheckVarName = 'postcodeFormatCheck',
+                                phjNewPostcodeStrLenVarName = 'postcodeCleanStrLen',
+                                phjPostcodeCheckVarName = 'postcodeCheck',
                                 phjMissingValueCode = 'missing',
+                                phjMinDamerauLevenshteinDistanceVarName = 'minDamLevDist',
+                                phjBestAlternativesVarName = 'bestAlternatives',
                                 phjPostcode7VarName = 'postcode7',
                                 phjPostcodeAreaVarName = 'postcodeArea',
                                 phjSalvageOutwardPostcodeComponent = True,
+                                phjCheckByOption = 'format',
                                 phjDropExisting = False,
-                                phjPrintResults = True)
+                                phjPrintResults = True))
 
 ```
 
@@ -259,10 +264,10 @@ Python function to clean and extract correctly formatted postcode data.
 #### Description
 In many situations, postcodes are added to a database field to record people's addresses. However, when entering postcodes by hand or transcribing from written notes, it is often the case that postcodes are entered incorrectly due to typing errors or because the postcode in question is not fully known. Consequently, a variable containing postcode information will contain many correct postcodes but also many incorrect or partial data points. This function seeks to extract correctly formatted postcodes and to correct some commonly occurring transcription errors in order to produce a correctly-formatted postcode. In addition, in situations where just the outward component (first half) of the postcode is recorded, the function will attempt to salvage just the outward component. Finally, the function extracts the postcode area (first 1 or 2 letters) of the postcode. The cleaned postcode (with no spaces and in 7-character format), the outward and inward components of the postcode and the postcode areas are all stored in new variables that are added to the original dataframe.
 
+This function uses one of two methods to extract postcode information: i) checking the postcode is correctly 'formatted' using a regex; ii) comparing the postcode to a database of all known postcodes and, if the postcode does not exist, determining the most likely alternatives based on Damerau-Levenshtein distance and on the physical position of inserted or transposed characters on the keyboard.
+
 The regex used to determine whether postcodes are correctly formatted is a modified version of a regex published at https://en.wikipedia.org/wiki/Talk:Postcodes_in_the_United_Kingdom (accessed 22 Mar 2016). (This page is also stored locally as a PDF entitled, "Talk/Postcodes in the United Kingdom - Wikipedia, the free encyclopedia".)
 
-NOTE: This function does not check entered postcodes against a database of actual postcodes. In merely checks that the *format* of the entered postcode is correct. So, for example, AB12 5DG is a correctly formatted postcode but it may or may not actually exist.
-  
 The function takes, as two of its arguments, a Pandas dataframe containing a column of postcode data, and the name of that postcode column. It returns the same dataframe with some additional, postcode-related columns. The additional columns returned are:
 
 i. 'postcodeClean' (column name is user-defined through phjNewPostcodeVarName argument)
