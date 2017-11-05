@@ -791,10 +791,12 @@ Binomial data structure                                   Multinomial data struc
                                                           | 26 |   np.nan  |   spaniel |
                                                           ------------------------------
 
+```
+
 In both datasets, missing values can be entered either as np.nan or as a missing value string such as 'missing' which is then defined when the function is called.
 
-These example datasets can be produced using the following Python code
-```
+These example datasets can be produced using the following Python code:
+
 ```python
 import numpy as np
 import pandas as pd
@@ -809,8 +811,58 @@ multinomDataDF = pd.DataFrame({'id':[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,1
                                'group':['case','case','case','control','control','case','case','case','control','control','control','control','case','case','case','control','control','control','control','case','case','case','case','case',np.nan,np.nan],
                                'category':[np.nan,'spaniel','missing','terrier','collie','labrador','labrador','collie','spaniel','spaniel','labrador','collie','terrier','terrier','terrier','collie','labrador','labrador','labrador','spaniel','spaniel','collie','collie','collie','terrier','spaniel']})
 ```
+
+The output summary tables in each case would be very similar:
 ```
-The output summary tables in each case would be very similar.                       
+    Summary table for multinomial proportions
+    
+    |---------|---------------|---------------|---------------|---------------|
+    |         |    case_count | control_count |     case_prop |  control_prop |
+    |---------|---------------|---------------|---------------|---------------|
+    | spaniel |               |               |               |               |
+    |---------|---------------|---------------|---------------|---------------|
+    | terrier |               |               |               |               |
+    |---------|---------------|---------------|------ --------|---------------|
+    | labrador|               |               |               |               |
+    |---------|---------------|---------------|---------------|---------------|
+    | collie  |               |               |               |               |
+    |---------|---------------|---------------|---------------|---------------|
+    
+    * The 'count' columns give the absolute counts.
+      The 'prop' columns give the proportion of the total.
+    
+    
+    Summary table for binomial proportions
+    
+    |-----|---------------|-----------------|---------------|---------------|---------------|---------------|
+    |     |  case_success | control_success |    case_total | control_total |     case_prop |  control_prop |
+    |-----|---------------|-----------------|---------------|---------------|---------------|---------------|
+    |   A |               |                 |               |               |               |               |
+    |-----|---------------|-----------------|---------------|---------------|---------------|---------------|
+    |   B |               |                 |               |               |               |               |
+    |-----|---------------|-----------------|------ --------|---------------|---------------|---------------|
+    |   C |               |                 |               |               |               |               |
+    |-----|---------------|-----------------|---------------|---------------|---------------|---------------|
+    
+    * The 'success' columns give the number of 'successes' in each variable.
+      The 'total' columns give the total number of rows (missing values excluded) for each variable.
+      The 'prop' columns give the proportion of successes.
+```
+
+The confidence intervals (either binomial or multinomial) are added to the table as separate columns containing lower and upper limits.
+
+And the data would be plotted in a similar fashion (although the method used to calculate the error bars would be different).
+```
+     R  |           |-|                                 |           |-|             
+     e  |           |/|-|                               |           |/|-|           |/| case
+     l  |     |-|   |/| |           |-|               P |     |-|   |/| |           
+        |     | |   |/| |           |/|-|             r |     | |   |/| |           | | control
+     F  |   |-| |   |/| |     |-|   |/| |       OR    o |   |-| |   |/| |     |-|   
+     r  |   |/| |   |/| |   |-| |   |/| |             p |   |/| |   |/| |   |-| |   
+     e  |   |/| |   |/| |   |/| |   |/| |               |   |/| |   |/| |   |/| |   
+     q  |-----------------------------------            |---------------------------
+             spn     ter     lab     col                      A       B       C
+
 ```
 
 
