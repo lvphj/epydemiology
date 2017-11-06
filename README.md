@@ -86,7 +86,7 @@ This function can be used to import data from a named range in a Microsoft Excel
 #### Function parameters
 1. **phjExcelPathAndFilename**
 
-The full path and filename of the Microsoft Excel workbook.
+   The full path and filename of the Microsoft Excel workbook.
 
 2. **phjExcelCellRangeName**
 
