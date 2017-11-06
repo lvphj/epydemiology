@@ -81,7 +81,7 @@ df = phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = None,
 Python function to read data from a named cell range in an Excel workbook.
 
 #### Description
-This function can be used to import data from a named range in a Microsoft Excel workbook. The function receives the full path and filename of the Excel document, together with the name of the named cell range of interest, and returns the data as a Pandas dataframe.
+   This function can be used to import data from a named range in a Microsoft Excel workbook. The function receives the full path and filename of the Excel document, together with the name of the named cell range of interest, and returns the data as a Pandas dataframe.
 
 #### Function parameters
 1. **phjExcelPathAndFilename**
@@ -110,26 +110,25 @@ This function can be used to import data from a named range in a Microsoft Excel
 
 #### Exceptions raised
 
-None
+   None.
 
 #### Returns
 
-Pandas dataframe containing data read from named cell range.
+   Pandas dataframe containing data read from named cell range.
 
 #### Other notes
 
-None.
+   None.
 
 #### Example
 
-An example of the function in use is given below. An Excel workbook named 'myWorkbook.xlsx' is stored on the Desktop. The workbook contains several individual worksheets, one of which contains a named cell range called 'myCellRange', the first row of which contains the names of the columns. The data can be imported into a Pandas dataframe using:
+   An example of the function in use is given below. An Excel workbook named 'myWorkbook.xlsx' is stored on the Desktop. The workbook contains several individual worksheets, one of which contains a named cell range called 'myCellRange', the first row of which contains the names of the columns. The data can be imported into a Pandas dataframe using:
 
 ```python
 # The following libraries are imported automatically but are incuded here for completeness.
-import numpy as np
 import pandas as pd
-import epydemiology as epy
 import openpyxl
+import epydemiology as epy
 
 myTempDF = epy.phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = '/Users/username/Desktop/myWorkbook.xlsx',
                                                   phjExcelCellRangeName = 'myCellRange',
@@ -151,7 +150,7 @@ Python function to read data from a MySQL or SQL SERVER database.
 
 #### Description
 
-The function is used to query MySQL or SQL SERVER databases using an SQL file that is stored as a text file. As the function runs, the user is prompted to enter all other required parameters include server address, username and password details.
+   The function is used to query MySQL or SQL SERVER databases using an SQL file that is stored as a text file. As the function runs, the user is prompted to enter all other required parameters include server address, username and password details. A maximum of three attempts allowed to enter correct login information.
 
 #### Function parameters
 
@@ -163,25 +162,30 @@ The function is used to query MySQL or SQL SERVER databases using an SQL file th
 
    Print the imported results.
 
-
 #### Exceptions raised
-None
+
+   None.
 
 #### Returns
-Pandas dataframe containing data read from database.
+
+   Pandas dataframe containing data read from database.
 
 #### Other notes
-None.
+
+   None.
 
 #### Example
-An example of the function in use is given below. If the SQL query to be used to query a SQL SERVER database is saved as a text file named 'theSQLQueryFile.mssql' on the Desktop, the function can be used to import returned data using:
+
+   An example of the function in use is given below. If the SQL query to be used to query a SQL SERVER database is saved as a text file named 'theSQLQueryFile.mssql' on the Desktop, the function can be used to import returned data using:
 
 ```python
 # The following libraries are imported automatically but are incuded here for completeness.
-import numpy as np
+import re
+import getpass
 import pandas as pd
-import epydemiology as epy
+import pymysql
 import pymssql
+import epydemiology as epy
 
 myTempDF = epy.phjQueryPathAndFilename(phjQueryPathAndFile = '/Users/username/Desktop/theSQLQueryFile.mssql',
                                        phjPrintResults = True)
@@ -197,29 +201,35 @@ myStr = phjReadTextFromFile(phjFilePathAndName = None,
 
 #### Description
 
+   This function can be used to read text from a text file.
 
 #### Function parameters
 
+1. **phjFilePathAndName**
+
+   The full path and name of the text file to read. The text file does not need to end with the prefix '.txt'. This is the function that is used to read SQL queries from text files in the phjGetDataFromDatabase() function.
 
 #### Exceptions raised
 
+   None.
 
 #### Returns
 
+   A string containing the contents of the text file.
 
 #### Other notes
 
+   None.
 
 #### Example
 
+```python
+myStr = phjReadTextFromFile(phjFilePathAndName = '/Users/username/Desktop/myTextFile.txt',
+                            maxAttempts = 3,
+                            phjPrintResults = False)
 
 
-
-
-
-
-
-
+```
 
 ### 4. phjBinaryVarsToSquareMatrix()
 
@@ -231,31 +241,37 @@ arr = phjBinaryVarsToSquareMatrix(phjDataDF,
 ```
 
 Function to produce a Numpy array from a group of binary variables to show co-occurrence.
+
 #### Description
-This function takes a number of variables containing binary data and returns a Numpy array representing a square matrix that shows co-occurrence of positive variables.
+
+   This function takes a number of variables containing binary data and returns a Numpy array representing a square matrix that shows co-occurrence of positive variables.
 
 #### Function parameters
 
 1. **phjDataDF**
-    * Pandas dataframe
+    Pandas dataframe
 
 2. **phjColumnNamesList**
-    * A list of variable names contained in the dataframe that contains binary data.
+    A list of variable names contained in the dataframe that contains binary data.
     
-3. **phjOutputFormat** (Default = 'arr')
-    * Output format. Default is a Numpy array ('arr'). Alternative is 'df' to return a Pandas dataframe.
+3. **phjOutputFormat** (default = 'arr')
+    Output format. Default is a Numpy array ('arr'). Alternative is 'df' to return a Pandas dataframe.
     
-4. **phjPrintResults** (Default = False.)
-  * Print verbose output during execution of scripts. If running on Jupyter-Notebook, setting PrintResults = True causes a lot a output and can cause problems connecting to kernel.
+4. **phjPrintResults** (default = False)
+
+  Print verbose output during execution of scripts. If running on Jupyter-Notebook, setting ```phjPrintResults = True``` causes a lot a output and can cause problems connecting to kernel. It is recommended to set ```phjPrintResults = False``` routinely to avoid possible problems when using Jupyter-notebook.
 
 #### Exceptions raised
-None
+
+   None.
 
 #### Returns
-By default, function returns a Numpy array of a square matrix (phjOutputFormat = 'arr'). Matrix can be returned as a Pandas dataframe (phjOutputFormat = 'df').
+
+   By default, function returns a Numpy array of a square matrix (phjOutputFormat = 'arr'). Matrix can be returned as a Pandas dataframe (phjOutputFormat = 'df').
 
 #### Other notes
-None
+
+   None.
 
 #### Example
 
@@ -306,43 +322,45 @@ df = phjCleanUKPostcodeVariable(phjCleanUKPostcodeVariable(phjTempDF,
                                 phjSalvageOutwardPostcodeComponent = True,
                                 phjCheckByOption = 'format',
                                 phjDropExisting = False,
-                                phjPrintResults = True))
+                                phjPrintResults = True)
 
 ```
 
 Python function to clean and extract correctly formatted postcode data.
+
 #### Description
-In many situations, postcodes are added to a database field to record people's addresses. However, when entering postcodes by hand or transcribing from written notes, it is often the case that postcodes are entered incorrectly due to typing errors or because the postcode in question is not fully known. Consequently, a variable containing postcode information will contain many correct postcodes but also many incorrect or partial data points. This function seeks to extract correctly formatted postcodes and to correct some commonly occurring transcription errors in order to produce a correctly-formatted postcode. In addition, in situations where just the outward component (first half) of the postcode is recorded, the function will attempt to salvage just the outward component. Finally, the function extracts the postcode area (first 1 or 2 letters) of the postcode. The cleaned postcode (with no spaces and in 7-character format), the outward and inward components of the postcode and the postcode areas are all stored in new variables that are added to the original dataframe.
 
-This function uses one of two methods to extract postcode information: i) checking the postcode is correctly 'formatted' using a regex; ii) comparing the postcode to a database of all known postcodes and, if the postcode does not exist, determining the most likely alternatives based on Damerau-Levenshtein distance and on the physical position of inserted or transposed characters on the keyboard.
+   In many situations, postcodes are added to a database field to record people's addresses. However, when entering postcodes by hand or transcribing from written notes, it is often the case that postcodes are entered incorrectly due to typing errors or because the postcode in question is not fully known. Consequently, a variable containing postcode information will contain many correct postcodes but also many incorrect or partial data points. This function seeks to extract correctly formatted postcodes and to correct some commonly occurring transcription errors in order to produce a correctly-formatted postcode. In addition, in situations where just the outward component (first half) of the postcode is recorded, the function will attempt to salvage just the outward component. Finally, the function extracts the postcode area (first 1 or 2 letters) of the postcode. The cleaned postcode (with no spaces and in 7-character format), the outward and inward components of the postcode and the postcode areas are all stored in new variables that are added to the original dataframe.
 
-The regex used to determine whether postcodes are correctly formatted is a modified version of a regex published at https://en.wikipedia.org/wiki/Talk:Postcodes_in_the_United_Kingdom (accessed 22 Mar 2016). (This page is also stored locally as a PDF entitled, "Talk/Postcodes in the United Kingdom - Wikipedia, the free encyclopedia".)
+   This function uses one of two methods to extract postcode information: i) checking the postcode is correctly 'formatted' using a regex; ii) comparing the postcode to a database of all known postcodes and, if the postcode does not exist, determining the most likely alternatives based on Damerau-Levenshtein distance and on the physical position of inserted or transposed characters on the keyboard.
 
-The function takes, as two of its arguments, a Pandas dataframe containing a column of postcode data, and the name of that postcode column. It returns the same dataframe with some additional, postcode-related columns. The additional columns returned are:
+   The regex used to determine whether postcodes are correctly formatted is a modified version of a regex published at https://en.wikipedia.org/wiki/Talk:Postcodes_in_the_United_Kingdom (accessed 22 Mar 2016). (This page is also stored locally as a PDF entitled, "Talk/Postcodes in the United Kingdom - Wikipedia, the free encyclopedia".)
+
+   The function takes, as two of its arguments, a Pandas dataframe containing a column of postcode data, and the name of that postcode column. It returns the same dataframe with some additional, postcode-related columns. The additional columns returned are:
 
 i. 'postcodeClean' (column name is user-defined through phjNewPostcodeVarName argument)
 
-This variable will contain the correctly formatted components of the postcode, either the whole postcode or the outward component (first half of postcode). Postcodes that are incorrectly formatted or have been entered as missing values will contain the missing value code (e.g. 'missing').
+   This variable will contain the correctly formatted components of the postcode, either the whole postcode or the outward component (first half of postcode). Postcodes that are incorrectly formatted or have been entered as missing values will contain the missing value code (e.g. 'missing').
 
 ii. 'postcodeFormatCheck' (column name is user-defined through phjPostcodeFormatCheckVarName argument)
 
-This is a binary variable that contains True if a correctly formatted postcode component can be extracted, either the whole postcode or the outward component only. Otherwise, it contains False.
+   This is a binary variable that contains True if a correctly formatted postcode component can be extracted, either the whole postcode or the outward component only. Otherwise, it contains False.
 
 iii. 'postcode7' (column name is user-defined through the phjPostcode7VarName argument)
 
-This variable contains correctly formatted complete postcodes in 7-character format. For postcodes that contain 5 letters, the outward and inward components will be separated by 2 spaces; for postcodes that contain 6 letters, the outward and inward components will be separated by 1 space; and postcodes that contain 7 letters will contain no spaces. This format of postcodes is often used in postcode lookup tables.
+   This variable contains correctly formatted complete postcodes in 7-character format. For postcodes that contain 5 letters, the outward and inward components will be separated by 2 spaces; for postcodes that contain 6 letters, the outward and inward components will be separated by 1 space; and postcodes that contain 7 letters will contain no spaces. This format of postcodes is often used in postcode lookup tables.
 
-v. 'postcodeOutward' (defined as a group name in the regular expression and, therefore, not user-definable)
+iv. 'postcodeOutward' (defined as a group name in the regular expression and, therefore, not user-definable)
 
-This variable contains the outward component of the postcode (first half of postcode). It is possible that this variable may contain a correctly-formatted postcode string (2 to 4 characters) whilst the variable containing the inward postcode string contains the missing vaue code. 
+   This variable contains the outward component of the postcode (first half of postcode). It is possible that this variable may contain a correctly-formatted postcode string (2 to 4 characters) whilst the variable containing the inward postcode string contains the missing vaue code. 
 
-vi. 'postcodeInward' (defined as a group name in the regular expression and, therefore, not user-definable)
+v. 'postcodeInward' (defined as a group name in the regular expression and, therefore, not user-definable)
 
-This variable contains the inward component of the postcode (second half of postcode). It is possible that this variable may contain a missing value whilst the postcodeOutward variable contains a correctly-formatted postcode string (2 to 4 characters).
+   This variable contains the inward component of the postcode (second half of postcode). It is possible that this variable may contain a missing value whilst the postcodeOutward variable contains a correctly-formatted postcode string (2 to 4 characters).
 
-vii. 'phjPostcodeArea' (column name is user-defined through the phjPostcodeAreaVarName argument)
+vi. 'phjPostcodeArea' (column name is user-defined through the phjPostcodeAreaVarName argument)
 
-This variable contains the postcode area (first one or two letters) taken from correctly formatted outward postcode components.
+   This variable contains the postcode area (first one or two letters) taken from correctly formatted outward postcode components.
 
 
 The function proceeds as follows:
@@ -365,43 +383,76 @@ h. The function returns the dataframe containing the additional columns.
 
 
 #### Function parameters
-The function takes the following parameters:
+
+   The function takes the following parameters:
 
 1. **phjTempDF**
-  * Pandas dataframe containing a variable that contains postcode information.
 
-2. **phjOrigPostcodeVarName** (default = 'postcode')
-  * The name of the variable that contains postcode information.
-
-3. **phjNewPostcodeVarName** (default = 'postcodeClean')
-  * The name of the variable that the function creates that will contain 'cleaned' postcode data. The postcodes stored in this column will contain no whitespace. Therefore, A1 2BC will be entered as A12BC. Also, the 'cleaned' postcode may only be the outward component if that is the only corrected formatted data. If the use wants to view only complete postcodes, use phjPostcode7VarName. Strings where no valid postcode data has been extracted will be stored as missing value string.
-
-4. **phjPostcodeFormatCheckVarName** (default = ' postcodeFormatCheck')
-  * A binary variable that the function will create that indicates whether the whole postcode (or, if only 2 to 4 characters are entered, the outward component of the postcode) is correctly formatted.
-
-5. **phjMissingValueCode** (default = 'missing')
-  * String used to indicate a missing value. This can not be np.nan because DataFrame.update() function does not undate NaN values.
+  Pandas dataframe containing a variable that contains postcode information.
   
-6. **phjPostcode7VarName** (default = 'postcode7')
-  * The name of the variable that the function creates that will contain 'cleaned' postcode data in 7-character format. Postcodes can contain 5 to 7 characters. In those postcodes that consist of 5 characters, the outward and inward components will be separated by 2 spaces, in those postcodes that consist of 6 characters, the outward and inward components will be separated by 1 spaces, and in those postcodes that consist of 7 characters there will be no spaces. This format is commonly used in lookup tables that link postcodes to other geographical information.
+2. **phjRealPostcodeSer** (default = None)
 
-7. **phjPostcodeAreaVarName** (default = 'postcodeArea')
-  * The name of the variable that the function creates that will contain the postcode area (the first 1, 2 or, in very rare cases, 3 letters).
+  If the postcodes are to be compared to real postcodes, this variable should refer to a Pandas Series of genuine postcodes.
 
-8. **phjSalvageOutwardPostcodeComponent** (default = True)
-  * Indicates whether user wants to attempt to salvage some outward postcode components from postcode strings.
+3. **phjOrigPostcodeVarName** (default = 'postcode')
+
+  The name of the variable that contains postcode information.
+
+4. **phjNewPostcodeVarName** (default = 'postcodeClean')
+
+  The name of the variable that the function creates that will contain 'cleaned' postcode data. The postcodes stored in this column will contain no whitespace. Therefore, A1 2BC will be entered as A12BC. Also, the 'cleaned' postcode may only be the outward component if that is the only corrected formatted data. If the use wants to view only complete postcodes, use phjPostcode7VarName. Strings where no valid postcode data has been extracted will be stored as missing value string.
+
+5. **phjNewPostcodeStrLenVarName** (default = 'postcodeCleanStrLen')
+
+  Name of the variable that will be created to contain the length of the postcode.
   
-9. **phjDropExisting** (default = False)
-  * If set to True, the function will automatically drop any pre-existing columns that have the same name as those columns that need to be created. If set to False, the function will halt.
+6. **phjPostcodeCheckVarName** (default = 'postcodeCheck')
 
-10. **phjPrintResults** (default = False)
-  * If set to True, the function will print information to screen as it proceeds.
+  A binary variable that the function will create that indicates whether the whole postcode (or, if only 2 to 4 characters are entered, the outward component of the postcode) is either correctly formatted or matches the list of real postcodes supplied, depending on what what requested.
+
+7. **phjMissingValueCode** (default = 'missing')
+
+  String used to indicate a missing value. This can not be np.nan because DataFrame.update() function does not undate NaN values.
+  
+8. **phjMinDamerauLevenshteinDistanceVarName** (default = 'minDamLevDist')
+
+  Name of variable that will be created to contain the DL distance.
+  
+9. **phjBestAlternativesVarName** (default = 'bestAlternatives')
+
+  Name of variable that will be created to contain best (or closest matching) postcodes from the list of real postcodes.
+  
+10. **phjPostcode7VarName** (default = 'postcode7')
+
+  The name of the variable that the function creates that will contain 'cleaned' postcode data in 7-character format. Postcodes can contain 5 to 7 characters. In those postcodes that consist of 5 characters, the outward and inward components will be separated by 2 spaces, in those postcodes that consist of 6 characters, the outward and inward components will be separated by 1 spaces, and in those postcodes that consist of 7 characters there will be no spaces. This format is commonly used in lookup tables that link postcodes to other geographical information.
+
+11. **phjPostcodeAreaVarName** (default = 'postcodeArea')
+
+  The name of the variable that the function creates that will contain the postcode area (the first 1, 2 or, in very rare cases, 3 letters).
+
+12. **phjSalvageOutwardPostcodeComponent** (default = True)
+
+  Indicates whether user wants to attempt to salvage some outward postcode components from postcode strings.
+  
+13. **phjCheckByOption** (default = 'format')
+
+  Select method to use to check postcodes. The default is 'format' and checks the format of the postcode using a regular expression. The alternative is 'dl' which calculates the Damarau-Levenshtein distance from each postcode in the list of supplied postcodes and chooses the closest matches based on the DL distance and the disctance of inserted or trasposed characters based on physical distance on a standard QWERTY keyboard.
+  
+14. **phjDropExisting** (default = False)
+
+  If set to True, the function will automatically drop any pre-existing columns that have the same name as those columns that need to be created. If set to False, the function will halt.
+
+15. **phjPrintResults** (default = False)
+
+  If set to True, the function will print information to screen as it proceeds.
 
 #### Exceptions raised
-None
+
+  None
 
 #### Returns
-By default, function returns the original dataframe with added columns containing postcode data.
+
+  By default, function returns the original dataframe with added columns containing postcode data.
 
 #### Other notes
 None
@@ -452,13 +503,18 @@ print(myTestPostcodeDF)
 print('\n')
 
 myTestPostcodeDF = phjCleanUKPostcodeVariable(phjTempDF = myTestPostcodeDF,
+                                              phjRealPostcodeSer = None,
                                               phjOrigPostcodeVarName = 'postcode',
                                               phjNewPostcodeVarName = 'pcdClean',
-                                              phjPostcodeFormatCheckVarName = 'pcdFormatCheck',
+                                              phjNewPostcodeStrLenVarName = 'pcdCleanStrLen',
+                                              phjPostcodeCheckVarName = 'pcdFormatCheck',
                                               phjMissingValueCode = 'missing',
+                                              phjMinDamerauLevenshteinDistanceVarName = 'minDamLevDist',
+                                              phjBestAlternativesVarName = 'bestAlternatives',
                                               phjPostcode7VarName = 'pcd7',
                                               phjPostcodeAreaVarName = 'pcdArea',
                                               phjSalvageOutwardPostcodeComponent = True,
+                                              phjCheckByOption = 'format',
                                               phjDropExisting = True,
                                               phjPrintResults = True)
 
@@ -610,14 +666,16 @@ df = epy.phjSelectCaseControlDataset(phjCasesDF,
 ```
 
 Python function to randomly select matched or unmatched case-control data.
+
 #### Description
-This function selects case-control datasets from the SAVSNET database. It receives, as parameters, two Pandas dataframes, one containing known cases and, the other, potential controls. The algorithm steps through each case in turn and selects the relevant number of control subjects from the second dataframe, matching on the list of variables. The function then adds the details of the case and the selected controls to a separate, pre-defined dataframe before moving onto the next case.
 
-Initially, the phjSelectCaseControlDataset() function calls phjParameterCheck() to check that passed parameters meet specified criteria (e.g. ensure lists are lists and ints are ints etc.). If all requirements are met, phjParameterCheck() returns True and phjSelectCaseControlDataset() continues.
+  This function selects case-control datasets from the SAVSNET database. It receives, as parameters, two Pandas dataframes, one containing known cases and, the other, potential controls. The algorithm steps through each case in turn and selects the relevant number of control subjects from the second dataframe, matching on the list of variables. The function then adds the details of the case and the selected controls to a separate, pre-defined dataframe before moving onto the next case.
 
-The function requires a parameter called phjMatchingVariablesList. If this parameter is None (the default), an unmatched case-control dataset is produced. If, however, the parameter is a list of variable names, the function will return a dataset where controls have been matched on the variables in the list.
+  Initially, the phjSelectCaseControlDataset() function calls phjParameterCheck() to check that passed parameters meet specified criteria (e.g. ensure lists are lists and ints are ints etc.). If all requirements are met, phjParameterCheck() returns True and phjSelectCaseControlDataset() continues.
 
-The phjSelectCaseControlDataset() function proceeds as follows:
+  The function requires a parameter called phjMatchingVariablesList. If this parameter is None (the default), an unmatched case-control dataset is produced. If, however, the parameter is a list of variable names, the function will return a dataset where controls have been matched on the variables in the list.
+
+  The phjSelectCaseControlDataset() function proceeds as follows:
 
 1. Creates an empty dataframe in which selected cases and controls will be stored.
 2. Steps through each case in the phjCasesDF dataframe, one at a time.
@@ -629,32 +687,48 @@ The phjSelectCaseControlDataset() function proceeds as follows:
 8. Returns Pandas dataframe containing list of cases and controls. This dataframe only contains columns for unique identifier, case and group id. It will, therefore need to be merged with the full database to get and additional required columns.
 
 #### Function parameters
-The function takes the following parameters:
+
+  The function takes the following parameters:
 
 1. **phjCasesDF**
-  * Pandas dataframe containing list of cases.
+
+  Pandas dataframe containing list of cases.
+  
 2. **phjPotentialControlsDF**
-  * Pandas dataframe containing a list of potential control cases.
+
+  Pandas dataframe containing a list of potential control cases.
+  
 3. **phjUniqueIdentifierVarName**
-  * Name of variable that acts as a unique identifier (e.g. consulations ID number would be a good example). N.B. In some cases, the consultation number is not unique but has been entered several times in the database, sometimes in very quick succession (ms). Data must be cleaned to ensure that the unique identifier variable is, indeed, unique.
-4. **phjMatchingVariablesList** (Default = None.)
-  * List of variable names for which the cases and controls should be matched. Must be a list. The default is None. If 
-5. **phjControlsPerCaseInt** (Default = 1.)
-  * Number of controls that should be selected per case.
-6. **phjPrintResults** (Default= False.)
-  * Print verbose output during execution of scripts. If running on Jupyter-Notebook, setting PrintResults = True causes a lot a output and can cause problems connecting to kernel.
+
+  Name of variable that acts as a unique identifier (e.g. consulations ID number would be a good example). N.B. In some cases, the consultation number is not unique but has been entered several times in the database, sometimes in very quick succession (ms). Data must be cleaned to ensure that the unique identifier variable is, indeed, unique.
+  
+4. **phjMatchingVariablesList** (Default = None)
+
+  List of variable names for which the cases and controls should be matched. Must be a list. The default is None.
+  
+5. **phjControlsPerCaseInt** (Default = 1)
+
+  Number of controls that should be selected per case.
+  
+6. **phjPrintResults** (Default= False)
+
+  Print verbose output during execution of scripts. If running on Jupyter-Notebook, setting PrintResults = True causes a lot a output and can cause problems connecting to kernel.
 
 #### Exceptions raised
-None
+
+  None
 
 #### Returns
-Pandas dataframe containing a column containing the unique identifier variable, a column containing case/control identifier and – for matched case-control studies – a column containing a group identifier. The returned dataframe will need to be left-joined with another dataframe that contains additional required variables.
+
+  Pandas dataframe containing a column containing the unique identifier variable, a column containing case/control identifier and – for matched case-control studies – a column containing a group identifier. The returned dataframe will need to be left-joined with another dataframe that contains additional required variables.
 
 #### Other notes
-Setting phjPrintResults = True can cause problems when running script on Jupyiter-Notebook.
+
+  Setting phjPrintResults = True can cause problems when running script on Jupyiter-Notebook.
 
 #### Example
-An example of the function in use is given below:
+
+  An example of the function in use is given below:
 
 ```python
 import pandas as pd
@@ -807,13 +881,13 @@ df = phjCalculateMultinomialProportions(phjTempDF,
 
 #### Description
 
-The above two functions – ``` phjCalculateBinomialProportions() and phjCalculateMultinomialProportions() ``` – are closely related and will be discussed and described together.
+  The above two functions – ``` phjCalculateBinomialProportions() and phjCalculateMultinomialProportions() ``` – are closely related and will be discussed and described together.
 
-The functions can be used to rapidly summarise and visualise two common-encountered (at least, in my research) types of the data. The first summarises data which consists of rows of data (representing individuals) and a series of binomial (dummy-esque) variables indicating whether a characteristic is present or absent (see below). The categories are not necessarily mutually exclusive and each variable is considered as an individual characteristic. The confidence intervals for each category are calculated as individual binomial intervals (using StatsModels functions).
+  The functions can be used to rapidly summarise and visualise two common-encountered (at least, in my research) types of the data. The first summarises data which consists of rows of data (representing individuals) and a series of binomial (dummy-esque) variables indicating whether a characteristic is present or absent (see below). The categories are not necessarily mutually exclusive and each variable is considered as an individual characteristic. The confidence intervals for each category are calculated as individual binomial intervals (using StatsModels functions).
 
-The second data structure consists of rows of data (representing individuals) and a single variable which contains numerous categories. In this case, all the categories are mutually exclusive. The proportions (or relative frequencies) are calculated for each category level and the confidence intervals are calculated as multinomial intervals (using StatsModels functions).
+  The second data structure consists of rows of data (representing individuals) and a single variable which contains numerous categories. In this case, all the categories are mutually exclusive. The proportions (or relative frequencies) are calculated for each category level and the confidence intervals are calculated as multinomial intervals (using StatsModels functions).
 
-The series of binomial data might take the form shown on the left whilst the multinomial dataset might take the form shown on the right below:
+  The series of binomial data might take the form shown on the left whilst the multinomial dataset might take the form shown on the right below:
 
 ```
 Binomial data structure                                   Multinomial data structure
@@ -850,9 +924,9 @@ Binomial data structure                                   Multinomial data struc
 
 ```
 
-In both datasets, missing values can be entered either as np.nan or as a missing value string such as 'missing' which is then defined when the function is called.
+  In both datasets, missing values can be entered either as np.nan or as a missing value string such as 'missing' which is then defined when the function is called.
 
-These example datasets can be produced using the following Python code:
+  These example datasets can be produced using the following Python code:
 
 ```python
 import numpy as np
@@ -869,7 +943,7 @@ multinomDataDF = pd.DataFrame({'id':[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,1
                                'category':[np.nan,'spaniel','missing','terrier','collie','labrador','labrador','collie','spaniel','spaniel','labrador','collie','terrier','terrier','terrier','collie','labrador','labrador','labrador','spaniel','spaniel','collie','collie','collie','terrier','spaniel']})
 ```
 
-The output summary tables in each case would be very similar:
+  The output summary tables in each case would be very similar:
 ```
     Summary table for multinomial proportions
     
@@ -906,9 +980,9 @@ The output summary tables in each case would be very similar:
       The 'prop' columns give the proportion of successes.
 ```
 
-The confidence intervals (either binomial or multinomial) are added to the table as separate columns containing lower and upper limits.
+  The confidence intervals (either binomial or multinomial) are added to the table as separate columns containing lower and upper limits.
 
-And the data would be plotted in a similar fashion (although the method used to calculate the error bars would be different).
+  And the data would be plotted in a similar fashion (although the method used to calculate the error bars would be different).
 ```
      R  |           |-|                                 |           |-|             
      e  |           |/|-|                               |           |/|-|           |/| case
@@ -924,7 +998,7 @@ And the data would be plotted in a similar fashion (although the method used to 
 
 #### Function parameters
 
-The phjCalculateBinomialProportions() function takes the following parameters:
+  The phjCalculateBinomialProportions() function takes the following parameters:
 
 1. **phjTempDF**
 
@@ -964,7 +1038,7 @@ The phjCalculateBinomialProportions() function takes the following parameters:
 
 
 
-The phjCalculateMultinomialProportions() function takes the following parameters:
+  The phjCalculateMultinomialProportions() function takes the following parameters:
 
 1. **phjTempDF**
 
@@ -1000,18 +1074,20 @@ The phjCalculateMultinomialProportions() function takes the following parameters
 
 
 #### Exceptions raised
-None
+
+  None
 
 #### Returns
-Pandas dataframe containing a table of proportions and confidence intervals.
+
+  Pandas dataframe containing a table of proportions and confidence intervals.
 
 #### Other notes
-None
+
+  None
 
 #### Example
-An example of the function in use is given below:
 
-
+  An example of the function in use is given below:
 
 ---
 ### 9. phjOddsRatio()
@@ -1025,37 +1101,48 @@ df = phjOddsRatio(phjTempDF,
 ```
 
 #### Description
-This function can be used to calculate odds ratios and 95% confidence intervals for case-control studies. The function is passed a Pandas dataframe containing the data together with the name of the 'case' variable and the name of the potential risk factor variable. The function returns a Pandas dataframe based on a 2 x 2 or n x 2 contingency table together with columns containing the odds, odds ratios and 95% confidence intervals (Woolf). Rows that contain a missing value in either the case variable or the risk factor variable are removed before calculations are made.
+
+  This function can be used to calculate odds ratios and 95% confidence intervals for case-control studies. The function is passed a Pandas dataframe containing the data together with the name of the 'case' variable and the name of the potential risk factor variable. The function returns a Pandas dataframe based on a 2 x 2 or n x 2 contingency table together with columns containing the odds, odds ratios and 95% confidence intervals (Woolf). Rows that contain a missing value in either the case variable or the risk factor variable are removed before calculations are made.
 
 #### Function parameters
-The function takes the following parameters:
+
+  The function takes the following parameters:
 
 1. **phjTempDF**
-  * This is a Pandas dataframe that contains the data to be analysed. One of the columns should be a variable that indicates whether the row is a case or a control.
+
+  This is a Pandas dataframe that contains the data to be analysed. One of the columns should be a variable that indicates whether the row is a case or a control.
 
 2. **phjCaseVarName**
-  * Name of the variable that indicates whether the row is a case or a control.
+
+  Name of the variable that indicates whether the row is a case or a control.
 
 3. **phjCaseValue**
-  * The value used in phjCaseVarName variable to indicate a case (e.g. True, yes, 1, etc.)
+
+  The value used in phjCaseVarName variable to indicate a case (e.g. True, yes, 1, etc.)
 
 4. **phjRiskFactorVarName**
-  * The name of the potential risk factor to be analysed. This needs to be a categorical variable.
+
+  The name of the potential risk factor to be analysed. This needs to be a categorical variable.
 
 5. **phjRiskFactorBaseValue**
-  * The level or stratum of the potential risk factor that will be used as the base level in the calculation of odds ratios.
+
+  The level or stratum of the potential risk factor that will be used as the base level in the calculation of odds ratios.
 
 #### Exceptions raised
-None
+
+  None.
 
 #### Returns
-Pandas dataframe containing a cross-tabulation of the case and risk factor varible. In addition, odds, odds ratios and 95% confidence interval (Woolf) of the odds ratio is presented.
+
+  Pandas dataframe containing a cross-tabulation of the case and risk factor varible. In addition, odds, odds ratios and 95% confidence interval (Woolf) of the odds ratio is presented.
 
 #### Other notes
-None
+
+  None.
 
 #### Example
-An example of the function in use is given below:
+
+  An example of the function in use is given below:
 
 ```python
 import pandas as pd
@@ -1102,37 +1189,43 @@ df = phjRelativeRisk(phjTempDF,
 ```
 
 #### Description
-This function can be used to calculate relative risk (risk ratios) and 95% confidence intervals for cross-sectional and longitudinal (cohort) studies. The function is passed a Pandas dataframe containing the data together with the name of the 'case' variable and the name of the potential risk factor variable. The function returns a Pandas dataframe based on a 2 x 2 or n x 2 contingency table together with columns containing the risk, risk ratios and 95% confidence intervals. Rows that contain a missing value in either the case variable or the risk factor variable are removed before calculations are made.
+
+  This function can be used to calculate relative risk (risk ratios) and 95% confidence intervals for cross-sectional and longitudinal (cohort) studies. The function is passed a Pandas dataframe containing the data together with the name of the 'case' variable and the name of the potential risk factor variable. The function returns a Pandas dataframe based on a 2 x 2 or n x 2 contingency table together with columns containing the risk, risk ratios and 95% confidence intervals. Rows that contain a missing value in either the case variable or the risk factor variable are removed before calculations are made.
 
 #### Function parameters
-The function takes the following parameters:
+
+  The function takes the following parameters:
 
 1. **phjTempDF**
-  * This is a Pandas dataframe that contains the data to be analysed. One of the columns should be a variable that indicates whether the row has disease (diseased) or not (healthy).
+  This is a Pandas dataframe that contains the data to be analysed. One of the columns should be a variable that indicates whether the row has disease (diseased) or not (healthy).
 
 2. **phjCaseVarName**
-  * Name of the variable that indicates whether the row has disease or is healthy.
+  Name of the variable that indicates whether the row has disease or is healthy.
 
 3. **phjCaseValue**
-  * The value used in phjCaseVarName variable to indicate disease (e.g. True, yes, 1, etc.)
+  The value used in phjCaseVarName variable to indicate disease (e.g. True, yes, 1, etc.)
 
 4. **phjRiskFactorVarName**
-  * The name of the potential risk factor to be analysed. This needs to be a categorical variable.
+  The name of the potential risk factor to be analysed. This needs to be a categorical variable.
 
 5. **phjRiskFactorBaseValue**
-  * The level or stratum of the potential risk factor that will be used as the base level in the calculation of odds ratios.
+  The level or stratum of the potential risk factor that will be used as the base level in the calculation of odds ratios.
 
 #### Exceptions raised
-None
+
+  None
 
 #### Returns
-Pandas dataframe containing a cross-tabulation of the disease status and risk factor varible. In addition, risk, relative risk and 95% confidence interval of the relative risk is presented.
+
+  Pandas dataframe containing a cross-tabulation of the disease status and risk factor varible. In addition, risk, relative risk and 95% confidence interval of the relative risk is presented.
 
 #### Other notes
-None
+
+  None
 
 #### Example
-An example of the function in use is given below:
+
+  An example of the function in use is given below:
 
 ```python
 import pandas as pd
