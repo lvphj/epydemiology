@@ -44,7 +44,7 @@ try:
     pkg_resources.get_distribution('pymysql')
 except pkg_resources.DistributionNotFound:
     phjPymysqlPresent = False
-    print("Error: PyMySQL package not available.")
+    print("Error: PyMySQL package not available. Some features may not be available.")
 else:
     phjPymysqlPresent = True
     import pymysql
@@ -54,7 +54,7 @@ try:
     pkg_resources.get_distribution('pymssql')
 except pkg_resources.DistributionNotFound:
     phjPymssqlPresent = False
-    print("Error: PyMSSQL package not available.")
+    print("Error: PyMSSQL package not available. Some features may not be available.")
 else:
     phjPymssqlPresent = True
     import pymssql
