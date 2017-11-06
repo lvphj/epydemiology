@@ -8,58 +8,58 @@ pip install epydemiology as epy
 ## B. Usage
 
 The following functions are available:
-1. To load data from a named Excel cell range into a Pandas dataframe
+**1. To load data from a named Excel cell range into a Pandas dataframe**
 
 ```python
 myDF = epy.phjReadDataFromExcelNamedCellRange()
 ```
 
-2. To load data from a MySQL or SQL SERVER database into a Pandas dataframe
+**2. To load data from a MySQL or SQL SERVER database into a Pandas dataframe**
 
 ```python
 myDF = epy.phjGetDataFromDatabase()
 ```
 
-3. To load text from a text file (e.g. a SQL query or regular expression) into a Python variable as a single string
+**3. To load text from a text file (e.g. a SQL query or regular expression) into a Python variable as a single string**
 
 ```python
 myString = phjReadTextFromFile()
 ```
 
-4. To convert columns of binary data to a square matrix containing co-occurrences
+**4. To convert columns of binary data to a square matrix containing co-occurrences**
 
 ```python
 myArr = epy.phjBinaryVarsToSquareMatrix()
 ```
 
-5. To clean a column of UK postcodes in a Pandas dataframe
+**5. To clean a column of UK postcodes in a Pandas dataframe**
 
 ```python
 myDF = epy.phjCleanUKPostcodeVariable()
 ```
 
-6. To select matched or unmatced case-control data (without replacement) from Pandas dataframes
+**6. To select matched or unmatced case-control data (without replacement) from Pandas dataframes**
 
 ```python
 myDF = epy.phjSelectCaseControlDataset()
 ```
-7. To calculate and plot a series of binomial proportions
+**7. To calculate and plot a series of binomial proportions**
 
 ```python
 myDF = epy.phjCalculateBinomialProportions()
 ```
-8. To calculate and plot multinomial proportions
+**8. To calculate and plot multinomial proportions**
 
 ```python
 myDF = epy.phjCalculateMultinomialProportions()
 ```
 
-9. To calculate odds and odds ratios for case-control studies for data stored in Pandas dataframe
+**9. To calculate odds and odds ratios for case-control studies for data stored in Pandas dataframe**
 
 ```python
 myDF = epy.phjOddsRatio()
 ```
-10. To calculate relative risks for cross-sectional or longitudinal studies for data stored in Pandas dataframe
+**10. To calculate relative risks for cross-sectional or longitudinal studies for data stored in Pandas dataframe**
 
 ```python
 myDF = epy.phjRelativeRisk()
@@ -80,10 +80,25 @@ df = phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = None,
 Python function to read data from a named cell range in an Excel workbook.
 
 #### Description
-
+This function can be used to import data from a named range in a Microsoft Excel workbook. The function receives the full path and filename of the Excel document, together with the name of the named cell range of interest, and returns the data as a Pandas dataframe.
 
 #### Function parameters
+**phjExcelPathAndFilename**
+The full path and filename of the Microsoft Excel workbook.
 
+**phjExcelCellRangeName**
+The name of the cell range of interest. It is import to ensure that the name range only occurs once in the workbook.
+
+**phjDatetimeFormat** (default = "%Y-%m-%d %H:%M:%S")
+The datatime format that will be used to interpret columns containing date (and time) data.
+
+**phjMissingValue** (default = "missing")
+A string or code that is used to indicate a missing value.
+
+**phjHeaderRow** (default = False)
+
+
+**phjPrintResults** (default = False)
 
 
 #### Exceptions raised
