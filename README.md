@@ -125,6 +125,7 @@ None.
 An example of the function in use is given below. An Excel workbook named 'myWorkbook.xlsx' is stored on the Desktop. The workbook contains several individual worksheets, one of which contains a named cell range called 'myCellRange', the first row of which contains the names of the columns. The data can be imported into a Pandas dataframe using:
 
 ```python
+# The following libraries are imported automatically but are incuded here for completeness.
 import numpy as np
 import pandas as pd
 import epydemiology as epy
@@ -142,17 +143,25 @@ myTempDF = epy.phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = '/Us
 ### 2. phjGetDataFromDatabase()
 
 ```python
-df = epy.phjGetDataFromDatabase(phjQueryPathAndFileName = None,
-                                phjPrintResults = False)
+df = phjGetDataFromDatabase(phjQueryPathAndFileName = None,
+                            phjPrintResults = False)
 ```
 
 Python function to read data from a MySQL or SQL SERVER database.
 
 #### Description
 
+The function is used to query MySQL or SQL SERVER databases using an SQL file that is stored as a text file. As the function runs, the user is prompted to enter all other required parameters include server address, username and password details.
 
 #### Function parameters
 
+1. **phjQueryPathAndFilename**
+
+   The full path and filename of the SQL text file containing the SQL query.
+   
+2. ** phjPrintResults** (default = False)
+
+   Print the imported results.
 
 
 #### Exceptions raised
@@ -165,13 +174,18 @@ Pandas dataframe containing data read from database.
 None.
 
 #### Example
-An example of the function in use is given below:
+An example of the function in use is given below. If the SQL query to be used to query a SQL SERVER database is saved as a text file named 'theSQLQueryFile.mssql' on the Desktop, the function can be used to import returned data using:
 
 ```python
-Under construction.
+# The following libraries are imported automatically but are incuded here for completeness.
+import numpy as np
+import pandas as pd
+import epydemiology as epy
+import pymssql
+
+myTempDF = epy.phjQueryPathAndFilename(phjQueryPathAndFile = '/Users/username/Desktop/theSQLQueryFile.mssql',
+                                       phjPrintResults = True)
 ```
-
-
 
 ### 3. phjReadTextFromFile()
 
