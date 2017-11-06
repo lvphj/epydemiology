@@ -6,3 +6,5 @@ from .phjGetDBData import phjGetDataFromDatabase
 from .phjGetDBData import phjReadTextFromFile
 from .phjMatrices import phjBinaryVarsToSquareMatrix
 from .phjCleanUKPostcodes import phjCleanUKPostcodeVariable
+from .phjCalculateProportions import phjCalculateBinomialProportions
+from .phjCalculateProportions import phjCalculateMultinomialProportions
