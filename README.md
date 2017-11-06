@@ -8,6 +8,7 @@ pip install epydemiology as epy
 ## B. Usage
 
 The following functions are available:
+
 **1. To load data from a named Excel cell range into a Pandas dataframe**
 
 ```python
