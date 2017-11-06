@@ -139,7 +139,7 @@ myTempDF = epy.phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = '/Us
                                                   phjPrintResults = False)
 
 ```
-
+---
 ### 2. phjGetDataFromDatabase()
 
 ```python
@@ -191,7 +191,7 @@ import epydemiology as epy
 myTempDF = epy.phjQueryPathAndFilename(phjQueryPathAndFile = '/Users/username/Desktop/theSQLQueryFile.mssql',
                                        phjPrintResults = True)
 ```
-
+---
 ### 3. phjReadTextFromFile()
 
 ```python
@@ -231,7 +231,7 @@ myStr = phjReadTextFromFile(phjFilePathAndName = '/Users/username/Desktop/myText
 
 
 ```
-
+---
 ### 4. phjBinaryVarsToSquareMatrix()
 
 ```python
@@ -304,8 +304,7 @@ Output:
  [0 2 1 0 1]
  [0 1 1 1 0]]
 ```
-
-
+---
 ### 5. phjCleanUKPostcodeVariable()
 
 ```python
@@ -654,8 +653,7 @@ Returned dataframe
 20  NP4 5DG             NP4            5DG      NP
 
 ```
-
-
+---
 ### 6. phjSelectCaseControlDataset()
 
 ```python
@@ -1179,9 +1177,7 @@ b      2  2 1.000 1.333  [0.1132, 15.7047]
 c      2  3 0.667 0.889   [0.0862, 9.1622]
 d      1  3 0.333 0.444   [0.0295, 6.7031]
 ```
-
 ---
-
 ### 10. phjRelativeRisk()
 
 ```python
@@ -1268,3 +1264,4 @@ b      2  2 0.500 1.167  [0.3177, 4.2844]
 c      2  3 0.400 0.933  [0.2365, 3.6828]
 d      1  3 0.250 0.583  [0.0872, 3.9031]
 ```
+---
