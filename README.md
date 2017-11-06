@@ -85,36 +85,51 @@ This function can be used to import data from a named range in a Microsoft Excel
 
 #### Function parameters
 1. **phjExcelPathAndFilename**
+
 The full path and filename of the Microsoft Excel workbook.
 
 2. **phjExcelCellRangeName**
+
 The name of the cell range of interest. It is import to ensure that the name range only occurs once in the workbook.
 
 3. **phjDatetimeFormat** (default = "%Y-%m-%d %H:%M:%S")
+
 The datatime format that will be used to interpret columns containing date (and time) data.
 
 4. **phjMissingValue** (default = "missing")
+
 A string or code that is used to replace empty cells.
 
 5. **phjHeaderRow** (default = False)
+
 Indicates whether the cell range has a header row. If so, the values in the first row of the cell range are used as the headings of the dataframe columns; otherwise, the columns are given default, generic names.
 
 6. **phjPrintResults** (default = False)
+
 Print the imported results.
 
 #### Exceptions raised
+
 None
 
 #### Returns
+
 Pandas dataframe containing data read from named cell range.
 
 #### Other notes
+
 None.
 
 #### Example
+
 An example of the function in use is given below. An Excel workbook named 'myWorkbook.xlsx' is stored on the Desktop. The workbook contains several individual worksheets, one of which contains a named cell range called 'myCellRange', the first row of which contains the names of the columns. The data can be imported into a Pandas dataframe using:
 
 ```python
+import numpy as np
+import pandas as pd
+import epydemiology as epy
+import openpyxl
+
 myTempDF = epy.phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = '/Users/username/Desktop/myWorkbook.xlsx',
                                                   phjExcelCellRangeName = 'myCellRange',
                                                   phjDatetimeFormat = "%Y-%m-%d %H:%M:%S",
