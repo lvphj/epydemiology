@@ -151,7 +151,7 @@ Python function to read data from a MySQL or SQL SERVER database.
 
 #### Description
 
-The function is used to query MySQL or SQL SERVER databases using an SQL file that is stored as a text file. As the function runs, the user is prompted to enter all other required parameters include server address, username and password details. A maximum of three attempts allowed to enter correct login information.
+The function is used to query MySQL or SQL SERVER databases using an SQL query that is stored as a text file. As the function runs, the user will be prompted to enter all other required parameters including server address, username and password details. A maximum of three attempts allowed to enter correct login information. The password is entered and remains securely obscured on-screen.
 
 #### Function parameters
 
