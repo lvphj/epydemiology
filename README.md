@@ -1059,6 +1059,7 @@ The phjCalculateBinomialProportions() function takes the following parameters:
    Indicates whehter the results should be printed to screed as the function progresses.
 
 
+
 **phjCalculateMultinomialProportions() function**
 
 The phjCalculateMultinomialProportions() function takes the following parameters:
@@ -1116,7 +1117,7 @@ None
 
 #### Returns
 
-Pandas dataframe containing a table of proportions and confidence intervals.
+These functions both return Pandas dataframes containing a table of proportions and confidence intervals.
 
 #### Other notes
 
