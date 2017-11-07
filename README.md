@@ -1000,6 +1000,8 @@ And the data would be plotted in a similar fashion (although the method used to 
 
 #### Function parameters
 
+**phjCalculateBinomialProportions() function**
+
 The phjCalculateBinomialProportions() function takes the following parameters:
 
 1. **phjTempDF**
@@ -1057,31 +1059,33 @@ The phjCalculateBinomialProportions() function takes the following parameters:
    Indicates whehter the results should be printed to screed as the function progresses.
 
 
+**phjCalculateMultinomialProportions() function**
 
 The phjCalculateMultinomialProportions() function takes the following parameters:
 
 1. **phjTempDF**
 
+   The Pandas dataframe containing the data to be analysed. The dataframe does not need to be sliced before use because the data columns that need to be used are defined in the function arguments.
 
 2. **phjCategoryVarName = None**
 
 
-3. **phjCategoriesToPlotList = 'all'**
+3. **phjGroupVarName = None**
 
 
-4. **phjGroupVarName = None**
+4. **phjMissingValue = 'missing'**
 
 
-5. **phjMissingValue = 'missing'**
+5. **phjMultinomialConfIntMethod = 'goodman'**
 
 
-6. **phjMultinomialConfIntMethod = 'goodman'**
+6. **phjAlpha = 0.05**
 
 
-7. **phjAlpha = 0.05**
+7. **phjPlotRelFreq = True**
 
 
-8. **phjPlotRelFreq = True**
+8. **phjCategoriesToPlotList = 'all'**
 
 
 9. **phjGroupsToPlotList = 'all'**
