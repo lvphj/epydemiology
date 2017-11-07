@@ -1024,25 +1024,37 @@ The phjCalculateBinomialProportions() function takes the following parameters:
 
 6. **phjBinomialConfIntMethod = 'normal'**
 
-   This argument defines the method to be used to calculate the binomial confidence intervals. The options available are those that can be handled by the statsmodel.proporotions() method. The default is 'normal' but os
+   This argument defines the method to be used to calculate the binomial confidence intervals. The options available are those that can be handled by the statsmodel.proporotions() method. The default is 'normal' but the full list of options (taken from the statsmodels website) are:
+   1. `normal` : asymptotic normal approximation
+   2. `agresti_coull` : Agresti-Coull interval
+   3. `beta` : Clopper-Pearson interval based on Beta distribution
+   4. `wilson` : Wilson Score interval
+   5. `jeffreys` : Jeffreys Bayesian Interval
+   6. `binom_test` : experimental, inversion of binom_test
 
 7. **phjAlpha = 0.05**
 
+   The desired value for alpha; the default is 0.05 (which leads to the calculation of 95% confidence intervals.
 
 8. **phjPlotProportions = True**
 
+   Determines whether a bar chart (with errors bars) is plotted.
 
 9. **phjGroupsToPlotList = 'all'**
 
+   The data may be calculated for numerous groups but it may not be desired for the plot to display all groups. This argument is a list of groups which should be displayed in the plot.
 
 10. **phjSortProportions = False**
 
+   If only a single group is plotted, this argument indicates whether the columns should be sorted. Default is 'False' but other options are 'asc' or desc'.
 
 11. **phjGraphTitle = None**
 
+   The title of the graph.
 
 12. **phjPrintResults = False**
 
+   Indicates whehter the results should be printed to screed as the function progresses.
 
 
 
