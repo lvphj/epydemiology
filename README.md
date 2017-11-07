@@ -883,7 +883,7 @@ df = phjCalculateMultinomialProportions(phjTempDF,
 
 The above two functions – ``` phjCalculateBinomialProportions() and phjCalculateMultinomialProportions() ``` – are closely related and will be discussed and described together.
 
-The functions can be used to rapidly summarise and visualise two common-encountered (at least, in my research) types of the data. The first summarises data which consists of rows of data (representing individuals) and a series of binomial (dummy-esque) variables indicating whether a characteristic is present or absent (see below). The categories are not necessarily mutually exclusive and each variable is considered as an individual characteristic. The confidence intervals for each category are calculated as individual binomial intervals (using StatsModels functions).
+The functions can be used to rapidly summarise and visualise two common-encountered (at least, in my research) types of data. The first summarises data which consists of rows of records (representing individuals) and a series of binomial (dummy-esque) variables indicating whether a characteristic is present or absent (see below). These are not true dummy variables because categories are not necessarily mutually exclusive and each variable is considered as an individual characteristic. The confidence intervals for each category are calculated as individual binomial intervals (using StatsModels functions).
 
 The second data structure consists of rows of data (representing individuals) and a single variable which contains numerous categories. In this case, all the categories are mutually exclusive. The proportions (or relative frequencies) are calculated for each category level and the confidence intervals are calculated as multinomial intervals (using StatsModels functions).
 
@@ -1004,21 +1004,27 @@ The phjCalculateBinomialProportions() function takes the following parameters:
 
 1. **phjTempDF**
 
+   The Pandas dataframe containing the data to be analysed. The dataframe does not need to be sliced before use because the data columns that need to be used are defined in the function arguments.
 
 2. **phjColumnsList = None**
 
+   A list of the columns that need to be analyses. Each of these columns should be binary variables and should contain only binary data. Missing values (either in the form of a specified missing value or a np.nan value will be removed before analysis).
 
 3. **phjSuccess = 'yes'**
 
+   The text string or value that is used to indicate a positive value or a 'success'. The default assumes that data will be coded as 'yes' or 'no'.
 
 4. **phjGroupVarName = None**
 
+   It is likely that some analysis will need to summarise data over two distinct categories (e.g. 'case' and 'control' data may be summarised separately). This varialble should contain the column heading for the variable that defines group membership. The default is None. If phjGroupVarName is None, the whole dataset is analysed as a single group.
 
 5. **phjMissingValue = 'missing'**
 
+   The text string or value that indicates a success.
 
 6. **phjBinomialConfIntMethod = 'normal'**
 
+   This argument defines the method to be used to calculate the binomial confidence intervals. The options available are those that can be handled by the statsmodel.proporotions() method. The default is 'normal' but os
 
 7. **phjAlpha = 0.05**
 
