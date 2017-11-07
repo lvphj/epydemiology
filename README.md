@@ -367,7 +367,7 @@ The function takes, as two of its arguments, a Pandas dataframe containing a col
    This variable contains the postcode area (first one or two letters) taken from correctly formatted outward postcode components.
 
 
-The function proceeds as follows:
+If postcodes are checked using a regex, the functions proceeds as follows:
 
 1. Postcodes data is cleaned by removing all spaces and punctuation marks and converting all letters to uppercase. Missing values and strings that cannot possibly be a postcode (e.g. all numeric data) are converted to the missing value code. The cleaned strings are stored temporarily in the postcodeClean variable.
 
@@ -385,6 +385,7 @@ The function proceeds as follows:
 
 8. The function returns the dataframe containing the additional columns.
 
+If postcodes are checked against a list of correct postcodes, the functions proceeds in a similar way except incorrect postcodes are compared with correct postcodes using the Damarau-Levenshtein distance, weighted bfor the physical distance of inserted or transponsed character on a standard QWERTY keyboard.
 
 #### Function parameters
 
