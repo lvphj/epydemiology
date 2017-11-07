@@ -334,35 +334,35 @@ In many situations, postcodes are added to a database field to record people's a
 
 This function uses one of two methods to extract postcode information:
 
-  1. checking the postcode is correctly 'formatted' using a regex;
+1. checking the postcode is correctly 'formatted' using a regex;
   
-  2. comparing the postcode to a database of all known postcodes and, if the postcode does not exist, determining the most likely alternatives based on Damerau-Levenshtein distance and on the physical position of inserted or transposed characters on the keyboard.
+2. comparing the postcode to a database of all known postcodes and, if the postcode does not exist, determining the most likely alternatives based on Damerau-Levenshtein distance and on the physical position of inserted or transposed characters on the keyboard.
 
 The regex used to determine whether postcodes are correctly formatted is a modified version of a regex published at https://en.wikipedia.org/wiki/Talk:Postcodes_in_the_United_Kingdom (accessed 22 Mar 2016). (This page is also stored locally as a PDF entitled, "Talk/Postcodes in the United Kingdom - Wikipedia, the free encyclopedia".)
 
 The function takes, as two of its arguments, a Pandas dataframe containing a column of postcode data, and the name of that postcode column. It returns the same dataframe with some additional, postcode-related columns. The additional columns returned are:
 
-  1. 'postcodeClean' (column name is user-defined through phjNewPostcodeVarName argument)
+1. 'postcodeClean' (column name is user-defined through phjNewPostcodeVarName argument)
 
    This variable will contain the correctly formatted components of the postcode, either the whole postcode or the outward component (first half of postcode). Postcodes that are incorrectly formatted or have been entered as missing values will contain the missing value code (e.g. 'missing').
 
-  2. 'postcodeFormatCheck' (column name is user-defined through phjPostcodeFormatCheckVarName argument)
+2. 'postcodeFormatCheck' (column name is user-defined through phjPostcodeFormatCheckVarName argument)
 
    This is a binary variable that contains True if a correctly formatted postcode component can be extracted, either the whole postcode or the outward component only. Otherwise, it contains False.
 
-  3. 'postcode7' (column name is user-defined through the phjPostcode7VarName argument)
+3. 'postcode7' (column name is user-defined through the phjPostcode7VarName argument)
 
    This variable contains correctly formatted complete postcodes in 7-character format. For postcodes that contain 5 letters, the outward and inward components will be separated by 2 spaces; for postcodes that contain 6 letters, the outward and inward components will be separated by 1 space; and postcodes that contain 7 letters will contain no spaces. This format of postcodes is often used in postcode lookup tables.
 
-  4. 'postcodeOutward' (defined as a group name in the regular expression and, therefore, not user-definable)
+4. 'postcodeOutward' (defined as a group name in the regular expression and, therefore, not user-definable)
 
    This variable contains the outward component of the postcode (first half of postcode). It is possible that this variable may contain a correctly-formatted postcode string (2 to 4 characters) whilst the variable containing the inward postcode string contains the missing vaue code. 
 
-  5. 'postcodeInward' (defined as a group name in the regular expression and, therefore, not user-definable)
+5. 'postcodeInward' (defined as a group name in the regular expression and, therefore, not user-definable)
 
    This variable contains the inward component of the postcode (second half of postcode). It is possible that this variable may contain a missing value whilst the postcodeOutward variable contains a correctly-formatted postcode string (2 to 4 characters).
 
-  6. 'phjPostcodeArea' (column name is user-defined through the phjPostcodeAreaVarName argument)
+6. 'phjPostcodeArea' (column name is user-defined through the phjPostcodeAreaVarName argument)
 
    This variable contains the postcode area (first one or two letters) taken from correctly formatted outward postcode components.
 
