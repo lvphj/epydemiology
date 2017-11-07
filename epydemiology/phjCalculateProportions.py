@@ -58,12 +58,12 @@ import collections
 
 def phjCalculateMultinomialProportions(phjTempDF,
                                        phjCategoryVarName = None,
-                                       phjCategoriesToPlotList = 'all',
                                        phjGroupVarName = None,
                                        phjMissingValue = 'missing',
                                        phjMultinomialConfIntMethod = 'goodman',
                                        phjAlpha = 0.05,
                                        phjPlotRelFreq = True,
+                                       phjCategoriesToPlotList = 'all',
                                        phjGroupsToPlotList = 'all',   # Currently not implemented
                                        phjGraphTitle = None,
                                        phjPrintResults = False):
