@@ -1008,25 +1008,25 @@ The phjCalculateBinomialProportions() function takes the following parameters:
 
    The Pandas dataframe containing the data to be analysed. The dataframe does not need to be sliced before use because the data columns that need to be used are defined in the function arguments.
 
-2. **phjColumnsList = None**
+2. **phjColumnsList** (default = None)
 
    A list of the columns that need to be analyses. Each of these columns should be binary variables and should contain only binary data. Missing values (either in the form of a specified missing value or a np.nan value will be removed before analysis).
 
-3. **phjSuccess = 'yes'**
+3. **phjSuccess** (default = 'yes')
 
    The text string or value that is used to indicate a positive value or a 'success'. The default assumes that data will be coded as 'yes' or 'no'.
 
-4. **phjGroupVarName = None**
+4. **phjGroupVarName** (default = None)
 
-   It is likely that some analysis will need to summarise data over two distinct categories (e.g. 'case' and 'control' data may be summarised separately). This varialble should contain the column heading for the variable that defines group membership. The default is None. If phjGroupVarName is None, the whole dataset is analysed as a single group.
+   It is likely that some analyses will need to summarise data over two distinct categories (e.g. 'case' and 'control' data may be summarised separately). This varialble should contain the column heading for the variable that defines group membership. The default is None. If phjGroupVarName is None, the whole dataset is analysed as a single group.
 
-5. **phjMissingValue = 'missing'**
+5. **phjMissingValue** (default = 'missing')
 
    The text string or value that indicates a success.
 
-6. **phjBinomialConfIntMethod = 'normal'**
+6. **phjBinomialConfIntMethod** (default = 'normal')
 
-   This argument defines the method to be used to calculate the binomial confidence intervals. The options available are those that can be handled by the statsmodel.proporotions() method. The default is 'normal' but the full list of options (taken from the statsmodels website) are:
+   This argument defines the method to be used to calculate the binomial confidence intervals. The options available are those that can be handled by the statsmodel.stats.proporotion proportion_confint() method. The default is 'normal' but the full list of options (taken from the statsmodels website) are:
    1. `normal` : asymptotic normal approximation
    2. `agresti_coull` : Agresti-Coull interval
    3. `beta` : Clopper-Pearson interval based on Beta distribution
@@ -1034,27 +1034,27 @@ The phjCalculateBinomialProportions() function takes the following parameters:
    5. `jeffreys` : Jeffreys Bayesian Interval
    6. `binom_test` : experimental, inversion of binom_test
 
-7. **phjAlpha = 0.05**
+7. **phjAlpha** (default = 0.05)
 
    The desired value for alpha; the default is 0.05 (which leads to the calculation of 95% confidence intervals.
 
-8. **phjPlotProportions = True**
+8. **phjPlotProportions** (default = True)
 
-   Determines whether a bar chart (with errors bars) is plotted.
+   Determines whether a bar chart of proportions (with errors bars) is plotted.
 
-9. **phjGroupsToPlotList = 'all'**
+9. **phjGroupsToPlotList** (default = 'all')
 
    The data may be calculated for numerous groups but it may not be desired for the plot to display all groups. This argument is a list of groups which should be displayed in the plot.
 
-10. **phjSortProportions = False**
+10. **phjSortProportions** (default = False)
 
    If only a single group is plotted, this argument indicates whether the columns should be sorted. Default is 'False' but other options are 'asc' or desc'.
 
-11. **phjGraphTitle = None**
+11. **phjGraphTitle** (default = None)
 
    The title of the graph.
 
-12. **phjPrintResults = False**
+12. **phjPrintResults** (default = False)
 
    Indicates whehter the results should be printed to screed as the function progresses.
 
@@ -1067,35 +1067,48 @@ The phjCalculateMultinomialProportions() function takes the following parameters
 
    The Pandas dataframe containing the data to be analysed. The dataframe does not need to be sliced before use because the data columns that need to be used are defined in the function arguments.
 
-2. **phjCategoryVarName = None**
+2. **phjCategoryVarName** (default = None)
+
+   The name of the column that defines category.
+
+3. **phjGroupVarName** (default = None)
+
+   It is likely that some analysis will need to summarise data over two distinct categories (e.g. 'case' and 'control' data may be summarised separately). This varialble should contain the column heading for the variable that defines group membership. The default is None. If phjGroupVarName is None, the whole dataset is analysed as a single group.
 
 
-3. **phjGroupVarName = None**
+4. **phjMissingValue** (default = 'missing')
 
+   The text string or value that indicates a success.
 
-4. **phjMissingValue = 'missing'**
+5. **phjMultinomialConfIntMethod** (default = 'goodman')
 
+   This argument defines the method to be used to calculate the multinomial confidence intervals. The options available are those that can be handled by the statsmodel.stats.proporotion multinomial_proportions_confint() method. The default is 'normal' but the full list of options (taken from the statsmodels website) are:
+   1. `goodman`: based on a chi-squared approximation, valid if all values in `counts` are greater or equal to 5
+   2. `sison-glaz`: less conservative than `goodman`, but only valid if `counts` has 7 or more categories (``len(counts) >= 7``)
 
-5. **phjMultinomialConfIntMethod = 'goodman'**
+6. **phjAlpha** (default = 0.05)
 
+   The desired value for alpha; the default is 0.05 (which leads to the calculation of 95% confidence intervals.
 
-6. **phjAlpha = 0.05**
+7. **phjPlotRelFreq** (default = True)
 
+   Determines whether a bar chart of proportions (with errors bars) is plotted.
 
-7. **phjPlotRelFreq = True**
+8. **phjCategoriesToPlotList** (default = 'all')
 
+  A list of column names that should be plotted on a bar chart.
 
-8. **phjCategoriesToPlotList = 'all'**
+9. **phjGroupsToPlotList** (default = 'all')
 
+   The data may be calculated for numerous groups but it may not be desired for the plot to display all groups. This argument is a list of groups which should be displayed in the plot.
 
-9. **phjGroupsToPlotList = 'all'**
+10. **phjGraphTitle** (default = None)
 
+   The title of the graph.
 
-10. **phjGraphTitle = None**
+11. **phjPrintResults** (default = False)
 
-
-11. **phjPrintResults = False**
-
+   Indicates whehter the results should be printed to screed as the function progresses.
 
 #### Exceptions raised
 
