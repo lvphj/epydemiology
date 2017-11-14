@@ -253,15 +253,7 @@ def phjCalculateBinomialProportions(phjTempDF,
     
     # Set default suffixes and join strings to create column names
     # to use in output dataframe.
-    # Create a dict containing all the suffixes that will be used to facilitate
-    # passing from one function to the next.
-    phjSuffixDict = {'numberobs':'total',                              # Total number of observations
-                     'numbersuccess':'success',                        # Number of successes
-                     'proportion':'prop',                              # Proportion of successes
-                     'cisuffix':phjCISuffix(phjAlpha),                 # CI suffix
-                     'cilowlim':'llimit',                              # lower limit of confidence interval
-                     'ciupplim':'ulimit',                              # upper limit of confidence interval
-                     'joinstr':'_'}                                    # Character to join name and suffix
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = 0.05)
 
     
     # Create lists of unique group levels. (In the bionomial proportions function,
