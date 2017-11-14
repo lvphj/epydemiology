@@ -43,18 +43,6 @@ else:
 import collections
 
 
-def phjDefineSuffixDict(phjAlpha = 0.05):
-    # Create a dict containing all the default suffixes and join strings that will be used to facilitate
-    # passing information from one function to the next.
-
-    phjSuffixDict = {'absfreq':'count',                                # Absolute frequency suffix
-                     'proportion':'prop',                              # Relative frequency suffix
-                     'cisuffix':phjCISuffix(phjAlpha),                 # CI suffix
-                     'cilowlim':'llimit',                              # lower limit of confidence interval
-                     'ciupplim':'ulimit',                              # upper limit of confidence interval
-                     'joinstr':'_'}                                    # Character to join name and suffix
-    
-    return phjSuffixDict
 
 # ==============
 # Main functions
@@ -384,6 +372,20 @@ def phjCalculateBinomialProportions(phjTempDF,
 # ====================
 # Supporting functions
 # ====================
+
+def phjDefineSuffixDict(phjAlpha = 0.05):
+    # Create a dict containing all the default suffixes and join strings that will be used to facilitate
+    # passing information from one function to the next.
+
+    phjSuffixDict = {'absfreq':'count',                                # Absolute frequency suffix
+                     'proportion':'prop',                              # Relative frequency suffix
+                     'cisuffix':phjCISuffix(phjAlpha),                 # CI suffix
+                     'cilowlim':'llimit',                              # lower limit of confidence interval
+                     'ciupplim':'ulimit',                              # upper limit of confidence interval
+                     'joinstr':'_'}                                    # Character to join name and suffix
+    
+    return phjSuffixDict
+
 
 def phjCountSuccesses(x,
                       phjColumnsList,
