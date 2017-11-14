@@ -43,6 +43,18 @@ else:
 import collections
 
 
+def phjDefineSuffixDict(phjAlpha = 0.05):
+    # Create a dict containing all the default suffixes and join strings that will be used to facilitate
+    # passing information from one function to the next.
+
+    phjSuffixDict = {'absfreq':'count',                                # Absolute frequency suffix
+                     'proportion':'prop',                              # Relative frequency suffix
+                     'cisuffix':phjCISuffix(phjAlpha),                 # CI suffix
+                     'cilowlim':'llimit',                              # lower limit of confidence interval
+                     'ciupplim':'ulimit',                              # upper limit of confidence interval
+                     'joinstr':'_'}                                    # Character to join name and suffix
+    
+    return phjSuffixDict
 
 # ==============
 # Main functions
@@ -75,14 +87,7 @@ def phjCalculateMultinomialProportions(phjTempDF,
     
     # Set default suffixes and join strings to create column names
     # to use in output dataframe.
-    # Create a dict containing all the suffixes that will be used to facilitate
-    # passing from one function to the next.
-    phjSuffixDict = {'absfreq':'count',                                # Absolute frequency suffix
-                     'proportion':'prop',                              # Relative frequency suffix
-                     'cisuffix':phjCISuffix(phjAlpha),                 # CI suffix
-                     'cilowlim':'llimit',                              # lower limit of confidence interval
-                     'ciupplim':'ulimit',                              # upper limit of confidence interval
-                     'joinstr':'_'}                                    # Character to join name and suffix
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = 0.05)
     
     
     # Copy required columns to dataframe
