@@ -75,7 +75,7 @@ def phjCalculateMultinomialProportions(phjTempDF,
     
     # Set default suffixes and join strings to create column names
     # to use in output dataframe.
-    phjSuffixDict = phjDefineSuffixDict(phjAlpha = 0.05)
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
     
     
     # Copy required columns to dataframe
@@ -125,7 +125,6 @@ def phjCalculateMultinomialProportions(phjTempDF,
                                                                    phjAbsFreqColumnName = phjSuffix,
                                                                    phjSimultConfIntColumnName = phjSuffixDict['cisuffix'],
                                                                    phjMultinomialConfIntMethod = phjMultinomialConfIntMethod,
-                                                                   phjSuffixDict = phjSuffixDict,
                                                                    phjAlpha = phjAlpha,
                                                                    phjPrintResults = phjPrintResults)
 
@@ -149,7 +148,6 @@ def phjCalculateMultinomialProportions(phjTempDF,
                                                                        phjAbsFreqColumnName = phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffix]),
                                                                        phjSimultConfIntColumnName = phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix']]),
                                                                        phjMultinomialConfIntMethod = phjMultinomialConfIntMethod,
-                                                                       phjSuffixDict = phjSuffixDict,
                                                                        phjAlpha = phjAlpha,
                                                                        phjPrintResults = phjPrintResults)
 
@@ -165,7 +163,7 @@ def phjCalculateMultinomialProportions(phjTempDF,
     phjRelFreqDF = phjReorderCols(phjTempDF = phjRelFreqDF,
                                   phjGroupVarName = phjGroupVarName,
                                   phjGroupLevelsList = phjGroupLevelsList,
-                                  phjSuffixDict = phjSuffixDict,
+                                  phjAlpha = phjAlpha,
                                   phjPrintResults = False)
     
     if phjPrintResults == True:
@@ -180,7 +178,6 @@ def phjCalculateMultinomialProportions(phjTempDF,
                                    phjCategoriesToPlotList = phjCategoriesToPlotList,
                                    phjGroupVarName = phjGroupVarName,
                                    phjGroupLevelsList = phjGroupLevelsList,
-                                   phjSuffixDict = phjSuffixDict,
                                    phjGraphTitle = phjGraphTitle,
                                    phjXAxisTitle = phjCategoryVarName,
                                    phjYAxisTitle = 'Relative frequency',
@@ -241,7 +238,7 @@ def phjCalculateBinomialProportions(phjTempDF,
     
     # Set default suffixes and join strings to create column names
     # to use in output dataframe.
-    phjSuffixDict = phjDefineSuffixDict(phjAlpha = 0.05)
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
 
     
     # Create lists of unique group levels. (In the bionomial proportions function,
@@ -271,8 +268,7 @@ def phjCalculateBinomialProportions(phjTempDF,
         # Calculate number of successes for each level of group variable and return summary dataframe
         phjPropDF = phjTempDF.groupby(phjGroupVarName).apply(lambda x: phjCountSuccesses(x,
                                                                                          phjColumnsList = phjColumnsList,
-                                                                                         phjMissingValue = phjMissingValue,
-                                                                                         phjSuffixDict = phjSuffixDict))
+                                                                                         phjMissingValue = phjMissingValue))
     
     
     # Ensure count data is stored as integer values. Otherwise,
@@ -288,7 +284,6 @@ def phjCalculateBinomialProportions(phjTempDF,
                                              phjSuccessesColumnName = phjSuffixDict['numbersuccess'],
                                              phjNColumnName = phjSuffixDict['numberobs'],
                                              phjBinomialConfIntMethod = 'normal',
-                                             phjSuffixDict = phjSuffixDict,
                                              phjAlpha = 0.05,
                                              phjPrintResults = False)
     
@@ -358,7 +353,6 @@ def phjCalculateBinomialProportions(phjTempDF,
                                    phjCategoriesToPlotList = phjColumnsList,
                                    phjGroupVarName = phjGroupVarName,
                                    phjGroupLevelsList = phjGroupLevelsList,
-                                   phjSuffixDict = phjSuffixDict,
                                    phjGraphTitle = None,
                                    phjXAxisTitle = None,
                                    phjYAxisTitle = 'Proportions',
@@ -374,23 +368,43 @@ def phjCalculateBinomialProportions(phjTempDF,
 # ====================
 
 def phjDefineSuffixDict(phjAlpha = 0.05):
+    
+    # Define abbreviation for confidence interval
+    phjCIAbbrev = 'CI'
+    
     # Create a dict containing all the default suffixes and join strings that will be used to facilitate
     # passing information from one function to the next.
-
     phjSuffixDict = {'absfreq':'count',                                # Absolute frequency suffix
                      'proportion':'prop',                              # Relative frequency suffix
-                     'cisuffix':phjCISuffix(phjAlpha),                 # CI suffix
+                     'cisuffix':phjCISuffix(phjAlpha,phjCIAbbrev),     # Confidence interval suffix
                      'cilowlim':'llimit',                              # lower limit of confidence interval
                      'ciupplim':'ulimit',                              # upper limit of confidence interval
-                     'joinstr':'_'}                                    # Character to join name and suffix
+                     'joinstr':'_',                                    # Character to join name and suffix
+                     'odds':'odds',                                    # Odds suffix
+                     'logodds':'logodds',                              # Log odds suffix
+                     'catmidpoints':'catMidpoints',                    # Midpoints of categorized continuous variable
+                     'categorisedvar':'cat',                           # Suffix to indicate a continuous var had been categorised
+                     'stderr':'se'                                     # Column heading containing standard error
+                    }
     
     return phjSuffixDict
 
 
+
+def phjCISuffix(phjAlpha,
+                phjCIAbbrev):
+    
+    return (str(int(100 - 100*phjAlpha)) + phjCIAbbrev)
+
+
+
 def phjCountSuccesses(x,
                       phjColumnsList,
-                      phjMissingValue = 'missing',
-                      phjSuffixDict = None):
+                      phjMissingValue = 'missing'):
+    
+    # Get a list of the terms used to head columns in summary tables.
+    # (The alpha value is not required and can be left as default.)
+    phjSuffixDict = phjDefineSuffixDict()
     
     phjSummaryDF = pd.DataFrame(index = phjColumnsList, columns = [phjSuffixDict['numberobs'],
                                                                    phjSuffixDict['numbersuccess']])
@@ -406,11 +420,14 @@ def phjCountSuccesses(x,
 def phjCalculateBinomialConfInts(phjTempDF,
                                  phjSuccessesColumnName = None,
                                  phjNColumnName = None,
-                                 phjBinomialConfIntMethod = 'beta',
-                                 phjSuffixDict = None,
+                                 phjBinomialConfIntMethod = 'beta'
                                  phjAlpha = 0.05,
                                  phjPrintResults = False):
     
+    # Get a list of the terms used to head columns in summary tables
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+
+    # Get binomial confidence intervals
     phjBinomConfIntArr = smprop.proportion_confint(count = phjTempDF[phjSuccessesColumnName],
                                                    nobs = phjTempDF[phjNColumnName],
                                                    alpha = phjAlpha,
@@ -420,12 +437,6 @@ def phjCalculateBinomialConfInts(phjTempDF,
     phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] = [i for i in phjBinomConfIntArr[1]]
     
     return phjTempDF
-
-
-
-def phjCISuffix(phjAlpha):
-    
-    return (str(int(100 - 100*phjAlpha)) + 'CI')
 
 
 
@@ -486,10 +497,13 @@ def phjCalculateMultinomialConfInts(phjTempDF,
                                     phjAbsFreqColumnName = None,
                                     phjSimultConfIntColumnName = None,
                                     phjMultinomialConfIntMethod = 'goodman',
-                                    phjSuffixDict = None,
                                     phjAlpha = 0.05,
                                     phjPrintResults = False):
     
+    # Get a list of the terms used to head columns in summary tables
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+
+    # Get simultaneous confidence intervals
     phjSimultConfIntArr = smprop.multinomial_proportions_confint(phjTempDF[phjAbsFreqColumnName],
                                                                  alpha = phjAlpha,
                                                                  method = phjMultinomialConfIntMethod)
@@ -504,9 +518,13 @@ def phjCalculateMultinomialConfInts(phjTempDF,
 def phjReorderCols(phjTempDF,
                    phjGroupVarName = None,
                    phjGroupLevelsList = None,
-                   phjSuffixDict = None,
+                   phjAlpha = 0.05,
                    phjPrintResults = False):
     
+    # Get a list of the terms used to head columns in summary tables.
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+
+    # Reorder columns
     if phjGroupVarName is None:
         phjColOrder = [phjSuffixDict['absfreq'],
                        phjSuffixDict['proportion'],
@@ -552,7 +570,7 @@ def phjPlotProportionsBarChart(phjTempDF,
                                    phjCategoriesToPlotList = phjIndexItemsToPlot,
                                    phjGroupVarName = phjGroupVarName,
                                    phjGroupLevelsList = phjGroupLevelsList,
-                                   phjSuffixDict = phjSuffixDict,
+                                   phjAlpha = phjAlpha,
                                    phjPrintResults = phjPrintResults)
         
         # Plot bar chart of relative frequencies
@@ -568,7 +586,7 @@ def phjPlotProportionsBarChart(phjTempDF,
                                    phjCategoriesToPlotList = phjIndexItemsToPlot,
                                    phjGroupVarName = phjGroupVarName,
                                    phjGroupLevelsList = phjGroupLevelsList,
-                                   phjSuffixDict = phjSuffixDict,
+                                   phjAlpha = phjAlpha,
                                    phjPrintResults = phjPrintResults)
 
     
@@ -589,10 +607,20 @@ def phjPlotProportionsBarChart(phjTempDF,
 
 def phjGetYErrors(phjTempDF,
                   phjCategoriesToPlotList = None,
+                  phjParameterValue = 'proportion',   # This is the value that is plotted (e.g. proportion, logodds etc.)
                   phjGroupVarName = None,
                   phjGroupLevelsList = None,
-                  phjSuffixDict = None,
+                  phjAlpha = 0.05,
                   phjPrintResults = False):
+    
+    
+    # CHECK
+    # Check phjParameterValue is a value in the suffix dict keys
+    
+    
+    # Get a list of the terms used to head columns in summary tables
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+    
     
     # The following list comprehension produces a M x 2 x N list which is what is need for
     # asymmetrical error bars. N.B. the '2' bit represents lower interval and upper interval.
@@ -610,12 +638,12 @@ def phjGetYErrors(phjTempDF,
     
     print(phjTempDF)
     if phjGroupVarName is None:
-        phjYErrors = [[ (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['proportion']] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]).tolist(),
-                        (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['proportion']]).tolist() ]]
+        phjYErrors = [[ (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict[phjParameterValue]] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]).tolist(),
+                        (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict[phjParameterValue]]).tolist() ]]
 
     else:
-        phjYErrors = [[ (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['proportion']])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]).tolist(),
-                        (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['proportion']])]).tolist() ] for phjGroup in phjGroupLevelsList]
+        phjYErrors = [[ (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict[phjParameterValue]])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]).tolist(),
+                        (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict[phjParameterValue]])]).tolist() ] for phjGroup in phjGroupLevelsList]
         
         
     #if phjPrintResults == True:
@@ -623,6 +651,7 @@ def phjGetYErrors(phjTempDF,
     #    print(phjYErrors)
         
     return phjYErrors
+
     
     
 if __name__ == '__main__':
