@@ -67,7 +67,7 @@ myDF = epy.phjOddsRatio()
 myDF = epy.phjRelativeRisk()
 ```
 
-**11. Categorise a continuous variable using predefined breaks, quantiles or optimised break positions
+**11. Categorise a continuous variable using predefined breaks, quantiles or optimised break positions**
 
 ```python
 myDF = epy.phjCategoriseContinuousVariable()
@@ -77,7 +77,7 @@ or, if phjReturnBreaks is set to True:
 myDF,myBreaks = epy.phjCategoriseContinuousVariable()
 ```
 
-**12. To view a plot of log odds against mid-points of categories of a continuous variable
+**12. To view a plot of log odds against mid-points of categories of a continuous variable**
 
 ```python
 myOddRatioTable = epy.phjViewLogOdds()
