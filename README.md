@@ -1373,7 +1373,7 @@ None
 
 #### Returns
 
-Pandas dataframe containing a tabulation of the odds ratio.
+Pandas dataframe containing a tabulation of the log odds for a categorised variable.
 
 #### Other notes
 
