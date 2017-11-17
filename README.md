@@ -60,10 +60,27 @@ myDF = epy.phjCalculateMultinomialProportions()
 ```python
 myDF = epy.phjOddsRatio()
 ```
+
 **10. To calculate relative risks for cross-sectional or longitudinal studies for data stored in Pandas dataframe**
 
 ```python
 myDF = epy.phjRelativeRisk()
+```
+
+**11. Categorise a continuous variable using predefined breaks, quantiles or optimised break positions
+
+```python
+myDF = epy.phjCategoriseContinuousVariable()
+```
+or, if phjReturnBreaks is set to True:
+```python
+myDF,myBreaks = epy.phjCategoriseContinuousVariable()
+```
+
+**12. To view a plot of log odds against mid-points of categories of a continuous variable
+
+```python
+myOddRatioTable = epy.phjViewLogOdds()
 ```
 
 ## C. Details of functions
@@ -1306,3 +1323,111 @@ c      2  3 0.400 0.933  [0.2365, 3.6828]
 d      1  3 0.250 0.583  [0.0872, 3.9031]
 ```
 ---
+
+### 11. phjCategoriseContinuousVariable()
+
+```python
+df,list = phjCategoriseContinuousVariable(phjTempDF,
+                                          phjContinuousVarName = None,
+                                          phjMissingValue = 'missing',
+                                          phjNumberOfCategoriesInt = 5,
+                                          phjNewCategoryVarName = None,
+                                          phjCategorisationMethod = 'jenks',
+                                          phjReturnBreaks = True,
+                                          phjPrintResults = False)
+```
+or
+```
+df = phjCategoriseContinuousVariable(phjTempDF,
+                                     phjContinuousVarName = None,
+                                     phjMissingValue = 'missing',
+                                     phjNumberOfCategoriesInt = 5,
+                                     phjNewCategoryVarName = None,
+                                     phjCategorisationMethod = 'jenks',
+                                     phjReturnBreaks = False,
+                                     phjPrintResults = False)
+```
+
+### 12. phjViewLogOdds()
+
+```python
+df = phjViewLogOdds(phjTempDF,
+                    phjBinaryDepVarName = None,
+                    phjContIndepVarName = None,
+                    phjCaseValue = 1,
+                    phjMissingValue = 'missing',
+                    phjNumberOfCategoriesInt = 5,
+                    phjNewCategoryVarName = None,
+                    phjCategorisationMethod = 'jenks',
+                    phjGroupNameVar = None,
+                    phjAlpha = 0.05,
+                    phjPrintResults = False)
+```
+#### Description
+
+#### Function parameters
+
+#### Exceptions raised
+
+None
+
+#### Returns
+
+Pandas dataframe containing a tabulation of the odds ratio.
+
+#### Other notes
+
+None
+
+#### Example
+
+An example of the function in use is given below:
+
+```python
+# Define example dataset
+phjTempDF = pd.DataFrame({'binDepVar':['yes']*50000 + ['no']*50000,
+                          'riskFactorCont':np.random.uniform(0,1,100000)})
+
+with pd.option_context('display.max_rows', 10, 'display.max_columns', 5):
+    print(phjTempDF)
+
+    
+# View log odds
+phjTempDF = phjViewLogOdds(phjTempDF = phjTempDF,
+                           phjBinaryDepVarName = 'binDepVar',
+                           phjContIndepVarName = 'riskFactorCont',
+                           phjCaseValue = 'yes',
+                           phjMissingValue = 'missing',
+                           phjNumberOfCategoriesInt = 8,
+                           phjNewCategoryVarName = 'categoricalVar',
+                           phjCategorisationMethod = 'quantile',
+                           phjGroupNameVar = None,
+                           phjPrintResults = False)
+
+with pd.option_context('display.max_rows', 10, 'display.max_columns', 10):
+    print(phjTempDF)
+```
+Output
+```
+                 yes    no      odds        or      95pcCI_Woolf   logodds  \
+categoricalVar                                                               
+0               6371  6385  0.997807  1.018299  [0.9693, 1.0698] -0.002195   
+1               6184  6311  0.979876  1.000000               --- -0.020329   
+2               6334  6313  1.003326  1.023932  [0.9745, 1.0758]  0.003321   
+3               6239  6299  0.990475  1.010816  [0.9619, 1.0622] -0.009571   
+4               6254  6123  1.021395  1.042371  [0.9918, 1.0955]  0.021169   
+5               6155  6276  0.980720  1.000861  [0.9524, 1.0518] -0.019468   
+6               6190  6133  1.009294  1.030022  [0.9800, 1.0826]  0.009251   
+7               6273  6160  1.018344  1.039258  [0.9889, 1.0922]  0.018178   
+
+                      se  95CI_llimit  95CI_ulimit  catMidpoints  
+categoricalVar                                                    
+0               0.017708    -0.036902     0.032512      0.062007  
+1               0.017893    -0.055399     0.014741      0.187506  
+2               0.017784    -0.031536     0.038178      0.312504  
+3               0.017862    -0.044579     0.025437      0.437502  
+4               0.017978    -0.014068     0.056406      0.562501  
+5               0.017939    -0.054628     0.015692      0.687499  
+6               0.018017    -0.026061     0.044563      0.812497  
+7               0.017937    -0.016979     0.053335      0.937496  
+```
