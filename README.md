@@ -82,7 +82,7 @@ myDF,myBreaks = epy.phjCategoriseContinuousVariable()
 ```python
 myOddRatioTable = epy.phjViewLogOdds()
 ```
-
+---
 ## C. Details of functions
 ### 1. phjReadDataFromExcelNamedCellRange()
 
@@ -1347,6 +1347,7 @@ df = phjCategoriseContinuousVariable(phjTempDF,
                                      phjReturnBreaks = False,
                                      phjPrintResults = False)
 ```
+---
 
 ### 12. phjViewLogOdds()
 
@@ -1431,3 +1432,4 @@ categoricalVar
 6               0.018017    -0.026061     0.044563      0.812497  
 7               0.017937    -0.016979     0.053335      0.937496  
 ```
+---
