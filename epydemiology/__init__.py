@@ -8,3 +8,5 @@ from .phjMatrices import phjBinaryVarsToSquareMatrix
 from .phjCleanUKPostcodes import phjCleanUKPostcodeVariable
 from .phjCalculateProportions import phjCalculateBinomialProportions
 from .phjCalculateProportions import phjCalculateMultinomialProportions
+from .phjExploreData import phjViewLogOdds
+from .phjExtFuncs import getJenksBreaks
