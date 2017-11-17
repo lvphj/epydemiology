@@ -1,11 +1,58 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+import pkg_resources
+
+try:
+    pkg_resources.get_distribution('numpy')
+except pkg_resources.DistributionNotFound:
+    numpyPresent = False
+    print("Error: Numpy package not available.")
+else:
+    numpyPresent = True
+    import numpy as np
+
+
+try:
+    pkg_resources.get_distribution('pandas')
+except pkg_resources.DistributionNotFound:
+    pandasPresent = False
+    print("Error: Pandas package not available.")
+else:
+    pandasPresent = True
+    import pandas as pd
+
+
+try:
+    pkg_resources.get_distribution('matplotlib')
+except pkg_resources.DistributionNotFound:
+    matplotlibPresent = False
+    print("Error: Matplotlib package not available.")
+else:
+    matplotlibPresent = True
+    import matplotlib.pyplot as plt
+
+
+try:
+    pkg_resources.get_distribution('scipy')
+except pkg_resources.DistributionNotFound:
+    scipyPresent = False
+    print("Error: Scipy package not available.")
+else:
+    scipyPresent = True
+    from scipy.stats import norm
+
+
+try:
+    pkg_resources.get_distribution('statsmodels')
+except pkg_resources.DistributionNotFound:
+    statsmodelsPresent = False
+    print("Error: Statsmodels package not available.")
+else:
+    statsmodelsPresent = True
+    import statsmodels.formula.api as smf
+    import statsmodels.api as sm
+
+
 import re
-import scipy as sp
-from scipy.stats import norm
-import statsmodels.formula.api as smf
-import statsmodels.api as sm
+
 
 
 def phjViewLogOdds(phjTempDF,
@@ -252,7 +299,3 @@ def phjCategoriseContinuousVariable(phjTempDF,
         phjBreaks = None
     
     return phjBreaks
-
-
-
-
