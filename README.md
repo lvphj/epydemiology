@@ -1347,6 +1347,9 @@ df = phjCategoriseContinuousVariable(phjTempDF,
                                      phjReturnBreaks = False,
                                      phjPrintResults = False)
 ```
+
+Check:
+1. The extreme values in the list of breaks are extended by a small percentage to make sure they include all values. Check whether these are the values that are actually returned as a list from the function.
 ---
 
 ### 12. phjViewLogOdds()
