@@ -24,7 +24,7 @@ myDF = epy.phjGetDataFromDatabase()
 **3. To load text from a text file (e.g. a SQL query or regular expression) into a Python variable as a single string**
 
 ```python
-myString = phjReadTextFromFile()
+myString = epy.phjReadTextFromFile()
 ```
 
 **4. To convert columns of binary data to a square matrix containing co-occurrences**
