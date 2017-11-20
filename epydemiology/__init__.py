@@ -1,3 +1,6 @@
+# These are the functions that can be accessed from epydemiology.
+# Other functions that are used internally cannot be accessed
+# directly by end-users.
 from .phjRROR import phjOddsRatio
 from .phjRROR import phjRelativeRisk
 from .phjSelectData import phjSelectCaseControlDataset
