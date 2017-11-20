@@ -889,16 +889,17 @@ df = phjCalculateBinomialProportions(phjTempDF,
 ### 8. phjCalculateMultinomialProportions()
 ```python
 df = phjCalculateMultinomialProportions(phjTempDF,
-                                        phjCategoryVarName = None,
-                                        phjCategoriesToPlotList = 'all',
-                                        phjGroupVarName = None,
-                                        phjMissingValue = 'missing',
-                                        phjMultinomialConfIntMethod = 'goodman',
-                                        phjAlpha = 0.05,
-                                        phjPlotRelFreq = True,
-                                        phjGroupsToPlotList = 'all',
-                                        phjGraphTitle = None,
-                                        phjPrintResults = False)
+                                       phjCategoryVarName = None,
+                                       phjGroupVarName = None,
+                                       phjMissingValue = 'missing',
+                                       phjMultinomialConfIntMethod = 'goodman',
+                                       phjAlpha = 0.05,
+                                       phjPlotRelFreq = True,
+                                       phjCategoriesToPlotList = 'all',
+                                       phjGroupsToPlotList = 'all',   # Currently not implemented
+                                       phjGraphTitle = None,
+                                       phjPrintResults = False)
+
 ```
 
 #### Description
@@ -1150,15 +1151,16 @@ None
 An example of the function in use is given below:
 
 ```python
-# Example using binomial proportions
-# ==================================
+# Example calculating binomial proportions (using phjCaculateBinomialProportions() function)
+# ========================================
 
 phjTempDF = pd.DataFrame({'group':['g1','g1','g2','g1','g2','g2','g1','g1','g2','g1'],
                           'A':['yes','yes','no','no','no','no','no','yes',np.nan,'yes'],
                           'B':['no',np.nan,np.nan,'yes','yes','yes','yes','no','no','no'],
                           'C':['yes','yes','yes',np.nan,'no','yes','yes','yes','no','no']})
 
-print(phjTempDF,'\n')
+print(phjTempDF)
+print('\n')
 
 phjPropDF = epy.phjCalculateBinomialProportions(phjTempDF = phjTempDF,
                                                 phjColumnsList = ['A','B','C'],
@@ -1177,39 +1179,30 @@ print(phjPropDF)
 ```
 
 ```python
-# Example of using phjCalculateMultinomialProportions() function
+# Example of calculating multinomial proportions (using phjCalculateMultinomialProportions() function)
+# ==============================================
 
 phjTempDF = pd.DataFrame({'group':['case','case','case','control','control','case','case','case','control','control','control','control','case','case','case','control','control','control','control','case','case','case','case','case',np.nan,np.nan],
                           'category':[np.nan,'spaniel','missing','terrier','collie','labrador','labrador','collie','spaniel','spaniel','labrador','collie','terrier','terrier','terrier','collie','labrador','labrador','labrador','spaniel','spaniel','collie','collie','collie','terrier','spaniel'],
                           'catint':[1,2,3,2,3,2,1,2,1,2,3,2,3,2,3,1,2,3,2,3,2,3,2,3,1,2]})
 
-print('Example dataframe')
-print('-----------------\n')
 print(phjTempDF)
 print('\n')
 
-phjRelFreqDF = phjCalculateRelativeFrequencies(phjTempDF = phjTempDF,
-                                               phjCategoryVarName = 'category',
-                                               phjGroupVarName = 'group',
-                                               phjMissingValue = 'missing',
-                                               phjMultinomialConfIntMethod = 'goodman',
-                                               phjAlpha = 0.05,
-                                               phjPlotRelFreq = True,
-                                               phjCategoriesToPlotList = 'all',
-                                               phjGraphTitle = 'Relative frequencies (Goodman CI)',
-                                               phjPrintResults = True)
+phjRelFreqDF = epy.phjCalculateMultinomialProportioins(phjTempDF = phjTempDF,
+                                                       phjCategoryVarName = 'category',
+                                                       phjGroupVarName = 'group',
+                                                       phjMissingValue = 'missing',
+                                                       phjMultinomialConfIntMethod = 'goodman',
+                                                       phjAlpha = 0.05,
+                                                       phjPlotRelFreq = True,
+                                                       phjCategoriesToPlotList = 'all',
+                                                       phjGroupsToPlotList = 'all',   # Currently not implemented
+                                                       phjGraphTitle = 'Relative frequencies (Goodman CI)',
+                                                       phjPrintResults = True)
 
+print(phjRelFreqDF)
 
-phjRelFreqDF = phjCalculateRelativeFrequencies(phjTempDF = phjTempDF,
-                                               phjCategoryVarName = 'category',
-                                               phjGroupVarName = 'group',
-                                               phjMissingValue = 'missing',
-                                               phjMultinomialConfIntMethod = 'sison',
-                                               phjAlpha = 0.05,
-                                               phjPlotRelFreq = True,
-                                               phjCategoriesToPlotList = 'all',
-                                               phjGraphTitle = 'Relative frequencies (Sison CI)',
-                                               phjPrintResults = True)
 ```
 ---
 ### 9. phjOddsRatio()
