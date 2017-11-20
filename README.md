@@ -1149,6 +1149,68 @@ None
 
 An example of the function in use is given below:
 
+```python
+# Example using binomial proportions
+# ==================================
+
+phjTempDF = pd.DataFrame({'group':['g1','g1','g2','g1','g2','g2','g1','g1','g2','g1'],
+                          'A':['yes','yes','no','no','no','no','no','yes',np.nan,'yes'],
+                          'B':['no',np.nan,np.nan,'yes','yes','yes','yes','no','no','no'],
+                          'C':['yes','yes','yes',np.nan,'no','yes','yes','yes','no','no']})
+
+print(phjTempDF,'\n')
+
+phjPropDF = epy.phjCalculateBinomialProportions(phjTempDF = phjTempDF,
+                                                phjColumnsList = ['A','B','C'],
+                                                phjSuccess = 'yes',
+                                                phjGroupVarName = 'group',
+                                                phjMissingValue = 'missing',
+                                                phjBinomialConfIntMethod = 'normal',
+                                                phjAlpha = 0.05,
+                                                phjPlotProportions = True,
+                                                phjGroupsToPlotList = 'all',
+                                                phjSortProportions = True,
+                                                phjGraphTitle = None,
+                                                phjPrintResults = False)
+
+print(phjPropDF)
+```
+
+```python
+# Example of using phjCalculateMultinomialProportions() function
+
+phjTempDF = pd.DataFrame({'group':['case','case','case','control','control','case','case','case','control','control','control','control','case','case','case','control','control','control','control','case','case','case','case','case',np.nan,np.nan],
+                          'category':[np.nan,'spaniel','missing','terrier','collie','labrador','labrador','collie','spaniel','spaniel','labrador','collie','terrier','terrier','terrier','collie','labrador','labrador','labrador','spaniel','spaniel','collie','collie','collie','terrier','spaniel'],
+                          'catint':[1,2,3,2,3,2,1,2,1,2,3,2,3,2,3,1,2,3,2,3,2,3,2,3,1,2]})
+
+print('Example dataframe')
+print('-----------------\n')
+print(phjTempDF)
+print('\n')
+
+phjRelFreqDF = phjCalculateRelativeFrequencies(phjTempDF = phjTempDF,
+                                               phjCategoryVarName = 'category',
+                                               phjGroupVarName = 'group',
+                                               phjMissingValue = 'missing',
+                                               phjMultinomialConfIntMethod = 'goodman',
+                                               phjAlpha = 0.05,
+                                               phjPlotRelFreq = True,
+                                               phjCategoriesToPlotList = 'all',
+                                               phjGraphTitle = 'Relative frequencies (Goodman CI)',
+                                               phjPrintResults = True)
+
+
+phjRelFreqDF = phjCalculateRelativeFrequencies(phjTempDF = phjTempDF,
+                                               phjCategoryVarName = 'category',
+                                               phjGroupVarName = 'group',
+                                               phjMissingValue = 'missing',
+                                               phjMultinomialConfIntMethod = 'sison',
+                                               phjAlpha = 0.05,
+                                               phjPlotRelFreq = True,
+                                               phjCategoriesToPlotList = 'all',
+                                               phjGraphTitle = 'Relative frequencies (Sison CI)',
+                                               phjPrintResults = True)
+```
 ---
 ### 9. phjOddsRatio()
 
