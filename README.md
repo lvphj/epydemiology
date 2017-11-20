@@ -304,10 +304,10 @@ rawDataDF = pd.DataFrame({'a':[0,1,1,1,0,0,1,0],
 
 columns = ['a','b','c','d','e']
 
-phjMatrix = phjBinaryVarsToSquareMatrix(phjDataDF = rawDataDF,
-                                        phjColumnNamesList = columns,
-                                        phjOutputFormat = 'arr',
-                                        phjPrintResults = False)
+phjMatrix = epy.phjBinaryVarsToSquareMatrix(phjDataDF = rawDataDF,
+                                            phjColumnNamesList = columns,
+                                            phjOutputFormat = 'arr',
+                                            phjPrintResults = False)
                                         
 print(phjMatrix)
 ```
@@ -525,21 +525,21 @@ print('\nStart dataframe\n===============\n')
 print(myTestPostcodeDF)
 print('\n')
 
-myTestPostcodeDF = phjCleanUKPostcodeVariable(phjTempDF = myTestPostcodeDF,
-                                              phjRealPostcodeSer = None,
-                                              phjOrigPostcodeVarName = 'postcode',
-                                              phjNewPostcodeVarName = 'pcdClean',
-                                              phjNewPostcodeStrLenVarName = 'pcdCleanStrLen',
-                                              phjPostcodeCheckVarName = 'pcdFormatCheck',
-                                              phjMissingValueCode = 'missing',
-                                              phjMinDamerauLevenshteinDistanceVarName = 'minDamLevDist',
-                                              phjBestAlternativesVarName = 'bestAlternatives',
-                                              phjPostcode7VarName = 'pcd7',
-                                              phjPostcodeAreaVarName = 'pcdArea',
-                                              phjSalvageOutwardPostcodeComponent = True,
-                                              phjCheckByOption = 'format',
-                                              phjDropExisting = True,
-                                              phjPrintResults = True)
+myTestPostcodeDF = epy.phjCleanUKPostcodeVariable(phjTempDF = myTestPostcodeDF,
+                                                  phjRealPostcodeSer = None,
+                                                  phjOrigPostcodeVarName = 'postcode',
+                                                  phjNewPostcodeVarName = 'pcdClean',
+                                                  phjNewPostcodeStrLenVarName = 'pcdCleanStrLen',
+                                                  phjPostcodeCheckVarName = 'pcdFormatCheck',
+                                                  phjMissingValueCode = 'missing',
+                                                  phjMinDamerauLevenshteinDistanceVarName = 'minDamLevDist',
+                                                  phjBestAlternativesVarName = 'bestAlternatives',
+                                                  phjPostcode7VarName = 'pcd7',
+                                                  phjPostcodeAreaVarName = 'pcdArea',
+                                                  phjSalvageOutwardPostcodeComponent = True,
+                                                  phjCheckByOption = 'format',
+                                                  phjDropExisting = True,
+                                                  phjPrintResults = True)
 
 print('\nReturned dataframe\n==================\n')
 print(myTestPostcodeDF)
