@@ -1347,9 +1347,91 @@ df = phjCategoriseContinuousVariable(phjTempDF,
                                      phjReturnBreaks = False,
                                      phjPrintResults = False)
 ```
+#### Description
+
+#### Function parameters
+
+#### Exceptions raised
+
+None
+
+#### Returns
+
+Pandas dataframe containing a tabulation of the log odds for a categorised variable.
+
+#### Other notes
 
 Check:
 1. The extreme values in the list of breaks are extended by a small percentage to make sure they include all values. Check whether these are the values that are actually returned as a list from the function.
+2. When calculating the Jenks breaks, the process can be very slow. Jenks breaks are therefore calculated on a random sample taken from the dataframe. The lowest and highest values are replaced by the data minimum and maximum (possibly extended by a small percentage as in 1. above).
+
+#### Example
+
+An example of the function in use is given below:
+
+```python
+# Define example dataset
+phjTempDF = pd.DataFrame({'binDepVar':['yes']*50000 + ['no']*50000,
+                          'riskFactorCont':np.random.uniform(0,1,100000)})
+
+with pd.option_context('display.max_rows', 10, 'display.max_columns', 5):
+    print(phjTempDF)
+
+    
+# Categorise a continuous variable
+phjTempDF, phjBreaksList = epy.phjCategoriseContinuousVariable(phjTempDF = phjTempDF,
+                                                               phjContinuousVarName = 'riskFactorCont',
+                                                               phjMissingValue = 'missing',
+                                                               phjNumberOfCategoriesInt = 6,
+                                                               phjNewCategoryVarName = 'catVar',
+                                                               phjCategorisationMethod = 'jenks',
+                                                               phjReturnBreaks = True,
+                                                               phjPrintResults = False)
+
+with pd.option_context('display.max_rows', 10, 'display.max_columns', 5):
+    print('\nCategorised variable')
+    print(phjTempDF)
+    print('\n')
+    print('Breaks')
+    print(phjBreaksList)
+```
+Output
+```
+      binDepVar  riskFactorCont
+0           yes        0.268203
+1           yes        0.871220
+2           yes        0.501282
+3           yes        0.858652
+4           yes        0.723276
+...         ...             ...
+99995        no        0.943760
+99996        no        0.953255
+99997        no        0.080429
+99998        no        0.091481
+99999        no        0.925220
+
+[100000 rows x 2 columns]
+
+Categorised variable
+      binDepVar  riskFactorCont  catVar
+0           yes        0.268203       1
+1           yes        0.871220       5
+2           yes        0.501282       3
+3           yes        0.858652       5
+4           yes        0.723276       4
+...         ...             ...     ...
+99995        no        0.943760       5
+99996        no        0.953255       5
+99997        no        0.080429       0
+99998        no        0.091481       0
+99999        no        0.925220       5
+
+[100000 rows x 3 columns]
+
+
+Breaks
+[1.1083476758642629e-05, 0.16544335416294453, 0.32239443898189324, 0.48614660309506053, 0.65418653301496088, 0.83115022562356933, 1.0009938172219826]
+```
 ---
 
 ### 12. phjViewLogOdds()
@@ -1381,7 +1463,7 @@ Pandas dataframe containing a tabulation of the log odds for a categorised varia
 
 #### Other notes
 
-None
+See comments relating to phjCategoriseContinuousVariable() function.
 
 #### Example
 
