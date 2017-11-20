@@ -9,4 +9,5 @@ from .phjCleanUKPostcodes import phjCleanUKPostcodeVariable
 from .phjCalculateProportions import phjCalculateBinomialProportions
 from .phjCalculateProportions import phjCalculateMultinomialProportions
 from .phjExploreData import phjViewLogOdds
+from .phjExploreData import phjCategoriseContinuousVariable
 from .phjExtFuncs import getJenksBreaks
