@@ -53,7 +53,7 @@ import collections
 #
 # Calculates relative frequencies and multinomial confidence intervals
 # --------------------------------------------------------------------
-# This function calcalates proportions, simultaneous confidence intervals for a categorical
+# This function calculates proportions, simultaneous confidence intervals for a categorical
 # variable and plots bar charts with asymmetrical error bars.
 
 def phjCalculateMultinomialProportions(phjTempDF,
@@ -420,7 +420,7 @@ def phjCountSuccesses(x,
 def phjCalculateBinomialConfInts(phjTempDF,
                                  phjSuccessesColumnName = None,
                                  phjNColumnName = None,
-                                 phjBinomialConfIntMethod = 'beta'
+                                 phjBinomialConfIntMethod = 'beta',
                                  phjAlpha = 0.05,
                                  phjPrintResults = False):
     
@@ -636,23 +636,22 @@ def phjGetYErrors(phjTempDF,
     # Therefore, it is necessary to calculate the difference between proportion and CI limits
     # in order to plot error bars.
     
-    print(phjTempDF)
     if phjGroupVarName is None:
         phjYErrors = [[ (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict[phjParameterValue]] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]).tolist(),
                         (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict[phjParameterValue]]).tolist() ]]
-
+    
     else:
         phjYErrors = [[ (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict[phjParameterValue]])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]).tolist(),
                         (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict[phjParameterValue]])]).tolist() ] for phjGroup in phjGroupLevelsList]
-        
-        
+    
+    
     #if phjPrintResults == True:
     #    print("\nErrors:")
     #    print(phjYErrors)
         
     return phjYErrors
 
-    
-    
+
+
 if __name__ == '__main__':
-main()
+	main()

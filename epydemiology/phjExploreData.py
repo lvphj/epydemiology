@@ -54,7 +54,26 @@ else:
 import re
 
 
+# Import minor epydemiology functions from other epydemiology files
+# -----------------------------------------------------------------
+# In order to use the phjDefineSuffixDict() function from a different .py file in the
+# same package, it seems that we need to import that function explicitly. This can be
+# done using the same format as in the __init__.py file e.g.:
+#     from .pythonFileName import functionName
+# Where the pythonFileName is a file in the same package.
+# For more details, see tutorial at https://www.youtube.com/watch?v=0oTh1CXRaQ0.
 
+from .phjRROR import phjOddsRatio
+from .phjCalculateProportions import phjDefineSuffixDict
+from .phjCalculateProportions import phjGetYErrors
+from .phjExtFuncs import getJenksBreaks
+
+
+
+# ==============
+# Main functions
+# ==============
+#
 def phjViewLogOdds(phjTempDF,
                    phjBinaryDepVarName = None,
                    phjContIndepVarName = None,
@@ -67,19 +86,9 @@ def phjViewLogOdds(phjTempDF,
                    phjAlpha = 0.05,
                    phjPrintResults = False):
     
-    
     # In several functions, it's useful to have access to a dict containing column headings
     # and suffixes used in a variety of situations.
-    # In order to use the phjDefineSuffixDict() function from a different .py file in the
-    # same package, the __init__.py file contents may do this because the 'from xxx import yyy' statement
-    # will cause the whole file to by imported. (NOTE: this form of the import statement
-    # does NOT magically import just a single function; the whole .py file is imported.) However, if this
-    # doesn't work, could try a relative import within the function e.g.:
-    #     from epydemiology import functionName
-    # For more details, see tutorial at https://www.youtube.com/watch?v=0oTh1CXRaQ0.
     phjSuffixDict = phjDefineSuffixDict()
-    
-    print(phjSuffixDict)
     
     # Create a name for the new categorical variable by replacing all spaces with underscores
     # and adding the suffix to indicate that a continuous variable has been converted to a category.
@@ -104,12 +113,12 @@ def phjViewLogOdds(phjTempDF,
     # then plot the graph of logodds against mid-points
     if phjBreaks is not None:
         # The following DF contains an index that may be numeric.
-        phjOR = epy.phjOddsRatio(phjTempDF = phjTempDF,
-                                 phjCaseVarName = phjBinaryDepVarName,
-                                 phjCaseValue = phjCaseValue,
-                                 phjRiskFactorVarName = phjNewCategoryVarName,
-                                 phjRiskFactorBaseValue = 1)
-
+        phjOR = phjOddsRatio(phjTempDF = phjTempDF,
+                             phjCaseVarName = phjBinaryDepVarName,
+                             phjCaseValue = phjCaseValue,
+                             phjRiskFactorVarName = phjNewCategoryVarName,
+                             phjRiskFactorBaseValue = 1)
+        
         phjOR[phjSuffixDict['logodds']] = np.log(phjOR[phjSuffixDict['odds']])
         
         # Calculate log odds using logistic regression and retrieve the se from the statistical model
@@ -126,7 +135,7 @@ def phjViewLogOdds(phjTempDF,
         
         phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
                                              phjSuffixDict['cilowlim']])] = phjOR[phjSuffixDict['logodds']] - (phjRelCoef * phjOR[phjSuffixDict['stderr']])
-
+        
         phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
                                              phjSuffixDict['ciupplim']])] = phjOR[phjSuffixDict['logodds']] + (phjRelCoef * phjOR[phjSuffixDict['stderr']])
         
@@ -136,7 +145,6 @@ def phjViewLogOdds(phjTempDF,
         
         
         # Plot log odds against midpoints of categories
-        
         phjYErrors = phjGetYErrors(phjTempDF = phjOR,
                                    phjCategoriesToPlotList = phjOR.index.tolist(),
                                    phjParameterValue = 'logodds',
@@ -144,7 +152,7 @@ def phjViewLogOdds(phjTempDF,
                                    phjGroupLevelsList = None,
                                    phjAlpha = phjAlpha,
                                    phjPrintResults = phjPrintResults)
-
+        
         ax = phjOR.plot(x = 'catMidpoints',
                         y = 'logodds',
                         kind = 'line',
@@ -158,13 +166,17 @@ def phjViewLogOdds(phjTempDF,
         phjOR = None
     
     if phjPrintResults == True:
-        print('Odds ratio dataframe')
+        print('\nOdds ratio dataframe')
         print(phjOR)
 
     return phjOR
 
 
 
+
+# ====================
+# Supporting functions
+# ====================
 
 def phjCalculateLogOddsSE(phjTempDF,
                           phjAlpha = 0.05,
@@ -263,11 +275,11 @@ def phjCategoriseContinuousVariable(phjTempDF,
         return phjTempDF,phjBreaks
     else:
         return phjTempDF
-  
-  
-  
-  
-  def phjImplementGetBreaks(phjTempDF,
+
+
+
+
+def phjImplementGetBreaks(phjTempDF,
                           phjContinuousVarName = None,
                           phjMissingValue = 'missing',
                           phjNumberOfCategoriesInt = 5,
@@ -280,7 +292,7 @@ def phjCategoriseContinuousVariable(phjTempDF,
         if len(phjTempSer.index) <= 1000:
             phjBreaks = getJenksBreaks(np.array(phjTempSer),
                                        phjNumberOfCategoriesInt)
-
+        
         else:
             phjBreaks = getJenksBreaks(np.array(phjTempSer.sample(1000)),
                                        phjNumberOfCategoriesInt)
@@ -299,3 +311,9 @@ def phjCategoriseContinuousVariable(phjTempDF,
         phjBreaks = None
     
     return phjBreaks
+
+
+
+
+if __name__ == '__main__':
+    main()

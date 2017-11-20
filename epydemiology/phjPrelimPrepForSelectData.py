@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-# The controls that are selected to got with cases could be either
+# The controls that are selected to go with cases could be either
 # consultation controls (i.e. a random selection of consultations from
 # any animals not represented in the cases dataset) or animal
 # controls (i.e. a random selection of animals that are not represented in
@@ -24,9 +24,28 @@ import pandas as pd
 #     |      1008 |      5322 |  yes |    b |  235 |   hi |
 #     |      1009 |      5322 |  yes |    c |  657 |   hi |
 #     etc.
-#
+# 
+# 
+# General workflow
+# ----------------
+# 1. Use regex to identify potential cases in whole database
+#    (or part of database)
+#                |
+#               \|/ 
+#                V
+# 2. Manually read consultations and identify confirmed cases.
+#    These consultations represent the 'cases' dataframe.
+#                |
+#               \|/ 
+#                V
+# 3. Identify all consultations that would not be identified
+#    using the regex
+# 
+# 
 # Selecting consultation controls
 # -------------------------------
-# The workflow that involves selecting 
+# The workflow that involves selecting a random sample of consultations
+# from consultations not included in the cases and which would not have
+# been selected as a case. 
 # 
 # 

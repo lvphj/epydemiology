@@ -101,4 +101,8 @@ def classify(value, breaks):
       return i
   return len(breaks) - 1
   
-================================
+# ================================
+    
+    
+if __name__ == '__main__':
+	main()
