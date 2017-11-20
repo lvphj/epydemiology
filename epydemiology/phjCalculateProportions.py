@@ -258,8 +258,7 @@ def phjCalculateBinomialProportions(phjTempDF,
         # whole columns and return summary dataframe.
         phjPropDF = phjCountSuccesses(x = phjTempDF[phjColumnsList],
                                       phjColumnsList = phjColumnsList,
-                                      phjMissingValue = phjMissingValue,
-                                      phjSuffixDict = phjSuffixDict)
+                                      phjMissingValue = phjMissingValue)
     
     else:
         # Copy required columns to new dataframe
@@ -374,8 +373,10 @@ def phjDefineSuffixDict(phjAlpha = 0.05):
     
     # Create a dict containing all the default suffixes and join strings that will be used to facilitate
     # passing information from one function to the next.
-    phjSuffixDict = {'absfreq':'count',                                # Absolute frequency suffix
-                     'proportion':'prop',                              # Relative frequency suffix
+    phjSuffixDict = {'numbersuccesses':'success',                      # Number of successes (used to calculate binomial proportions)
+                     'numbertrials':'obs',                             # Number of trials (used to calculate binomial proportions)
+                     'absfreq':'count',                                # Absolute frequency suffix (used to calcuate multinomial proportions)
+                     'proportion':'prop',                              # Relative frequency suffix (used to calcuate multinomial proportions)
                      'cisuffix':phjCISuffix(phjAlpha,phjCIAbbrev),     # Confidence interval suffix
                      'cilowlim':'llimit',                              # lower limit of confidence interval
                      'ciupplim':'ulimit',                              # upper limit of confidence interval
@@ -406,12 +407,12 @@ def phjCountSuccesses(x,
     # (The alpha value is not required and can be left as default.)
     phjSuffixDict = phjDefineSuffixDict()
     
-    phjSummaryDF = pd.DataFrame(index = phjColumnsList, columns = [phjSuffixDict['numberobs'],
-                                                                   phjSuffixDict['numbersuccess']])
+    phjSummaryDF = pd.DataFrame(index = phjColumnsList, columns = [phjSuffixDict['numbertrials'],
+                                                                   phjSuffixDict['numbersuccesses']])
     
     for var in phjColumnsList:
-        phjSummaryDF.loc[var,phjSuffixDict['numberobs']] = ((x[var].replace(phjMissingValue,np.nan).dropna()) == 'yes').count()
-        phjSummaryDF.loc[var,phjSuffixDict['numbersuccess']] = ((x[var].replace(phjMissingValue,np.nan).dropna()) == 'yes').sum()
+        phjSummaryDF.loc[var,phjSuffixDict['numbertrials']] = ((x[var].replace(phjMissingValue,np.nan).dropna()) == 'yes').count()
+        phjSummaryDF.loc[var,phjSuffixDict['numbersuccesses']] = ((x[var].replace(phjMissingValue,np.nan).dropna()) == 'yes').sum()
     
     return phjSummaryDF
 
