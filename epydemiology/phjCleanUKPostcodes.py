@@ -51,7 +51,7 @@ else:
 # Checking that pyxdameraulevenshtein package is installed does not work using the
 # above method because attribute .DistributionNotFound is not present.
 try:
-    import pyxdameraulevenshtein
+    import pyxdameraulevenshtein as pyxdl
 except ImportError:
     print("Error: pyxdameraulevenshtein package not installed. Some features may not be available.")
 
