@@ -478,7 +478,20 @@ By default, function returns the original dataframe with added columns containin
 
 #### Other notes
 
-None.
+The regex used to check the format of postcodes is given below and is a modification of the regex found at https://en.wikipedia.org/wiki/Talk:Postcodes_in_the_United_Kingdom (accessed 22 Mar 2016). The regex was modified slightly to allow for optional space between first and second parts of postcode (even though, in this library, all the whitespace is removed before comparing with the regex). Also, the original did not find old Norwich postcodes of the form NOR number-number-letter nor old Newport postcodes of form NPT number-letter-letter. The regex was changed so it consisted of two named components recognising the outward (first half) and inward (second half) of the postcode which could be compiled into a single regex, separated by whitespace (if required).
+
+```python
+postcodeOutwardRegex = '''(?P<postcodeOutward>(?:^GIR(?=\s*0AA$)) |                 # Identifies special postcode GIR 0AA
+                                              (?:^NOR(?=\s*[0-9][0-9][A-Z]$)) |     # Identifies old Norwich postcodes of format NOR number-number-letter
+                                              (?:^NPT(?=\s*[0-9][A-Z][A-Z]$)) |     # Identifies old Newport (South Wales) postcodes of format NPT number-letter-letter
+                                              (?:^(?:(?:A[BL]|B[ABDFHLNRSTX]?|C[ABFHMORTVW]|D[ADEGHLNTY]|E[HNX]?|F[KY]|G[LUY]?|H[ADGPRSUX]|I[GMPV]|JE|K[ATWY]|L[ADELNSU]?|M[EKL]?|N[EGNPRW]?|O[LX]|P[AEHLOR]|R[GHM]|S[AEGKLMNOPRSTY]?|T[ADFNQRSW]|UB|W[ADFNRSV]|YO|ZE)[1-9]?[0-9] |  # Identifies stardard outward code e.g. L4, L12, CH5, CH64
+                                                  (?:(?:E|N|NW|SE|SW|W)1|EC[1-4]|WC[12])[A-HJKMNPR-Y]|(?:SW|W)(?:[1-9]|[1-9][0-9])|EC[1-9][0-9]|WC99))    # Identifies the odd London-based postcodes
+                           )'''
+
+postcodeInwardRegex = '''(?P<postcodeInward>(?<=NOR)(?:\s*[0-9][0-9][A-Z]$) |      # Picks out the unusual format of old Norwich postcodes (including leading space)
+                                            (?:[0-9][ABD-HJLNP-UVW-Z]{2}$)         # Picks out standard number-letter-letter end of postcode
+                         )'''
+```
 
 #### Example
 
