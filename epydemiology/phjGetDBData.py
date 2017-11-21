@@ -61,15 +61,17 @@ else:
 
 
 
-def phjGetDataFromDatabase(phjQueryPathAndFileName = None,
+def phjGetDataFromDatabase(phjQueryStr = None,
+                           phjQueryPathAndFileName = None,
                            phjPrintResults = False):
     
     phjAllowedAttempts = 3
     
-    # Load SQL query from text file
-    phjTempQuery = phjReadTextFromFile(phjFilePathAndName = phjQueryPathAndFileName,
-                                       phjMaxAttempts = phjAllowedAttempts,
-                                       phjPrintResults = phjPrintResults)
+    phjTempQuery = phjGetSELECTQueryStr(phjQueryStr = phjQueryStr,
+                                        phjQueryPathAndFileName = phjQueryPathAndFileName,
+                                        phjAllowedAttempts = phjallowedAttempts,
+                                        phjPrintResults = phjPrintResults)
+    
     
     if phjTempQuery is not None:
         # Enter name of database (convert to lower case and remove white space)
@@ -109,6 +111,48 @@ def phjGetDataFromDatabase(phjQueryPathAndFileName = None,
             print('\n')
     
     return phjTempDF
+
+
+
+def phjGetSELECTQueryStr(phjQueryStr = None,
+                         phjQueryPathAndFileName = None,
+                         phjAllowedAttempts = 3,
+                         phjPrintResults = False):
+    
+    # If one or other of the string input options is not None then get query string
+    if (phjQueryStr is not None) or (phjQueryPathAndFileName is not None):
+        # File name and path given preference (i.e. check this first)
+        if phjQueryPathAndFileName is not None:
+            # Load SQL query from text file
+             phjTempQuery = phjReadTextFromFile(phjFilePathAndName = phjQueryPathAndFileName,
+                                                phjMaxAttempts = phjAllowedAttempts,
+                                                phjPrintResults = phjPrintResults)
+        
+        else:
+            phjTempQuery = None
+        
+        
+        # If the text file did not yield a string, move on to the query string.
+        if (phjTempQuery is None) and (phjQueryString is not None):
+            phjTempQuery = phjQueryString
+            
+        else:
+            phjTempQuery = None
+            
+    else:
+        phjTempQuery = None
+    
+    
+    # Check whether input string matches a SELECT...FROM... query
+    phjSelectQueryRegex = re.compile('^SELECT.*FROM.*',flags=re.I)
+    
+    if phjTempQuery is not None:
+        if not(re.match(phjSelectQueryRegex, phjQueryStr)):
+            print("Only 'SELECT' queries can be used to interrogate the database.")
+            phjTempQuery = None
+    
+    
+    return phjTempQuery
 
 
 
