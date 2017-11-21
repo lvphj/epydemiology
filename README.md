@@ -1189,17 +1189,17 @@ phjTempDF = pd.DataFrame({'group':['case','case','case','control','control','cas
 print(phjTempDF)
 print('\n')
 
-phjRelFreqDF = epy.phjCalculateMultinomialProportioins(phjTempDF = phjTempDF,
-                                                       phjCategoryVarName = 'category',
-                                                       phjGroupVarName = 'group',
-                                                       phjMissingValue = 'missing',
-                                                       phjMultinomialConfIntMethod = 'goodman',
-                                                       phjAlpha = 0.05,
-                                                       phjPlotRelFreq = True,
-                                                       phjCategoriesToPlotList = 'all',
-                                                       phjGroupsToPlotList = 'all',   # Currently not implemented
-                                                       phjGraphTitle = 'Relative frequencies (Goodman CI)',
-                                                       phjPrintResults = True)
+phjRelFreqDF = epy.phjCalculateMultinomialProportions(phjTempDF = phjTempDF,
+                                                      phjCategoryVarName = 'category',
+                                                      phjGroupVarName = 'group',
+                                                      phjMissingValue = 'missing',
+                                                      phjMultinomialConfIntMethod = 'goodman',
+                                                      phjAlpha = 0.05,
+                                                      phjPlotRelFreq = True,
+                                                      phjCategoriesToPlotList = 'all',
+                                                      phjGroupsToPlotList = 'all',   # Currently not implemented
+                                                      phjGraphTitle = 'Relative frequencies (Goodman CI)',
+                                                      phjPrintResults = True)
 
 print(phjRelFreqDF)
 
