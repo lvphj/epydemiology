@@ -48,9 +48,180 @@ import collections
 # Main functions
 # ==============
 #
-# Calculate relative frequencies (multinomial proportions)
-# ========================================================
+# Calculate binomial proportions
+# ------------------------------
+# This function calculates the binomial proportions of a series of binomial variables
+# for each level of a given group variable. The dataframe has the following format:
 #
+#         group     A    B    C
+#     0      g1   yes   no  yes
+#     1      g1   yes  NaN  yes
+#     2      g2    no  NaN  yes
+#     3      g1    no  yes  NaN
+#     4      g2    no  yes   no
+#     5      g2    no  yes  yes
+#     6      g1    no  yes  yes
+#     7      g1   yes   no  yes
+#     8      g2   NaN   no   no
+#     9      g1   yes   no   no
+#
+#  ...and produces the following dataframe:
+#
+#     group   var   count   success   propn
+#        g1     A       6         4    0.66
+#        g1     B       5         2    0.40
+#        g1     C       5         4    0.80
+#        g2     A       3         0    0.00
+#        g2     B       4         2    0.50
+#        g2     C       4         2    0.50
+
+
+def phjCalculateBinomialProportions(phjTempDF,
+                                    phjColumnsList = None,
+                                    phjSuccess = 'yes',
+                                    phjGroupVarName = None,
+                                    phjMissingValue = 'missing',
+                                    phjBinomialConfIntMethod = 'normal',
+                                    phjAlpha = 0.05,
+                                    phjPlotProportions = True,
+                                    phjGroupsToPlotList = 'all',
+                                    phjSortProportions = False,
+                                    phjGraphTitle = None,
+                                    phjPrintResults = False):
+    
+    # Error checking required:
+    # 1. NEED TO CHECK that all variables in var list are in the dataframe.
+    # 2. NEED TO CHECK that group var is not included in list of columns
+    # 3. IF GROUPS TO PLOT IS A LIST AND GROUP VAR NAME IS NONE THEN CHECK
+    
+    
+    # Set default suffixes and join strings to create column names
+    # to use in output dataframe.
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+
+    
+    # Create lists of unique group levels. (In the bionomial proportions function,
+    # unlike for the multinomial proportions function, the category levels are defined
+    # as a list that is passed to the function.)
+    # (N.B. If no group name is given, a default value 'group' is used.)
+    # i. Categories
+    phjGroupLevelsList = phjGetGroupLevelsList(phjTempDF = phjTempDF,
+                                               phjGroupVarName = phjGroupVarName,
+                                               phjPrintResults = phjPrintResults)
+
+
+    
+    # Create dataframe consisting of total numbers and number of successes
+    if phjGroupVarName is None:
+        # If no group var name is supplied then calculate success for
+        # whole columns and return summary dataframe.
+        phjPropDF = phjCountSuccesses(x = phjTempDF[phjColumnsList],
+                                      phjColumnsList = phjColumnsList,
+                                      phjMissingValue = phjMissingValue)
+    
+    else:
+        # Copy required columns to new dataframe
+        phjTempDF = phjTempDF[phjColumnsList + [phjGroupVarName]].copy()
+
+        # Calculate number of successes for each level of group variable and return summary dataframe
+        phjPropDF = phjTempDF.groupby(phjGroupVarName).apply(lambda x: phjCountSuccesses(x,
+                                                                                         phjColumnsList = phjColumnsList,
+                                                                                         phjMissingValue = phjMissingValue))
+    
+    
+    # Ensure count data is stored as integer values. Otherwise,
+    # for some reason, calculations with object columsn can go awry.
+    phjPropDF[phjSuffixDict['numbertrials']] = phjPropDF[phjSuffixDict['numbertrials']].astype(int)
+    phjPropDF[phjSuffixDict['numbersuccesses']] = phjPropDF[phjSuffixDict['numbersuccesses']].astype(int)
+    
+
+    phjPropDF[phjSuffixDict['proportion']] = phjPropDF[phjSuffixDict['numbersuccesses']] / phjPropDF[phjSuffixDict['numbertrials']]
+
+
+    phjPropDF = phjCalculateBinomialConfInts(phjTempDF = phjPropDF,
+                                             phjSuccessesColumnName = phjSuffixDict['numbersuccesses'],
+                                             phjNColumnName = phjSuffixDict['numbertrials'],
+                                             phjBinomialConfIntMethod = 'normal',
+                                             phjAlpha = 0.05,
+                                             phjPrintResults = False)
+    
+#    if phjSortProportions != False:
+#        if phjSortProportions == 'asc':
+#            phjPropDF = phjPropDF.sort_values(by = 'proportion',
+#                                              axis = 0,
+#                                              ascending = True)
+#                                              
+#        elif phjSortProportions == 'desc':
+#            phjPropDF = phjPropDF.sort_values(by = 'proportion',
+#                                              axis = 0,
+#                                              ascending = False)
+#            
+#        else:
+#            print('Option for sorting does not exist.')
+
+
+#    if phjBinomialConfIntMethod == 'normal':
+#        # Calculate standard error
+#        phjPropDF['stderr'] = ((phjPropDF['proportion'] * (1 - phjPropDF['proportion'])) / phjPropDF['count']).pow(1/2)
+#        
+#        # Calculate reliability coefficient
+#        phjReliabilityCoefficient = norm.ppf(1 - (phjAlpha / 2))
+#        
+#        # Calculate confidence interval
+#        phjCIColumnName = phjCISuffix(phjAlpha)
+#        phjPropDF[phjCIColumnName] = phjReliabilityCoefficient * phjPropDF['stderr']
+#        
+#        # Calculate uppper and lower CI limits
+#        phjPropDF['lowCILimit'] = phjPropDF['proportion'] - phjPropDF[phjCIColumnName]
+#        phjPropDF['uppCILimit'] = phjPropDF['proportion'] + phjPropDF[phjCIColumnName]
+#        
+#    else:
+#        phjPropDF['stderr'] = np.nan
+        
+    
+    # Convert long to wide format based on group membership.
+    # This is only necessary if more than one group is present.
+    if phjGroupVarName is not None:
+        phjPropDF = phjPropDF.unstack(level = 0)
+        phjPropDF = phjPropDF.swaplevel(i = -1, j = 0, axis = 1)
+    
+    
+    # Flatten dataframe multi-index columns to be the following format:
+    #    groupName_columnHeading
+    # This only needs to be done if there are 2 more groups. If only one group,
+    # then column index is already a single dimension and doesn't need to be flattend.
+    if phjGroupVarName is not None:
+        phjColIndexNames = pd.Index([phjSuffixDict['joinstr'].join([c[0],c[1]]) for c in phjPropDF.columns.tolist()])
+        phjPropDF.columns = phjColIndexNames
+    
+    phjPropDF = phjPropDF.sort_index(axis = 1)
+    
+    
+    if phjPrintResults == True:
+        with pd.option_context('display.float_format','{:,.4f}'.format):
+            print(phjPropDF)
+    
+    
+
+# Plot bar chart of relative frequencies
+    if phjPlotProportions == True:
+        
+        # Plot chart
+        phjPlotProportionsBarChart(phjTempDF = phjPropDF,
+                                   phjCategoriesToPlotList = phjColumnsList,
+                                   phjGroupVarName = phjGroupVarName,
+                                   phjGroupLevelsList = phjGroupLevelsList,
+                                   phjAlpha = phjAlpha,
+                                   phjGraphTitle = None,
+                                   phjXAxisTitle = None,
+                                   phjYAxisTitle = 'Proportions',
+                                   phjPrintResults = True)
+
+
+    return phjPropDF
+
+
+
 # Calculates relative frequencies and multinomial confidence intervals
 # --------------------------------------------------------------------
 # This function calculates proportions, simultaneous confidence intervals for a categorical
@@ -178,6 +349,7 @@ def phjCalculateMultinomialProportions(phjTempDF,
                                    phjCategoriesToPlotList = phjCategoriesToPlotList,
                                    phjGroupVarName = phjGroupVarName,
                                    phjGroupLevelsList = phjGroupLevelsList,
+                                   phjAlpha = phjAlpha,
                                    phjGraphTitle = phjGraphTitle,
                                    phjXAxisTitle = phjCategoryVarName,
                                    phjYAxisTitle = 'Relative frequency',
@@ -185,180 +357,6 @@ def phjCalculateMultinomialProportions(phjTempDF,
     
     
     return phjRelFreqDF
-
-
-
-# Calculate binomial proportions
-# ==============================
-#
-# This function calculates the binomial proportions of a series of binomial variables
-# for each level of a given group variable. The dataframe has the following format:
-#
-#         group     A    B    C
-#     0      g1   yes   no  yes
-#     1      g1   yes  NaN  yes
-#     2      g2    no  NaN  yes
-#     3      g1    no  yes  NaN
-#     4      g2    no  yes   no
-#     5      g2    no  yes  yes
-#     6      g1    no  yes  yes
-#     7      g1   yes   no  yes
-#     8      g2   NaN   no   no
-#     9      g1   yes   no   no
-#
-#  ...and produces the following dataframe:
-#
-#     group   var   count   success   propn
-#        g1     A       6         4    0.66
-#        g1     B       5         2    0.40
-#        g1     C       5         4    0.80
-#        g2     A       3         0    0.00
-#        g2     B       4         2    0.50
-#        g2     C       4         2    0.50
-
-
-def phjCalculateBinomialProportions(phjTempDF,
-                                    phjColumnsList = None,
-                                    phjSuccess = 'yes',
-                                    phjGroupVarName = None,
-                                    phjMissingValue = 'missing',
-                                    phjBinomialConfIntMethod = 'normal',
-                                    phjAlpha = 0.05,
-                                    phjPlotProportions = True,
-                                    phjGroupsToPlotList = 'all',
-                                    phjSortProportions = False,
-                                    phjGraphTitle = None,
-                                    phjPrintResults = False):
-    
-    # Error checking required:
-    # 1. NEED TO CHECK that all variables in var list are in the dataframe.
-    # 2. NEED TO CHECK that group var is not included in list of columns
-    # 3. IF GROUPS TO PLOT IS A LIST AND GROUP VAR NAME IS NONE THEN CHECK
-    
-    
-    # Set default suffixes and join strings to create column names
-    # to use in output dataframe.
-    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
-
-    
-    # Create lists of unique group levels. (In the bionomial proportions function,
-    # unlike for the multinomial proportions function, the category levels are defined
-    # as a list that is passed to the function.)
-    # (N.B. If no group name is given, a default value 'group' is used.)
-    # i. Categories
-    phjGroupLevelsList = phjGetGroupLevelsList(phjTempDF = phjTempDF,
-                                               phjGroupVarName = phjGroupVarName,
-                                               phjPrintResults = phjPrintResults)
-
-
-    
-    # Create dataframe consisting of total numbers and number of successes
-    if phjGroupVarName is None:
-        # If no group var name is supplied then calculate success for
-        # whole columns and return summary dataframe.
-        phjPropDF = phjCountSuccesses(x = phjTempDF[phjColumnsList],
-                                      phjColumnsList = phjColumnsList,
-                                      phjMissingValue = phjMissingValue)
-    
-    else:
-        # Copy required columns to new dataframe
-        phjTempDF = phjTempDF[phjColumnsList + [phjGroupVarName]].copy()
-
-        # Calculate number of successes for each level of group variable and return summary dataframe
-        phjPropDF = phjTempDF.groupby(phjGroupVarName).apply(lambda x: phjCountSuccesses(x,
-                                                                                         phjColumnsList = phjColumnsList,
-                                                                                         phjMissingValue = phjMissingValue))
-    
-    
-    # Ensure count data is stored as integer values. Otherwise,
-    # for some reason, calculations with object columsn can go awry.
-    phjPropDF[phjSuffixDict['numberobs']] = phjPropDF[phjSuffixDict['numberobs']].astype(int)
-    phjPropDF[phjSuffixDict['numbersuccess']] = phjPropDF[phjSuffixDict['numbersuccess']].astype(int)
-    
-
-    phjPropDF[phjSuffixDict['proportion']] = phjPropDF[phjSuffixDict['numbersuccess']] / phjPropDF[phjSuffixDict['numberobs']]
-
-
-    phjPropDF = phjCalculateBinomialConfInts(phjTempDF = phjPropDF,
-                                             phjSuccessesColumnName = phjSuffixDict['numbersuccess'],
-                                             phjNColumnName = phjSuffixDict['numberobs'],
-                                             phjBinomialConfIntMethod = 'normal',
-                                             phjAlpha = 0.05,
-                                             phjPrintResults = False)
-    
-#    if phjSortProportions != False:
-#        if phjSortProportions == 'asc':
-#            phjPropDF = phjPropDF.sort_values(by = 'proportion',
-#                                              axis = 0,
-#                                              ascending = True)
-#                                              
-#        elif phjSortProportions == 'desc':
-#            phjPropDF = phjPropDF.sort_values(by = 'proportion',
-#                                              axis = 0,
-#                                              ascending = False)
-#            
-#        else:
-#            print('Option for sorting does not exist.')
-
-
-#    if phjBinomialConfIntMethod == 'normal':
-#        # Calculate standard error
-#        phjPropDF['stderr'] = ((phjPropDF['proportion'] * (1 - phjPropDF['proportion'])) / phjPropDF['count']).pow(1/2)
-#        
-#        # Calculate reliability coefficient
-#        phjReliabilityCoefficient = norm.ppf(1 - (phjAlpha / 2))
-#        
-#        # Calculate confidence interval
-#        phjCIColumnName = phjCISuffix(phjAlpha)
-#        phjPropDF[phjCIColumnName] = phjReliabilityCoefficient * phjPropDF['stderr']
-#        
-#        # Calculate uppper and lower CI limits
-#        phjPropDF['lowCILimit'] = phjPropDF['proportion'] - phjPropDF[phjCIColumnName]
-#        phjPropDF['uppCILimit'] = phjPropDF['proportion'] + phjPropDF[phjCIColumnName]
-#        
-#    else:
-#        phjPropDF['stderr'] = np.nan
-        
-    
-    # Convert long to wide format based on group membership.
-    # This is only necessary if more than one group is present.
-    if phjGroupVarName is not None:
-        phjPropDF = phjPropDF.unstack(level = 0)
-        phjPropDF = phjPropDF.swaplevel(i = -1, j = 0, axis = 1)
-    
-    
-    # Flatten dataframe multi-index columns to be the following format:
-    #    groupName_columnHeading
-    # This only needs to be done if there are 2 more groups. If only one group,
-    # then column index is already a single dimension and doesn't need to be flattend.
-    if phjGroupVarName is not None:
-        phjColIndexNames = pd.Index([phjSuffixDict['joinstr'].join([c[0],c[1]]) for c in phjPropDF.columns.tolist()])
-        phjPropDF.columns = phjColIndexNames
-    
-    phjPropDF = phjPropDF.sort_index(axis = 1)
-    
-    
-    if phjPrintResults == True:
-        with pd.option_context('display.float_format','{:,.4f}'.format):
-            print(phjPropDF)
-    
-    
-
-# Plot bar chart of relative frequencies
-    if phjPlotProportions == True:
-        
-        # Plot chart
-        phjPlotProportionsBarChart(phjTempDF = phjPropDF,
-                                   phjCategoriesToPlotList = phjColumnsList,
-                                   phjGroupVarName = phjGroupVarName,
-                                   phjGroupLevelsList = phjGroupLevelsList,
-                                   phjGraphTitle = None,
-                                   phjXAxisTitle = None,
-                                   phjYAxisTitle = 'Proportions',
-                                   phjPrintResults = True)
-
-
-    return phjPropDF
 
 
 
@@ -470,8 +468,8 @@ def phjGetCategoryLevelsList(phjTempDF,
         print('\nCategory levels: ',phjCategoryLevelsList)
     
     return phjCategoryLevelsList
-    
-    
+
+
 
 def phjGetGroupLevelsList(phjTempDF,
                           phjGroupVarName = None,
@@ -503,7 +501,7 @@ def phjCalculateMultinomialConfInts(phjTempDF,
     
     # Get a list of the terms used to head columns in summary tables
     phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
-
+    
     # Get simultaneous confidence intervals
     phjSimultConfIntArr = smprop.multinomial_proportions_confint(phjTempDF[phjAbsFreqColumnName],
                                                                  alpha = phjAlpha,
@@ -524,7 +522,7 @@ def phjReorderCols(phjTempDF,
     
     # Get a list of the terms used to head columns in summary tables.
     phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
-
+    
     # Reorder columns
     if phjGroupVarName is None:
         phjColOrder = [phjSuffixDict['absfreq'],
@@ -548,7 +546,7 @@ def phjPlotProportionsBarChart(phjTempDF,
                                phjCategoriesToPlotList = 'all',
                                phjGroupVarName = None,
                                phjGroupLevelsList = None,
-                               phjSuffixDict = None,
+                               phjAlpha = 0.05,
                                phjGraphTitle = None,
                                phjXAxisTitle = None,
                                phjYAxisTitle = None,
@@ -558,13 +556,16 @@ def phjPlotProportionsBarChart(phjTempDF,
     # The names of the columns to plot are generated using a list comprehension in code below.
     # The legend, however, does not contain the suffix text.
     
+    # Get a list of the terms used to head columns in summary tables.
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+    
     # Define which categories to plot
     if phjCategoriesToPlotList == 'all':
         phjIndexItemsToPlot = list(phjTempDF.index.values)
     else:
         phjIndexItemsToPlot = phjCategoriesToPlotList
     
-
+    
     if phjGroupVarName is None:                         
         # Calculate y errors
         phjYErrors = phjGetYErrors(phjTempDF = phjTempDF,
@@ -655,4 +656,5 @@ def phjGetYErrors(phjTempDF,
 
 
 if __name__ == '__main__':
-	main()
+    main()
+    
