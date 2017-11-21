@@ -160,7 +160,8 @@ myTempDF = epy.phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = '/Us
 ### 2. phjGetDataFromDatabase()
 
 ```python
-df = phjGetDataFromDatabase(phjQueryPathAndFileName = None,
+df = phjGetDataFromDatabase(phjQueryStr = None,
+                            phjQueryPathAndFileName = None,
                             phjPrintResults = False)
 ```
 
@@ -168,13 +169,19 @@ Python function to read data from a MySQL or SQL SERVER database.
 
 #### Description
 
-The function is used to query MySQL or SQL SERVER databases using an SQL query that is stored as a text file. As the function runs, the user will be prompted to enter all other required parameters including server address, username and password details. A maximum of three attempts allowed to enter correct login information. The password is entered and remains securely obscured on-screen.
+The function is used to query MySQL or SQL SERVER databases using an SQL query that can be entered as a string or is stored as a text file. As the function runs, the user will be prompted to enter all other required parameters including server address, username and password details. A maximum of three attempts allowed to enter correct login information. The password is entered and remains securely obscured on-screen.
 
 #### Function parameters
 
-1. **phjQueryPathAndFilename**
+1. **phjQueryStr**
+
+   A string representing a SELECT...FROM query.
+   A query entered as a text file (below) is given preference over a query entered as a string.
+
+2. **phjQueryPathAndFilename**
 
    The full path and filename of the SQL text file containing the SQL query.
+   A query entered as a text file (below) is given preference over a query entered as a string.
    
 2. **phjPrintResults** (default = False)
 
