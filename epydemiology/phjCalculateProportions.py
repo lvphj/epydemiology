@@ -141,9 +141,9 @@ def phjCalculateBinomialProportions(phjTempDF,
     phjPropDF = phjCalculateBinomialConfInts(phjTempDF = phjPropDF,
                                              phjSuccessesColumnName = phjSuffixDict['numbersuccesses'],
                                              phjNColumnName = phjSuffixDict['numbertrials'],
-                                             phjBinomialConfIntMethod = 'normal',
-                                             phjAlpha = 0.05,
-                                             phjPrintResults = False)
+                                             phjBinomialConfIntMethod = phjBinomialConfIntMethod,
+                                             phjAlpha = phjAlpha,
+                                             phjPrintResults = phjPrintResults)
     
 #    if phjSortProportions != False:
 #        if phjSortProportions == 'asc':
@@ -419,13 +419,13 @@ def phjCountSuccesses(x,
 def phjCalculateBinomialConfInts(phjTempDF,
                                  phjSuccessesColumnName = None,
                                  phjNColumnName = None,
-                                 phjBinomialConfIntMethod = 'beta',
+                                 phjBinomialConfIntMethod = 'normal',
                                  phjAlpha = 0.05,
                                  phjPrintResults = False):
     
     # Get a list of the terms used to head columns in summary tables
     phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
-
+    
     # Get binomial confidence intervals
     phjBinomConfIntArr = smprop.proportion_confint(count = phjTempDF[phjSuccessesColumnName],
                                                    nobs = phjTempDF[phjNColumnName],
