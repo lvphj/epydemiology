@@ -69,7 +69,7 @@ def phjGetDataFromDatabase(phjQueryStr = None,
     
     phjTempQuery = phjGetSELECTQueryStr(phjQueryStr = phjQueryStr,
                                         phjQueryPathAndFileName = phjQueryPathAndFileName,
-                                        phjAllowedAttempts = phjallowedAttempts,
+                                        phjAllowedAttempts = phjAllowedAttempts,
                                         phjPrintResults = phjPrintResults)
     
     
