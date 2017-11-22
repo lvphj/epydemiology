@@ -52,6 +52,8 @@ else:
 
 
 import re
+import collections
+
 
 
 # Import minor epydemiology functions from other epydemiology files
@@ -238,7 +240,30 @@ def phjCategoriseContinuousVariable(phjTempDF,
                                     phjPrintResults = False):
     
     
-    if phjCategorisationMethod == 'jenks':
+    # Check if phjCategorisationMethod is a list.
+    # If so, the phjNumberOfCategoriesInt is ignored and the number of categories
+    # is inferred from the break points.
+    if isinstance(phjCategorisationMethod,collections.Sequence) and not isinstance(phjCategorisationMethod,str):
+        
+        # Check the list contains only numbers and that each consecutive number
+        # is greater than the number preceding it.
+        if phjCheckListOfIncreasingNumbers(phjList = phjCategorisationMethod) == True:
+            
+            phjBreaks = phjCategorisationMethod
+            
+            phjTempDF[phjNewCategoryVarName] = pd.cut(phjTempDF[phjContinuousVarName],
+                                                      bins = phjBreaks,
+                                                      right = True,
+                                                      labels = False)
+        
+        else:
+            # If a list has been entered but it is not correct, return
+            # the dataframe unchanged.
+            phjTempDF = phjTempDF
+            phjBreaks = None
+    
+    
+    elif phjCategorisationMethod == 'jenks':
         
         phjBreaks = phjImplementGetBreaks(phjTempDF = phjTempDF,
                                           phjContinuousVarName = phjContinuousVarName,
@@ -249,17 +274,19 @@ def phjCategoriseContinuousVariable(phjTempDF,
         # Cut data series based on Jenks breaks
         phjTempDF[phjNewCategoryVarName] = pd.cut(phjTempDF[phjContinuousVarName],
                                                   bins = phjBreaks,
+                                                  right = True,
                                                   labels = False)
         
         if phjPrintResults == True:
             print('Category quantile bins (Jenks) = ',phjBreaks)
-
+    
     
     elif phjCategorisationMethod == 'quantile':
         
         # Cut data series based on quantiles / number of required bins
         phjTempDF[phjNewCategoryVarName], phjBreaks = pd.cut(phjTempDF[phjContinuousVarName],
                                                              bins = phjNumberOfCategoriesInt,
+                                                             right = True,
                                                              retbins = True,
                                                              labels = False)
         
@@ -275,6 +302,54 @@ def phjCategoriseContinuousVariable(phjTempDF,
         return phjTempDF,phjBreaks
     else:
         return phjTempDF
+
+
+
+
+def phjCheckListOfIncreasingNumbers(phjList):
+    # This function checks that the list contains only numbers and that
+    # the numbers are consecutively increasing.
+    if isinstance(phjList,collections.Sequence) and not isinstance(phjList,str):
+        # List comprehension steps through each value of list
+        # and only retains the numbers. If the length of the orginal
+        # list is different from the list with numbers only, then
+        # some items were not numbers
+        if len(phjList) == len([i for i in phjList if phjCheckIsNumber(i) == True]):
+            # If all items are numbers, check that each consecutive number
+            # is bigger than the preceding one
+            phjIncrease = True
+            for j in range(1,len(phjList)):
+                if (phjIncrease == True) and (phjList[j] - phjList[j-1] > 0):
+                    phjIncrease = True
+                else:
+                    phjIncrease = False
+                    print('Item at position {0} in list ({1}) is not larger than preceding number ({2}).'.format(j,phjList[j],phjList[j-1]))
+                    break
+
+            if phjIncrease == True:
+                phjListCheck = True
+            else:
+                phjListCheck = False
+
+        else:
+            # Here, could identify which list items are not numbers if so inclined...
+            print('Some items in list are not numbers.')
+            phjListCheck = False
+    
+    return phjListCheck
+
+
+
+
+def phjCheckIsNumber(i):
+    try:
+        i = float(i)
+        phjIsNumber = True
+    except ValueError:
+        phjIsNumber = False
+    except TypeError:
+        phjIsNumber = False
+    return phjIsNumber
 
 
 
