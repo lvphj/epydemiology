@@ -133,8 +133,8 @@ def phjGetSELECTQueryStr(phjQueryStr = None,
         
         
         # If the text file did not yield a string, move on to the query string.
-        if (phjTempQuery is None) and (phjQueryString is not None):
-            phjTempQuery = phjQueryString
+        if (phjTempQuery is None) and (phjQueryStr is not None):
+            phjTempQuery = phjQueryStr
             
         else:
             phjTempQuery = None
