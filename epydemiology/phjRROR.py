@@ -10,11 +10,11 @@ def phjOddsRatio(phjTempDF,
                  phjRiskFactorBaseValue):
     
     # Check passed parameters are useable
-    phjCheckPassed = phjCheckVars(phjTempDF = phjTempDF,
-                                  phjCaseVarName = phjCaseVarName,
-                                  phjCaseValue = phjCaseValue,
-                                  phjRiskFactorVarName = phjRiskFactorVarName,
-                                  phjRiskFactorBaseValue = phjRiskFactorBaseValue)
+    phjCheckPassed = phjRRORCheckArgs(phjTempDF = phjTempDF,
+                                      phjCaseVarName = phjCaseVarName,
+                                      phjCaseValue = phjCaseValue,
+                                      phjRiskFactorVarName = phjRiskFactorVarName,
+                                      phjRiskFactorBaseValue = phjRiskFactorBaseValue)
     
     # Data to use - remove rows that have a missing value
     phjTempDF = phjRemoveNaNRows(phjTempDF = phjTempDF,
@@ -84,11 +84,11 @@ def phjRelativeRisk(phjTempDF,
                     phjRiskFactorBaseValue):
 
     # Check passed parameters are useable
-    phjCheckPassed = phjCheckVars(phjTempDF = phjTempDF,
-                                  phjCaseVarName = phjCaseVarName,
-                                  phjCaseValue = phjCaseValue,
-                                  phjRiskFactorVarName = phjRiskFactorVarName,
-                                  phjRiskFactorBaseValue = phjRiskFactorBaseValue)
+    phjCheckPassed = phjRRORCheckArgs(phjTempDF = phjTempDF,
+                                      phjCaseVarName = phjCaseVarName,
+                                      phjCaseValue = phjCaseValue,
+                                      phjRiskFactorVarName = phjRiskFactorVarName,
+                                      phjRiskFactorBaseValue = phjRiskFactorBaseValue)
     
     # Data to use - remove rows that have a missing value
     phjTempDF = phjRemoveNaNRows(phjTempDF = phjTempDF,
@@ -162,11 +162,11 @@ def phjRelativeRisk(phjTempDF,
 
 
 
-def phjCheckVars(phjTempDF,
-                 phjCaseVarName,
-                 phjCaseValue,
-                 phjRiskFactorVarName,
-                 phjRiskFactorBaseValue):
+def phjRRORCheckArgs(phjTempDF,
+                    phjCaseVarName,
+                    phjCaseValue,
+                    phjRiskFactorVarName,
+                    phjRiskFactorBaseValue):
     
     # Check cases variable occurs and there are only 2 categories
     phjCheckPassed = phjCaseVarCheck(phjTempDF = phjTempDF,
