@@ -155,8 +155,8 @@ def phjViewLogOdds(phjTempDF,
                                    phjAlpha = phjAlpha,
                                    phjPrintResults = phjPrintResults)
         
-        ax = phjOR.plot(x = 'catMidpoints',
-                        y = 'logodds',
+        ax = phjOR.plot(x = phjSuffixDict['catmidpoints'],
+                        y = phjSuffixDict['logodds'],
                         kind = 'line',
                         yerr = phjYErrors,
                         capsize = 4,

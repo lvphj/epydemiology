@@ -371,19 +371,31 @@ def phjDefineSuffixDict(phjAlpha = 0.05):
     
     # Create a dict containing all the default suffixes and join strings that will be used to facilitate
     # passing information from one function to the next.
-    phjSuffixDict = {'numbersuccesses':'success',                      # Number of successes (used to calculate binomial proportions)
+    # The names used for calculated confidence intervals of RR and OR are taken from:
+    # Morten et al (2011_. Recommended confidence intervals for two independent
+    # binomial proportions. Statistical Methods in Medical Research 0(0) 1–31)
+    phjSuffixDict = {'joinstr':'_',                                    # Character to join name and suffix
+                     'numbersuccesses':'success',                      # Number of successes (used to calculate binomial proportions)
                      'numbertrials':'obs',                             # Number of trials (used to calculate binomial proportions)
                      'absfreq':'count',                                # Absolute frequency suffix (used to calcuate multinomial proportions)
                      'proportion':'prop',                              # Relative frequency suffix (used to calcuate multinomial proportions)
+                     'totalnumber':'total',                            # Total number (e.g. cases plus controls)
                      'cisuffix':phjCISuffix(phjAlpha,phjCIAbbrev),     # Confidence interval suffix
-                     'cilowlim':'llimit',                              # lower limit of confidence interval
-                     'ciupplim':'ulimit',                              # upper limit of confidence interval
-                     'joinstr':'_',                                    # Character to join name and suffix
+                     'cilowlim':'llim',                                # lower limit of confidence interval
+                     'ciupplim':'ulim',                                # upper limit of confidence interval
+                     'woolf':'woolf',                                  # Used to describe Woolf confidence interval of OR
+                     'gart':'gart',                                    # Used to describe Gart confidence interval of OR
+                     'katz':'katz',                                    # Used to describe Katz confidence interval of RR
+                     'kooperman':'kooperman',                          # Used to describe Kooperman confidence interval of RR
+                     'adj_log':'adj_log',                              # Used to estimate CI for relative risk is cells contain zero
+                     'risk':'risk',                                    # Risk suffix
+                     'relrisk':'rr',                                   # Relative risk suffix
                      'odds':'odds',                                    # Odds suffix
                      'logodds':'logodds',                              # Log odds suffix
-                     'catmidpoints':'catMidpoints',                    # Midpoints of categorized continuous variable
+                     'oddsratio':'or',                                 # Odds ratio suffix
+                     'catmidpoints':'midpoints',                       # Midpoints of categorized continuous variable
                      'categorisedvar':'cat',                           # Suffix to indicate a continuous var had been categorised
-                     'stderr':'se'                                     # Column heading containing standard error
+                     'stderr':'se'                                     # Standard error
                     }
     
     return phjSuffixDict
@@ -489,9 +501,9 @@ def phjGetGroupLevelsList(phjTempDF,
         print('Group levels: ',phjGroupLevelsList,'\n')
     
     return phjGroupLevelsList
-    
-    
-    
+
+
+
 def phjCalculateMultinomialConfInts(phjTempDF,
                                     phjAbsFreqColumnName = None,
                                     phjSimultConfIntColumnName = None,
@@ -511,9 +523,9 @@ def phjCalculateMultinomialConfInts(phjTempDF,
     phjTempDF[phjSuffixDict['joinstr'].join([phjSimultConfIntColumnName,phjSuffixDict['ciupplim']])] = [i[1] for i in phjSimultConfIntArr]
     
     return phjTempDF
-    
-    
-    
+
+
+
 def phjReorderCols(phjTempDF,
                    phjGroupVarName = None,
                    phjGroupLevelsList = None,
@@ -539,9 +551,9 @@ def phjReorderCols(phjTempDF,
     phjTempDF = phjTempDF[phjColOrder]
     
     return phjTempDF
-    
-    
-    
+
+
+
 def phjPlotProportionsBarChart(phjTempDF,
                                phjCategoriesToPlotList = 'all',
                                phjGroupVarName = None,
