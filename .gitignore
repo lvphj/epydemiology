@@ -94,3 +94,9 @@ env3/
 env33/
 env34/
 env35/
+*.xlsx
+*.xls
+*.docx
+*.doc
+*.pptx
+*.ppt
