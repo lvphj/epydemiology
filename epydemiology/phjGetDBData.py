@@ -25,9 +25,6 @@ dates in the database and this problem does not seem to be an issue.
 #
 # Instead use the following method (as described at: https://docs.plone.org/develop/styleguide/python.html#about-imports)...
 
-import re
-import getpass
-
 import pkg_resources
 
 try:
@@ -58,6 +55,13 @@ except pkg_resources.DistributionNotFound:
 else:
     phjPymssqlPresent = True
     import pymssql
+
+
+from .phjMiscFuncs import phjGetStrFromArgOrFile
+
+
+import re
+import getpass
 
 
 
@@ -119,29 +123,10 @@ def phjGetSELECTQueryStr(phjQueryStr = None,
                          phjAllowedAttempts = 3,
                          phjPrintResults = False):
     
-    # If one or other of the string input options is not None then get query string
-    if (phjQueryStr is not None) or (phjQueryPathAndFileName is not None):
-        # File name and path given preference (i.e. check this first)
-        if phjQueryPathAndFileName is not None:
-            # Load SQL query from text file
-             phjTempQuery = phjReadTextFromFile(phjFilePathAndName = phjQueryPathAndFileName,
-                                                phjMaxAttempts = phjAllowedAttempts,
-                                                phjPrintResults = phjPrintResults)
-        
-        else:
-            phjTempQuery = None
-        
-        
-        # If the text file did not yield a string, move on to the query string.
-        if (phjTempQuery is None) and (phjQueryStr is not None):
-            phjTempQuery = phjQueryStr
-            
-        else:
-            phjTempQuery = None
-            
-    else:
-        phjTempQuery = None
-    
+    phjTempQuery = phjGetStrFromArgOrFile(phjStr = phjQueryStr,
+                                          phjPathAndFileName = phjQueryPathAndFileName,
+                                          phjAllowedAttempts = phjAllowedAttempts,
+                                          phjPrintResults = phjPrintResults)
     
     # Check whether input string matches a SELECT...FROM... query
     phjSelectQueryRegex = re.compile('^SELECT.*FROM.*',flags=re.I)
@@ -151,45 +136,7 @@ def phjGetSELECTQueryStr(phjQueryStr = None,
             print("Only 'SELECT' queries can be used to interrogate the database.")
             phjTempQuery = None
     
-    
     return phjTempQuery
-
-
-
-def phjReadTextFromFile(phjFilePathAndName = None,
-                        phjMaxAttempts = 3,
-                        phjPrintResults = False):
-    
-    for i in range(phjMaxAttempts):
-        
-        if (phjFilePathAndName is None) or (i > 0):
-            phjFilePathAndName = input('Enter path and filename for file containing text (e.g. query or regex): ')
-        
-        try:
-            phjTempFileObject = open(phjFilePathAndName)
-            phjTempText = phjTempFileObject.read()
-            phjTempFileObject.close()
-            
-            if phjPrintResults:
-                print('Text read from file:')
-                print(phjTempText)
-                print('\n')
-            
-            break
-        
-        except FileNotFoundError as e:
-            
-            print("\nA FileNotFoundError occurred.\nError number {0}: {1}. File named \'{2}\' does not exist at that location.".format(e.args[0],e.args[1],phjFilePathAndName))
-            
-            if i < (phjMaxAttempts-1):
-                print('\nPlease re-enter path and filename details.\n')    # Only say 'Please try again' if not last attempt.
-            
-            else:
-                # If file can't be found then set phjTempText to None
-                print('\nFailed to find file containing text after {0} attempts.\n'.format(i+1))
-                phjTempText = None
-    
-    return phjTempText
 
 
 

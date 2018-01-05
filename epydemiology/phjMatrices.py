@@ -1,9 +1,29 @@
-import numpy as np
-import pandas as pd
+import pkg_resources
+
+try:
+    pkg_resources.get_distribution('numpy')
+except pkg_resources.DistributionNotFound:
+    numpyPresent = False
+    print("Error: Numpy package not available.")
+else:
+    numpyPresent = True
+    import numpy as np
+
+
+try:
+    pkg_resources.get_distribution('pandas')
+except pkg_resources.DistributionNotFound:
+    pandasPresent = False
+    print("Error: Pandas package not available.")
+else:
+    pandasPresent = True
+    import pandas as pd
+
+
 
 def phjRemoveUnwantedRows(phjTempDF,
                           phjColumnNamesList,
-                          phjPrintResults):
+                          phjPrintResults = False):
     
     # Remove any rows with one or more NaN values
     phjNumberRowsPreNaN = len(phjTempDF.index)

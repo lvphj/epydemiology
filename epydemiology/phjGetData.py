@@ -1,6 +1,3 @@
-import os
-import re
-
 import pkg_resources
 
 try:
@@ -31,6 +28,10 @@ except pkg_resources.DistributionNotFound:
 else:
     phjOpenpyxlPresent = True
     import openpyxl
+
+
+import os
+import re
 
 
 

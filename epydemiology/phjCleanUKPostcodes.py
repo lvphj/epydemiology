@@ -11,12 +11,7 @@ postcode area (first letters) components of the postcode.
 # Import required packages
 # ========================
 
-
-import re
-import math
-
 import pkg_resources
-
 
 try:
     pkg_resources.get_distribution('numpy')
@@ -37,7 +32,7 @@ else:
     pandasPresent = True
     import pandas as pd
 
-    
+
 try:
     pkg_resources.get_distribution('epydemiology')
 except pkg_resources.DistrbutionNotFound:
@@ -47,7 +42,7 @@ else:
     epydemiologyPresent = True
     import epydemiology as epy
 
-    
+
 # Checking that pyxdameraulevenshtein package is installed does not work using the
 # above method because attribute .DistributionNotFound is not present.
 try:
@@ -55,6 +50,9 @@ try:
 except ImportError:
     print("Error: pyxdameraulevenshtein package not installed. Some features may not be available.")
 
+
+import re
+import math
 
 
 
