@@ -39,35 +39,41 @@ myArr = epy.phjBinaryVarsToSquareMatrix()
 myDF = epy.phjCleanUKPostcodeVariable()
 ```
 
-**6. To select matched or unmatced case-control data (without replacement) from Pandas dataframes**
+**6. To generate a matched or unmatched case-control dataset (without replacement) from Pandas dataframes**
+
+```python
+myDF = epy.phjGenerateCaseControlDataset()
+```
+
+**7. To select matched or unmatched case-control data (without replacement) from Pandas dataframes**
 
 ```python
 myDF = epy.phjSelectCaseControlDataset()
 ```
-**7. To calculate and plot a series of binomial proportions**
+**8. To calculate and plot a series of binomial proportions**
 
 ```python
 myDF = epy.phjCalculateBinomialProportions()
 ```
-**8. To calculate and plot multinomial proportions**
+**9. To calculate and plot multinomial proportions**
 
 ```python
 myDF = epy.phjCalculateMultinomialProportions()
 ```
 
-**9. To calculate odds and odds ratios for case-control studies for data stored in Pandas dataframe**
+**10. To calculate odds and odds ratios for case-control studies for data stored in Pandas dataframe**
 
 ```python
 myDF = epy.phjOddsRatio()
 ```
 
-**10. To calculate relative risks for cross-sectional or longitudinal studies for data stored in Pandas dataframe**
+**11. To calculate relative risks for cross-sectional or longitudinal studies for data stored in Pandas dataframe**
 
 ```python
 myDF = epy.phjRelativeRisk()
 ```
 
-**11. Categorise a continuous variable using predefined breaks, quantiles or optimised break positions**
+**12. Categorise a continuous variable using predefined breaks, quantiles or optimised break positions**
 
 ```python
 myDF = epy.phjCategoriseContinuousVariable()
@@ -77,7 +83,7 @@ or, if phjReturnBreaks is set to True:
 myDF,myBreaks = epy.phjCategoriseContinuousVariable()
 ```
 
-**12. To view a plot of log odds against mid-points of categories of a continuous variable**
+**13. To view a plot of log odds against mid-points of categories of a continuous variable**
 
 ```python
 myOddRatioTable = epy.phjViewLogOdds()
@@ -696,7 +702,24 @@ Returned dataframe
 
 ```
 ---
-### 6. phjSelectCaseControlDataset()
+### 6. phjGenerateCaseControlDataset()
+```python
+def phjGenerateCaseControlDataset(phjAllDataDF,
+                                  phjConsultationIDVarName,
+                                  phjPatientIDVarName,
+                                  phjCasesDF,
+                                  phjMatchingVariablesList = None,
+                                  phjControlsPerCaseInt = 1,
+                                  phjScreeningRegexStr = None,
+                                  phjScreeningRegexPathAndFileName = None,
+                                  phjFreeTextVarName = None,
+                                  phjControlType = 'consultation',
+                                  phjConsultationDateVarName = None,
+                                  phjAggDict = None,
+                                  phjPrintResults = False)
+```
+
+### 7. phjSelectCaseControlDataset()
 
 ```python
 df = epy.phjSelectCaseControlDataset(phjCasesDF,
@@ -707,11 +730,13 @@ df = epy.phjSelectCaseControlDataset(phjCasesDF,
                                      phjPrintResults = False)
 ```
 
-Python function to randomly select matched or unmatched case-control data.
+Python functions to randomly select and generate matched or unmatched case-control datasets.
 
 #### Description
 
-This function selects case-control datasets from the SAVSNET database. It receives, as parameters, two Pandas dataframes, one containing known cases and, the other, potential controls. The algorithm steps through each case in turn and selects the relevant number of control subjects from the second dataframe, matching on the list of variables. The function then adds the details of the case and the selected controls to a separate, pre-defined dataframe before moving onto the next case.
+These two functions are similar; in fact, the phjGenerateCaseControlDataset() function calls the phjSelectCaseControlDataset() function as part of the data selection process.
+
+The phjSelectCaseControlDataset() function can be used independently to select case-control datasets from the SAVSNET database. It receives, as parameters, two Pandas dataframes, one containing known cases and, the other, potential controls. For unmatched controls, the algorithm selects the requested number of random controls from the database whilst for matched controls, the algorithm steps through each case in turn and selects the relevant number of control subjects from the second dataframe, matching on the list of variables provided as an argument to the function. The function then adds the details of the case and the selected controls to a separate, pre-defined dataframe before moving onto the next case.
 
 Initially, the phjSelectCaseControlDataset() function calls phjParameterCheck() to check that passed parameters meet specified criteria (e.g. ensure lists are lists and ints are ints etc.). If all requirements are met, phjParameterCheck() returns True and phjSelectCaseControlDataset() continues.
 
@@ -891,7 +916,7 @@ MATCHED CONTROLS
 ```
 
 ---
-### 7. phjCalculateBinomialProportions()
+### 8. phjCalculateBinomialProportions()
 ```python
 df = phjCalculateBinomialProportions(phjTempDF,
                                      phjColumnsList = None,
@@ -906,7 +931,7 @@ df = phjCalculateBinomialProportions(phjTempDF,
                                      phjGraphTitle = None,
                                      phjPrintResults = False)
 ```
-### 8. phjCalculateMultinomialProportions()
+### 9. phjCalculateMultinomialProportions()
 ```python
 df = phjCalculateMultinomialProportions(phjTempDF,
                                        phjCategoryVarName = None,
@@ -1225,7 +1250,7 @@ print(phjRelFreqDF)
 
 ```
 ---
-### 9. phjOddsRatio()
+### 10. phjOddsRatio()
 
 ```python
 df = phjOddsRatio(phjTempDF,
@@ -1311,7 +1336,7 @@ c      2  3 0.667 0.889   [0.0862, 9.1622]
 d      1  3 0.333 0.444   [0.0295, 6.7031]
 ```
 ---
-### 10. phjRelativeRisk()
+### 11. phjRelativeRisk()
 
 ```python
 df = phjRelativeRisk(phjTempDF,
@@ -1399,7 +1424,7 @@ d      1  3 0.250 0.583  [0.0872, 3.9031]
 ```
 ---
 
-### 11. phjCategoriseContinuousVariable()
+### 12. phjCategoriseContinuousVariable()
 
 ```python
 df,list = phjCategoriseContinuousVariable(phjTempDF,
@@ -1509,7 +1534,7 @@ Breaks
 ```
 ---
 
-### 12. phjViewLogOdds()
+### 13. phjViewLogOdds()
 
 ```python
 df = phjViewLogOdds(phjTempDF,
