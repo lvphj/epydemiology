@@ -45,17 +45,17 @@ myDF = epy.phjCleanUKPostcodeVariable()
 myDF = epy.phjGenerateCaseControlDataset()
 ```
 
-**[7. To select matched or unmatched case-control data (without replacement) from Pandas dataframes](https://github.com/lvphj/epydemiology/wiki/Select-matched-or-unmatched-case-control-data-(without-replacement)-from-Pandas-dataframes)**
+**[7. To select matched or unmatched case-control data (without replacement) from Pandas dataframes](https://github.com/lvphj/epydemiology/wiki/Generate-a-matched-or-unmatched-case-control-dataset-(without-replacement)-from-Pandas-dataframes)**
 
 ```python
 myDF = epy.phjSelectCaseControlDataset()
 ```
-**[8. To calculate and plot a series of binomial proportions using data stored in a Pandas dataframe](https://github.com/lvphj/epydemiology/wiki/Calculate-and-plot-a-series-of-binomial-proportions-using-data-stored-in-a-Pandas-dataframe)**
+**[8. To calculate and plot a series of binomial proportions using data stored in a Pandas dataframe](https://github.com/lvphj/epydemiology/wiki/Calculate-and-plot-proportions-using-data-stored-in-a-Pandas-dataframe)**
 
 ```python
 myDF = epy.phjCalculateBinomialProportions()
 ```
-**[9. To calculate and plot multinomial proportions using data stored in a Pandas dataframe](https://github.com/lvphj/epydemiology/wiki/Calculate-and-plot-multinomial-proportions-using-data-stored-in-a-Pandas-dataframe)**
+**[9. To calculate and plot multinomial proportions using data stored in a Pandas dataframe](https://github.com/lvphj/epydemiology/wiki/Calculate-and-plot-proportions-using-data-stored-in-a-Pandas-dataframe)**
 
 ```python
 myDF = epy.phjCalculateMultinomialProportions()
