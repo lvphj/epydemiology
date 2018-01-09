@@ -9,7 +9,7 @@ pip install epydemiology as epy
 
 The following functions are available:
 
-[**1. Load data from a named Excel cell range into a Pandas dataframe](https://github.com/lvphj/epydemiology/wiki/Load-data-from-a-named-Excel-cell-range-into-a-Pandas-dataframe)**
+**[1. Load data from a named Excel cell range into a Pandas dataframe](https://github.com/lvphj/epydemiology/wiki/Load-data-from-a-named-Excel-cell-range-into-a-Pandas-dataframe)**
 
 ```python
 myDF = epy.phjReadDataFromExcelNamedCellRange()
