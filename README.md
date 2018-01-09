@@ -703,20 +703,21 @@ Returned dataframe
 ```
 ---
 ### 6. phjGenerateCaseControlDataset()
+
 ```python
-def phjGenerateCaseControlDataset(phjAllDataDF,
-                                  phjConsultationIDVarName,
-                                  phjPatientIDVarName,
-                                  phjCasesDF,
-                                  phjMatchingVariablesList = None,
-                                  phjControlsPerCaseInt = 1,
-                                  phjScreeningRegexStr = None,
-                                  phjScreeningRegexPathAndFileName = None,
-                                  phjFreeTextVarName = None,
-                                  phjControlType = 'consultation',
-                                  phjConsultationDateVarName = None,
-                                  phjAggDict = None,
-                                  phjPrintResults = False)
+df = phjGenerateCaseControlDataset(phjAllDataDF,
+                                   phjConsultationIDVarName,
+                                   phjPatientIDVarName,
+                                   phjCasesDF,
+                                   phjMatchingVariablesList = None,
+                                   phjControlsPerCaseInt = 1,
+                                   phjScreeningRegexStr = None,
+                                   phjScreeningRegexPathAndFileName = None,
+                                   phjFreeTextVarName = None,
+                                   phjControlType = 'consultation',
+                                   phjConsultationDateVarName = None,
+                                   phjAggDict = None,
+                                   phjPrintResults = False)
 ```
 
 ### 7. phjSelectCaseControlDataset()
@@ -734,7 +735,127 @@ Python functions to randomly select and generate matched or unmatched case-contr
 
 #### Description
 
-These two functions are similar; in fact, the phjGenerateCaseControlDataset() function calls the phjSelectCaseControlDataset() function as part of the data selection process.
+These two functions are closely related. In fact, the phjGenerateCaseControlDataset() function calls the phjSelectCaseControlDataset() function as part of the data selection process but both functions can be used independently. In essence, the difference between them is that the phjSelectCaseControlDataset() function takes as arguments two dataframes, one containing all the data that can be used as potential controls and the other containing a list of cases and returns a skeletel, bare-bones dataframe containing the unique IDs of cases and controls together with case/control status and, in the case of matched controls, the group membership. This dataframe needs to be merged with original data to retrieve all the original variables. The phjGenerateCaseControlDataset() function, in contrast, seeks to automate the entire process. It takes a dataframe of all data and a list of cases and returns either a consultation-based or patient-based case-control dataset that contains all the original variables.
+
+##### General workflow
+
+These functions were written to streamline a commonly-encountered workflow in our research group, namely the need to randomly select matched or unmatched controls from a large dataset having screened and confirmed the identification of cases. The controls that are selected to go with cases could be either consultation controls (i.e. a random selection of consultations from any animals not represented in the cases dataset) or patient controls (i.e. a random selection of animals that are not represented in the case dataset). In the latter case, consultation-specific information needs to be collapsed on patient ID to produce patient-based information.
+
+It is assumed the cases and controls are ideally* stored in the same flat-file dataframe having the following basic structure:
+ 
+ ```
+ | consultID |       date | patientID | match | freetext | var2 | var3 |
+ |-----------|------------|-----------|-------|----------|------|------|
+ |      1001 | 2017-01-23 |      7324 |  catA |        a |  454 |  low |
+ |      1002 | 2017-01-25 |      7324 |  catB |        b |  345 |  low |
+ |      1003 | 2017-01-29 |      7324 |  catA |        c |  879 |  low |
+ |      1004 | 2017-02-05 |      9767 |  catB |        a |  276 |  mid |
+ |      1005 | 2017-02-11 |      9767 |  catB |        b |  478 |  mid |
+ |      1006 | 2017-02-28 |      3452 |  catA |        c |  222 |  mid |
+ |      1007 | 2017-03-23 |      5322 |  catA |        a |  590 |   hi |
+ |      1008 | 2017-03-23 |      5322 |  catB |        b |  235 |   hi |
+ |      1009 | 2017-04-02 |      5322 |  catB |        c |  657 |   hi |
+ etc.
+ ```
+ 
+ * Cases that are not part of the whole dataset can be provided as a dataframe but the extra columns in the dataframe (i.e. other variables) need to be the same as the columns in the dataset containing 'all' the data from which the controls will be selected.
+ 
+The following provides a brief description of the workflow used to identify and generate case-control datasets.
+
+1. IDENTIFY CASES
+The first step – prior to using these functions – is to identify cases within the data set.
+* The whole database (or a partial excerpt) is downloaded and stored in a pandas dataframe. The data set consists of consultation ID, date of consultation, patient ID, freetext clinical narrative, variables to be used for matching (if required) and any other variables of interest.
+* Potential cases are identified using a screening regex applied to the freetext clinical narrative.
+* The researcher manually reads consultations of potenial cases to confirm that they are cases. The consultation numbers of confirmed cases are recorded either alone or as a slice of the dataframe.
+
+2. IDENTIFY POTENIAL CONTROLS
+The potential controls may be drawn from a larger range of data than was used to select the cases. As a result, it is important that the potential controls do not include any consultations that would have been identified as cases had they been included in the initial screening of cases.
+   
+• Identify all consultations that would have been identified as a potential CASE using the screen regex and identify the corresponding patient ID.
+
+* Identify all corresponding patient IDs for consultations identified as confirmed cases.
+
+* Remove all consultations from confirmed and potential case patients (regardless of whether the individual consultation was positive or negative. If a patient has one consultation where the regex identifies a match, all consultations from that animal should be excluded from the list of potential controls. The remaining consultations are, therefore, potential cases.
+
+3. SELECT CONTROL DATASET
+* Select suitable controls from the dataframe of potential controls, either unmatched or matched on give variables. The controls can be either consultation controls (where individual consultations are selected from the dataframe) or patient controls (where patients are selected).
+
+* When selecting patient controls, it is necessary to collapse the consultation-based dataframe down to a patient-based on patient ID. A default, a collapsed dataframe will contain a 'count' variable to indicate how many consultations were recorded for each patient, the dates of the first and last consultations, and the last recorded entry for all other variables. This can, however, be altered as necessary.
+
+4. MERGE CASE-CONTROL DATASET WITH ORIGINAL DATAFRAMES
+The initial selection of case control dataset returns and minimalist dataframe that contains the bare minimum variables to be able to make the selection. After the case-control dataframe has been selected, it is necessary to merge with the original dataframe to return a complete dataset that contains all the original variables.
+
+##### POINTS TO NOTE
+* Collapsing a consultation-based dataframe to a patient-based dataframe requires a lot of computer processing that can be slow. As a result collapsing the consultation-based dataframe to a patient-based dataframe is only done after the controls have been selected; this ensures that only an minimal amount of computer processing is required to collapse the dataset.
+
+* The list of confirmed cases can be passed to the function either as a list (or series) with not other variables, or as a dataframe which contains several variables, one of which is the consultation ID or patient ID (depending on whether the required control dataset consists of consultations or patients).
+
+* Two dataframes need to be passed to the functions, one is a dataframe of 'ALL' data (including all necessary variables) and the other is a dataframe (or series or list) of confirmed cases. If the confirmed cases are all included in the dataframe of 'ALL' data then the final returned dataset (containing all the necessary other variables of interest) will be recreated from the dataframe of 'ALL' data. This means that any edits included in the dataframe of confirmed cases will be lost in favour of recreating the data from source. However, if the dataframe of cases contains some consultations or patients that are not included in the original dataframe then the returned dataframe will contain the data included in confirmed cases dataframe.
+
+##### Selecting consultation controls
+
+There are two main functions that can be used to create a case-control dataset:
+
+1. phjGenerateCaseControlDataset()
+
+   This function ultimates calls the phjSelectCaseControlDataset() function but it also attempts to automate a large proportion of the required pre- and post-production faffing around. For example, the function will determine whether a consultation-based or patient-based dataset is required, it will generate the dataframe of potential controls automatically and will merge the skeleton dataframe returned by phjSelectCaseControlDataset() function to produce a dataframe that is complete with all the variables that were included in the original dataframes.
+
+2. phjSelectCaseControlDataset()
+
+   This function takes, as arguments, two dataframes, one of confirmed cases and the other of potential controls. It then returns a 'skeleton' dataframe containing the minimal number of variables (e.g. ID, case/control and group membership (if a matched control set was required). It will be necessary to merge this skeleton with appropriate dataframes to produce a complete case-control dataset that contains all the necessary variables required for further analysis.
+
+#### phjGenerateCaseControlDataset()
+
+This function tries to deliver a complete solution for selecting controls for use in case-control studies.
+
+##### Function parameters
+
+##### Exceptions raised
+
+None
+
+##### Returns
+
+##### Other notes
+
+As mentioned previously, there are some limitions that should be recognised when passing case data. It is, therefore, important to pass suitable case data. The function should be passed a full dataframe containing 'ALL' the data. In fact, some of the confirmed cases need not be included in the dataframe of 'ALL' data (but there some limitations if this is the case). The requested case-control dataset can be either 'consultation-based' or 'patient-based'. In each of these cases, the confirmed cases can be passed in one of several formats (but, in some situations, returning a valid case-control dataset may not be feasible).
+
+1. Consultation-based dataset requested
+* Cases passed as a SERIES of consultation ID numbers, all of which are included in the dataframe of 'ALL' data.
+   SUCCESS. Returned dataframe will contain variables reconstructed from 'ALL' data.
+
+* Cases passed as a SERIES of consultation ID numbers, some of which are not included in the dataframe of 'ALL' data.
+   FAILED. Required variables missing for some cases.
+
+* Cases passed as a DATAFRAME containing several variables, one of which is the CONSULTATION ID and all consultations are a subset of the consultations in the dataframe of 'ALL' data.
+   SUCCESS
+
+* Cases passed as a DATAFRAME containing several variables, one of which is the CONSULTATION ID but not all consultations are included in the dataframe of 'ALL' data.
+   FAILED
+
+* Cases passed as a DATAFRAME containing all the same variables as included in the 'ALL' dataframe. Not all consultations are included in the dataframe of 'ALL' data.
+   SUCCESS
+
+2. Patient-based dataset requested
+* Cases passed as a SERIES of case PATIENT IDs that are a subset of the information in the dataframe of 'ALL' data.
+   SUCCESS
+
+* Cases passed as a SERIES of case PATIENT IDs that are NOT a subset of the information in the dataframe of 'ALL' data (e.g. there may be extra rows).
+   FAILED
+
+* Cases passed as a DATAFRAME containing several variables, one of which is the PATIENT ID and all patients are a subset of the patients in the dataframe of 'ALL' data.
+   SUCCESS
+
+* Cases passed as a DATAFRAME containing several variables, one of which is the PATIENT ID but not all patients are a subset of the patients in the dataframe of 'ALL' data.
+   FAILED
+
+* Cases passed as a DATAFRAME containing numerous variables, one of which is the PATIENT ID and all patients are a subset of the patients in the dataframe of 'ALL' data. The variables are the same as those that will be produced when the consultation dataframe is collapsed based on patient ID data.
+   SUCCESS
+
+* Cases passed as a DATAFRAME containing numerous variables, one of which is the PATIENT ID but the patients are NOT a subset of the patients in the dataframe of 'ALL' data. The variables are the same as those that will be produced when the consultation dataframe is collapsed based on patient ID data.
+   SUCCESS
+
+#### phjSelectCaseControlDataset()
 
 The phjSelectCaseControlDataset() function can be used independently to select case-control datasets from the SAVSNET database. It receives, as parameters, two Pandas dataframes, one containing known cases and, the other, potential controls. For unmatched controls, the algorithm selects the requested number of random controls from the database whilst for matched controls, the algorithm steps through each case in turn and selects the relevant number of control subjects from the second dataframe, matching on the list of variables provided as an argument to the function. The function then adds the details of the case and the selected controls to a separate, pre-defined dataframe before moving onto the next case.
 
@@ -753,7 +874,7 @@ The phjSelectCaseControlDataset() function proceeds as follows:
 7. Removes added control records from potential controls database so single case cannot be selected more than once
 8. Returns Pandas dataframe containing list of cases and controls. This dataframe only contains columns for unique identifier, case and group id. It will, therefore need to be merged with the full database to get and additional required columns.
 
-#### Function parameters
+##### Function parameters
 
 The function takes the following parameters:
 
@@ -781,21 +902,21 @@ The function takes the following parameters:
 
    Print verbose output during execution of scripts. If running on Jupyter-Notebook, setting PrintResults = True causes a lot a output and can cause problems connecting to kernel.
 
-#### Exceptions raised
+##### Exceptions raised
 
 None
 
-#### Returns
+##### Returns
 
 Pandas dataframe containing a column containing the unique identifier variable, a column containing case/control identifier and – for matched case-control studies – a column containing a group identifier. The returned dataframe will need to be left-joined with another dataframe that contains additional required variables.
 
-#### Other notes
+##### Other notes
 
 Setting phjPrintResults = True can cause problems when running script on Jupyiter-Notebook.
 
-#### Example
+#### Examples
 
-An example of the function in use is given below:
+Examples of the functions in use are given below:
 
 ```python
 import pandas as pd
