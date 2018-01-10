@@ -13,13 +13,13 @@ except (IOError, ImportError):
 setup(name = 'epydemiology',
       packages = ['epydemiology'], # this must be the same as the name above
       # packages=find_packages(exclude=[list_of_things_to_exclude]),
-      version = '0.1.23',
+      version = '0.1.24',
       description = 'A library of Python code for epidemiologists',
       long_description = long_description,
       author = 'Phil Jones',
       author_email = 'phjones@me.com',
       url = 'https://github.com/lvphj/epydemiology', # use the URL to the github repo
-      download_url = 'https://github.com/lvphj/epydemiology/archive/0.1.23.tar.gz',
+      download_url = 'https://github.com/lvphj/epydemiology/archive/0.1.24.tar.gz',
       license = 'MIT',
       keywords = ['database','mysql','epidemiology','case-control study','odds ratio','relative risk','risk ratio','proportions','confidence intervals'],
       classifiers = [# How mature is this project? Common values are
