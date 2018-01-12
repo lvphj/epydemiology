@@ -128,11 +128,14 @@ def phjGetSELECTQueryStr(phjQueryStr = None,
                                           phjAllowedAttempts = phjAllowedAttempts,
                                           phjPrintResults = phjPrintResults)
     
+    if phjPrintResults == True:
+        print("Query entered: ",phjTempQuery)
+    
     # Check whether input string matches a SELECT...FROM... query
-    phjSelectQueryRegex = re.compile('^SELECT.*FROM.*',flags=re.I)
+    phjSelectQueryRegex = re.compile('^SELECT[\s\S]+\sFROM\s',flags=re.I|re.X)
     
     if phjTempQuery is not None:
-        if not(re.match(phjSelectQueryRegex, phjQueryStr)):
+        if not(re.match(phjSelectQueryRegex, phjTempQuery)):
             print("Only 'SELECT' queries can be used to interrogate the database.")
             phjTempQuery = None
     

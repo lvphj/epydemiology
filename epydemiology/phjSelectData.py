@@ -1087,8 +1087,9 @@ def phjGetPotentialControls(phjTempDF,                    # A pandas dataframe c
         phjRegex = re.compile(phjScreeningRegex,flags=re.I|re.X)
         
         # Run regex against freetext field and create a binary mask to identify all
-        # consultations that match the regex
-        phjRegexMask = phjTempDF[phjFreeTextVarName].str.contains(phjRegex)
+        # consultations that match the regex.
+        # NA values are set to FALSE.
+        phjRegexMask = phjTempDF[phjFreeTextVarName].str.contains(phjRegex, na = False)
         
         # Retrieve patient IDs for consultations where freetext field contains a match
         phjCasesPatientID = phjTempDF.loc[phjRegexMask,phjPatientIDVarName]
@@ -1687,3 +1688,7 @@ def phjGetRenameCollapsedColumnsDict(phjPatientIDVarName,
     
     return phjRenameDict
 
+
+
+if __name__ == '__main__':
+    main()

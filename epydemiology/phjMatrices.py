@@ -158,3 +158,8 @@ def phjBinaryVarsToSquareMatrix(phjDataDF,
         print('The phjOutputFormat parammeter was set to an unknown value (\'{0}\'). The return value was set to None.'.format(phjOutputFormat))
         print('\n')
         return None
+
+
+
+if __name__ == '__main__':
+    main()

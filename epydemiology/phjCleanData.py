@@ -179,3 +179,8 @@ def phjParseDateVar(phjTempDF,
         print('Date variable name is not defined.')
     
     return phjWorkingDF
+
+
+if __name__ == '__main__':
+    main()
+

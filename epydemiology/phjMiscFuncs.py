@@ -35,9 +35,13 @@ def phjGetStrFromArgOrFile(phjStr = None,
         # File name and path given preference (i.e. check this first)
         if phjPathAndFileName is not None:
             # Load SQL query from text file
-             phjTempStr = phjReadTextFromFile(phjFilePathAndName = phjPathAndFileName,
-                                                phjMaxAttempts = phjAllowedAttempts,
-                                                phjPrintResults = phjPrintResults)
+            phjTempStr = phjReadTextFromFile(phjFilePathAndName = phjPathAndFileName,
+                                             phjMaxAttempts = phjAllowedAttempts,
+                                             phjPrintResults = phjPrintResults)
+            
+            if phjPrintResults == True:
+                print("\nString retrieved from file ('{0}'):".format(phjPathAndFileName))
+                print(phjTempStr)
         
         else:
             phjTempStr = None
@@ -45,6 +49,10 @@ def phjGetStrFromArgOrFile(phjStr = None,
         # If the text file did not yield a string, move on to the query string.
         if (phjTempStr is None) and (phjStr is not None):
             phjTempStr = phjStr
+            
+            if phjPrintResults == True:
+                print("\nString retrieved from passed argument (phjStr):")
+                print(phjTempStr)
             
         else:
             phjTempStr = None
@@ -92,4 +100,7 @@ def phjReadTextFromFile(phjFilePathAndName = None,
     return phjTempText
 
 
+
+if __name__ == '__main__':
+    main()
 
