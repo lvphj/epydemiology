@@ -51,6 +51,7 @@ def phjOddsRatio(phjTempDF,
                  phjCaseValue,
                  phjRiskFactorVarName,
                  phjRiskFactorBaseValue,
+                 phjMissingValue = np.nan,
                  phjAlpha = 0.05,
                  phjPrintResults = False):
     
@@ -61,6 +62,7 @@ def phjOddsRatio(phjTempDF,
                              phjCaseValue = phjCaseValue,
                              phjRiskFactorVarName = phjRiskFactorVarName,
                              phjRiskFactorBaseValue = phjRiskFactorBaseValue,
+                             phjMissingValue = phjMissingValue,
                              phjAlpha = phjAlpha,
                              phjPrintResults = phjPrintResults)
     
@@ -74,6 +76,7 @@ def phjRelativeRisk(phjTempDF,
                     phjCaseValue,
                     phjRiskFactorVarName,
                     phjRiskFactorBaseValue,
+                    phjMissingValue = np.nan,
                     phjAlpha = 0.05,
                     phjPrintResults = False):
     
@@ -84,6 +87,7 @@ def phjRelativeRisk(phjTempDF,
                              phjCaseValue = phjCaseValue,
                              phjRiskFactorVarName = phjRiskFactorVarName,
                              phjRiskFactorBaseValue = phjRiskFactorBaseValue,
+                             phjMissingValue = phjMissingValue,
                              phjAlpha = phjAlpha,
                              phjPrintResults = phjPrintResults)
     
@@ -98,12 +102,18 @@ def phjRatios(phjTempDF,
               phjCaseValue,
               phjRiskFactorVarName,
               phjRiskFactorBaseValue,
+              phjMissingValue = np.nan,
               phjAlpha = 0.05,
               phjPrintResults = False):
     
     # Set default suffixes and join strings to create column names
     # to use in output tables and dataframes.
     phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+    
+    # Retain only those columns that will be analysed (otherwise, it is feasible that
+    # unrelated columns that contain np.nan values will cause removal of rows in
+    # unexpected ways.
+    phjTempDF = phjTempDF[[phjCaseVarName,phjRiskFactorVarName]]
     
     # Check passed parameters are useable
     phjCheckPassed = phjRRORCheckArgs(phjTempDF = phjTempDF,
@@ -116,7 +126,8 @@ def phjRatios(phjTempDF,
         # Data to use - remove rows that have a missing value
         phjTempDF = phjRemoveNaNRows(phjTempDF = phjTempDF,
                                      phjCaseVarName = phjCaseVarName,
-                                     phjRiskFactorVarName = phjRiskFactorVarName)
+                                     phjRiskFactorVarName = phjRiskFactorVarName,
+                                     phjMissingValue = phjMissingValue)
         
         # Create a basic 2 x 2 (or n x 2) contingency table
         phjContTable = phjCreateContingencyTable(phjTempDF = phjTempDF,
@@ -169,15 +180,15 @@ def phjRatios(phjTempDF,
         
         if phjPrintResults == True:
             if phjRatioType == 'relrisk':
-                print("Table showing relative risk for risk factor strata with '{0}' considered as the base value.".format(phjRiskFactorBaseValue))
+                print("\nTable showing relative risk for risk factor strata with '{0}' considered as the base value.".format(phjRiskFactorBaseValue))
             elif phjRatioType == 'oddsratio':
-                print("Table showing odds ratio for risk factor strata with '{0}' considered as the base value.".format(phjRiskFactorBaseValue))
+                print("\nTable showing odds ratio for risk factor strata with '{0}' considered as the base value.".format(phjRiskFactorBaseValue))
             print(phjContTable)
             print('\n')
     
     
     else:
-        print("Arguments entered did not pass the test.")
+        print("\nArguments entered did not pass the test.")
         phjContTable = None
     
     return phjContTable
@@ -271,8 +282,20 @@ def phjCaseFirst(phjTempDF,
 
 def phjRemoveNaNRows(phjTempDF,
                      phjCaseVarName,
-                     phjRiskFactorVarName):
+                     phjRiskFactorVarName,
+                     phjMissingValue = np.nan):
     
+    # Replace empty cells with np.nan
+    phjTempDF = phjTempDF.replace('',np.nan)
+    
+    # Replace missing values with np.nan
+    if isinstance(phjMissingValue,str):
+        phjTempDF = phjTempDF.replace(phjMissingValue,np.nan)
+        
+    elif not np.isnan(phjMissingValue):
+        phjTempDF = phjTempDF.replace(phjMissingValue,np.nan)
+    
+    # Remove np.nan cells
     phjTempDF = phjTempDF[[phjCaseVarName,phjRiskFactorVarName]].dropna(axis = 0, how = 'any').reset_index(drop = True)
     
     return phjTempDF

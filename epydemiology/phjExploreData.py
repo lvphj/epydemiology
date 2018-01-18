@@ -54,6 +54,8 @@ else:
 import re
 import collections
 
+from .phjRROR import phjRemoveNaNRows
+
 
 
 # Import minor epydemiology functions from other epydemiology files
@@ -78,13 +80,13 @@ from .phjExtFuncs import getJenksBreaks
 #
 def phjViewLogOdds(phjTempDF,
                    phjBinaryDepVarName = None,
-                   phjContIndepVarName = None,
                    phjCaseValue = 1,
+                   phjContIndepVarName = None,
                    phjMissingValue = 'missing',
                    phjNumberOfCategoriesInt = 5,
                    phjNewCategoryVarName = None,
                    phjCategorisationMethod = 'jenks',   # Need to be able to pass a list of cut-off values here as well.
-                   phjGroupNameVar = None,
+                   phjGroupVarName = None,
                    phjAlpha = 0.05,
                    phjPrintResults = False):
     
@@ -98,8 +100,22 @@ def phjViewLogOdds(phjTempDF,
         phjNewCategoryVarName = phjSuffixDict['joinstr'].join([phjContIndepVarName.replace(' ','_'),
                                                                phjSuffixDict['categorisedvar']])
     
+    ###
+    ### NEED TO CHECK THAT CATEGORICAL VAR NAME DOES NOT ALREADY EXIST
+    ###
     
-    # Convert a continuous variable at a categorical variable using a variety of methods.
+    # Retain only those columns that will be analysed (otherwise, it is feasible that
+    # unrelated columns that contain np.nan values will cause removal of rows in
+    # unexpected ways.
+    phjTempDF = phjTempDF[[col for col in [phjBinaryDepVarName,phjContIndepVarName,phjGroupVarName] if col is not None]]
+    
+    # Data to use - remove rows that have a missing value
+    phjTempDF = phjRemoveNaNRows(phjTempDF = phjTempDF,
+                                 phjCaseVarName = phjBinaryDepVarName,
+                                 phjRiskFactorVarName = phjContIndepVarName,
+                                 phjMissingValue = phjMissingValue)
+    
+    # Convert a continuous variable to a categorical variable using a variety of methods.
     # If phjReturnBreaks = True then function also returns a list of the break points
     # for the continuous variable.
     phjTempDF, phjBreaks = phjCategoriseContinuousVariable(phjTempDF = phjTempDF,
@@ -114,57 +130,75 @@ def phjViewLogOdds(phjTempDF,
     # If the breaks have been calculated (and the continuous variable categorised successfully)
     # then plot the graph of logodds against mid-points
     if phjBreaks is not None:
+        
         # The following DF contains an index that may be numeric.
         phjOR = phjOddsRatio(phjTempDF = phjTempDF,
                              phjCaseVarName = phjBinaryDepVarName,
                              phjCaseValue = phjCaseValue,
                              phjRiskFactorVarName = phjNewCategoryVarName,
-                             phjRiskFactorBaseValue = 1)
-        
-        phjOR[phjSuffixDict['logodds']] = np.log(phjOR[phjSuffixDict['odds']])
-        
-        # Calculate log odds using logistic regression and retrieve the se from the statistical model
-        phjSE = phjCalculateLogOddsSE(phjTempDF = phjTempDF,
-                                      phjAlpha = phjAlpha,
-                                      phjPrintResults = phjPrintResults)
-        
-        # Join to phjOR dataframe
-        phjOR = phjOR.join(phjSE)
+                             phjRiskFactorBaseValue = 0,   # Use the minimum value as the base value (but it's not important in this context)
+                             phjMissingValue = phjMissingValue,
+                             phjAlpha = phjAlpha,
+                             phjPrintResults = phjPrintResults)
         
         
-        # Calculate lower and upper limits assuming normal distribution
-        phjRelCoef = norm.ppf(1 - (phjAlpha/2))
+        if phjOR is not None:
+            
+            phjOR[phjSuffixDict['logodds']] = np.log(phjOR[phjSuffixDict['odds']])
+            
+            # Calculate log odds using logistic regression and retrieve the se from the statistical model
+            phjSE = phjCalculateLogOddsSE(phjTempDF = phjTempDF,
+                                          phjCaseVarName = phjBinaryDepVarName,
+                                          phjCaseValue = phjCaseValue,
+                                          phjCategoricalVarName = phjNewCategoryVarName,
+                                          phjMissingValue = phjMissingValue,
+                                          phjAlpha = phjAlpha,
+                                          phjPrintResults = phjPrintResults)
+            
+            # Join to phjOR dataframe
+            phjOR = phjOR.join(phjSE)
+            
+            
+            # Calculate lower and upper limits assuming normal distribution
+            phjRelCoef = norm.ppf(1 - (phjAlpha/2))
+            
+            phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
+                                                 phjSuffixDict['cilowlim']])] = phjOR[phjSuffixDict['logodds']] - (phjRelCoef * phjOR[phjSuffixDict['stderr']])
+            
+            phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
+                                                 phjSuffixDict['ciupplim']])] = phjOR[phjSuffixDict['logodds']] + (phjRelCoef * phjOR[phjSuffixDict['stderr']])
+            
+            
+            # Calculae midpoints of categories
+            phjOR[phjSuffixDict['catmidpoints']] = [((phjBreaks[i] + phjBreaks[i+1]) / 2) for i in range(len(phjBreaks) - 1)]
+            
+            
+            # Plot log odds against midpoints of categories
+            phjYErrors = phjGetYErrors(phjTempDF = phjOR,
+                                       phjCategoriesToPlotList = phjOR.index.tolist(),
+                                       phjParameterValue = 'logodds',
+                                       phjGroupVarName = None,
+                                       phjGroupLevelsList = None,
+                                       phjAlpha = phjAlpha,
+                                       phjPrintResults = phjPrintResults)
+            
+            ax = phjOR.plot(x = phjSuffixDict['catmidpoints'],
+                            y = phjSuffixDict['logodds'],
+                            kind = 'line',
+                            yerr = phjYErrors,
+                            capsize = 4,
+                            title = 'Log-odds against mid-points of category')
+            ax.set_ylabel("Log odds")
+            ax.set_xlabel(phjNewCategoryVarName)
         
-        phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
-                                             phjSuffixDict['cilowlim']])] = phjOR[phjSuffixDict['logodds']] - (phjRelCoef * phjOR[phjSuffixDict['stderr']])
-        
-        phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
-                                             phjSuffixDict['ciupplim']])] = phjOR[phjSuffixDict['logodds']] + (phjRelCoef * phjOR[phjSuffixDict['stderr']])
-        
-        
-        # Calculae midpoints of categories
-        phjOR[phjSuffixDict['catmidpoints']] = [((phjBreaks[i] + phjBreaks[i+1]) / 2) for i in range(len(phjBreaks) - 1)]
-        
-        
-        # Plot log odds against midpoints of categories
-        phjYErrors = phjGetYErrors(phjTempDF = phjOR,
-                                   phjCategoriesToPlotList = phjOR.index.tolist(),
-                                   phjParameterValue = 'logodds',
-                                   phjGroupVarName = None,
-                                   phjGroupLevelsList = None,
-                                   phjAlpha = phjAlpha,
-                                   phjPrintResults = phjPrintResults)
-        
-        ax = phjOR.plot(x = phjSuffixDict['catmidpoints'],
-                        y = phjSuffixDict['logodds'],
-                        kind = 'line',
-                        yerr = phjYErrors,
-                        capsize = 4,
-                        title = 'Log-odds against mid-points of category')
-        ax.set_ylabel("Log odds")
-        ax.set_xlabel(phjNewCategoryVarName)
+        else:
+            # Otherwise, attempts to calculate the basic OR table failed and phjOR
+            # was returned as None. Strictly speaking, the following is not required
+            # but it makes it easier to follow the structure.
+            phjOR = None
     
     else:
+        # Otherwise, attempts to categorise the data failed and phjBreaks returned as None
         phjOR = None
     
     if phjPrintResults == True:
@@ -181,16 +215,34 @@ def phjViewLogOdds(phjTempDF,
 # ====================
 
 def phjCalculateLogOddsSE(phjTempDF,
+                          phjCaseVarName,
+                          phjCaseValue,
+                          phjCategoricalVarName,
+                          phjMissingValue = np.nan,
                           phjAlpha = 0.05,
                           phjPrintResults = False):
     
     
     # Get a list of the terms used to head columns in summary tables
     phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
-
-
-    # Run a logistic regression mode with no constant term (in patsy package, the -1 removes the constant term)
-    phjLogisticRegressionResults = smf.glm(formula='binDepVar ~ C(categoricalVar) -1',
+    
+    # statsmodels has some slightly unexpected behaviour if outcome variable contains
+    # strings (see https://stackoverflow.com/questions/48312979/how-does-statsmodels-encode-endog-variables-entered-as-strings).
+    # Convert to case variable to 0/1 for logistic regression model.
+    # The original calculation of odds table in phjOddsRatio() function checks to make
+    # sure there are only 2 levels present in the case variable and that the case value
+    # is actually present in the column so no need to check again.
+    # Get a list of values in the case variable, create a dictionary to convert values
+    # to binary representation (based on given value of case value) – assuming it's not
+    # already binary – and use the dictionary to convert case variable to a binary format.
+    phjCaseLevelsList = phjTempDF[phjCaseVarName].unique()
+    
+    if set(phjCaseLevelsList) != set([0,1]):
+        phjBinaryConvertDict = {c:(1 if c==phjCaseValue else 0) for c in phjCaseLevelsList}
+        phjTempDF[phjCaseVarName] = phjTempDF[phjCaseVarName].replace(phjBinaryConvertDict)
+    
+    # Run a logistic regression model with no constant term (in patsy package, the -1 removes the constant term)
+    phjLogisticRegressionResults = smf.glm(formula='{0} ~ C({1}) -1'.format(phjCaseVarName,phjCategoricalVarName),
                                            data=phjTempDF,
                                            family = sm.families.Binomial(link = sm.genmod.families.links.logit)).fit()
     
@@ -203,14 +255,15 @@ def phjCalculateLogOddsSE(phjTempDF,
     # Extract just the bit contained in square brackets:
     
     # i. Define and compile regex
-    phjRegex = re.compile('\[(?P<group_index>\w+)\]$')
+    #    (Picks out integer or floats from within square brackets)
+    phjRegex = re.compile('\[(?P<group_index>\d+.?\d*)\]$')
     
     # ii. Extract std err data from model
     phjSEResultsDF = pd.DataFrame(phjLogisticRegressionResults.bse)
     
     # iii. Rename column heading and generate a new index and replace the old one.
     phjSEResultsDF.columns = [phjSuffixDict['stderr']]
-
+    
     # The following list comprehension steps through each index and extracts the regex
     # group (in this case, the bit between the square brackets)
     phjNewIndex = [re.search(phjRegex,i).group('group_index') for i in phjSEResultsDF.index]
@@ -218,7 +271,7 @@ def phjCalculateLogOddsSE(phjTempDF,
     # ...and the extracted bits are converted to ints if possible
     for n,j in enumerate(phjNewIndex):
         try:
-            phjNewIndex[n] = int(j)
+            phjNewIndex[n] = int(float(j))   # Can't convert a string of a float to int using int(); need to use float() as well.
         except ValueError:
             phjNewIndex[n] = j
             
