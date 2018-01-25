@@ -54,8 +54,6 @@ else:
 import re
 import collections
 
-from .phjRROR import phjRemoveNaNRows
-
 
 
 # Import minor epydemiology functions from other epydemiology files
@@ -68,6 +66,7 @@ from .phjRROR import phjRemoveNaNRows
 # For more details, see tutorial at https://www.youtube.com/watch?v=0oTh1CXRaQ0.
 
 from .phjRROR import phjOddsRatio
+from .phjRROR import phjRemoveNaNRows
 from .phjCalculateProportions import phjDefineSuffixDict
 from .phjCalculateProportions import phjGetYErrors
 from .phjExtFuncs import getJenksBreaks
@@ -187,9 +186,16 @@ def phjViewLogOdds(phjTempDF,
                             kind = 'line',
                             yerr = phjYErrors,
                             capsize = 4,
-                            title = 'Log-odds against mid-points of category')
+                            title = 'Log-odds against mid-points of categories')
             ax.set_ylabel("Log odds")
             ax.set_xlabel(phjNewCategoryVarName)
+            ax.set_xlim([phjBreaks[0],phjBreaks[-1]])
+            
+            # Add vertical lines to indicate boundaries of categories
+            for xline in phjBreaks:
+                ax.axvline(x = xline,
+                           linestyle = 'dashed',
+                           color = 'gray')
         
         else:
             # Otherwise, attempts to calculate the basic OR table failed and phjOR
