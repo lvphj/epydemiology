@@ -55,6 +55,7 @@ except pkg_resources.DistributionNotFound:
 else:
     phjPymssqlPresent = True
     import pymssql
+    import _mssql
 
 
 from .phjMiscFuncs import phjGetStrFromArgOrFile
@@ -79,19 +80,19 @@ def phjGetDataFromDatabase(phjQueryStr = None,
     
     if phjTempQuery is not None:
         # Enter name of database (convert to lower case and remove white space)
-        phjTempDBName  = input('Please enter type of database (MySQL or SQL Server): ')
-        phjTempDBName = re.sub(r'\s+','', phjTempDBName.lower())
+        phjTempDBType  = input('Please enter type of database (MySQL or SQL Server): ')
+        phjTempDBType = re.sub(r'\s+','', phjTempDBType.lower())
         
-        if phjTempDBName == 'mysql':
+        if phjTempDBType == 'mysql':
             # Retrieve data from MySQL database
-            phjTempDF = phjLoadQueryIntoDataframe(phjDBName = 'mysql',
+            phjTempDF = phjLoadQueryIntoDataframe(phjDBType = 'mysql',
                                                   phjQuery = phjTempQuery,
                                                   phjMaxAttempts = phjAllowedAttempts,
                                                   phjPrintResults = phjPrintResults)
         
-        elif (phjTempDBName == 'mssql') or (phjTempDBName == 'sqlserver'):
+        elif (phjTempDBType == 'mssql') or (phjTempDBType == 'sqlserver'):
             # Retrieve data from SQL SERVER database
-            phjTempDF = phjLoadQueryIntoDataframe(phjDBName = 'mssql',
+            phjTempDF = phjLoadQueryIntoDataframe(phjDBType = 'mssql',
                                                   phjQuery = phjTempQuery,
                                                   phjMaxAttempts = phjAllowedAttempts,
                                                   phjPrintResults = phjPrintResults)
@@ -131,8 +132,10 @@ def phjGetSELECTQueryStr(phjQueryStr = None,
     if phjPrintResults == True:
         print("Query entered: ",phjTempQuery)
     
-    # Check whether input string matches a SELECT...FROM... query
-    phjSelectQueryRegex = re.compile('^SELECT[\s\S]+\sFROM\s',flags=re.I|re.X)
+    # Check whether input string matches a SELECT...FROM... query.
+    # The following regex also allows SELECT...FROM... query to occur inside a bracket
+    # at the start of the string.
+    phjSelectQueryRegex = re.compile('^\(?\s*SELECT[\s\S]+\sFROM\s',flags=re.I|re.X)
     
     if phjTempQuery is not None:
         if not(re.match(phjSelectQueryRegex, phjTempQuery)):
@@ -143,12 +146,12 @@ def phjGetSELECTQueryStr(phjQueryStr = None,
 
 
 
-def phjLoadQueryIntoDataframe(phjDBName,
+def phjLoadQueryIntoDataframe(phjDBType,
                               phjQuery,
                               phjMaxAttempts = 3,
                               phjPrintResults = False):
     
-    phjTempConnection = phjConnectToDatabase(phjDBName,
+    phjTempConnection = phjConnectToDatabase(phjDBType,
                                              phjMaxAttempts = phjMaxAttempts,
                                              phjPrintResults = False)
     
@@ -156,12 +159,13 @@ def phjLoadQueryIntoDataframe(phjDBName,
     
         if phjPandasPresent:
             try:
-                phjTempDF = pd.io.sql.read_sql(phjQuery, con=phjTempConnection)
+                # phjTempDF = pd.io.sql.read_sql(phjQuery, con=phjTempConnection)
+                phjTempDF = pd.read_sql_query(phjQuery, con=phjTempConnection)
             
             except pd.io.sql.DatabaseError as e:
                 print('\nA DatabaseError occurred.')
                 print(e)
-                print('Please edit the file containing the SQL query and re-run the function.\n')
+                print('\nPlease edit the file containing the SQL query and re-run the function.\n')
                 phjTempDF = None
             
             finally:
@@ -177,7 +181,7 @@ def phjLoadQueryIntoDataframe(phjDBName,
 
 
 
-def phjConnectToDatabase(phjDBName,
+def phjConnectToDatabase(phjDBType,
                          phjMaxAttempts = 3,
                          phjPrintResults = False):
     
@@ -187,9 +191,13 @@ def phjConnectToDatabase(phjDBName,
         phjTempServer = input("Enter host: ")
         phjTempUser = input("Enter user: ")
         phjTempPwd = getpass.getpass("Enter password: ")
+        phjTempDBName = input("Enter database name (optional but may need to modify SQL query): ")
+        
+        if not phjTempDBName or phjTempDBName.isspace():
+            phjTempDBName = None
         
         # Connect to MySQL database and load data into dataframe
-        if phjDBName == 'mysql':
+        if phjDBType == 'mysql':
             
             # Check that PyMySQL has been installed before trying to use it.
             # If so, read data into datagram; if not,
@@ -197,10 +205,18 @@ def phjConnectToDatabase(phjDBName,
             if phjPymysqlPresent:
             
                 try:
-                    phjTempConnection = pymysql.connect(host = phjTempServer,
-                                                        user = phjTempUser,
-                                                        password = phjTempPwd,
-                                                        cursorclass = pymysql.cursors.Cursor)
+                    if phjTempDBName is None:
+                        phjTempConnection = pymysql.connect(host = phjTempServer,
+                                                            user = phjTempUser,
+                                                            password = phjTempPwd,
+                                                            cursorclass = pymysql.cursors.Cursor)
+                    
+                    else:
+                        phjTempConnection = pymysql.connect(host = phjTempServer,
+                                                            user = phjTempUser,
+                                                            password = phjTempPwd,
+                                                            db = phjTempDBName,
+                                                            cursorclass = pymysql.cursors.Cursor)
                     
                     break
                     
@@ -222,7 +238,7 @@ def phjConnectToDatabase(phjDBName,
                 break
                 
         # Connect to SQL SERVER (or MS SQL) database and load data into dataframe
-        elif phjDBName == 'mssql':
+        elif phjDBType == 'mssql':
             
             # Check that PyMSSQL has been installed before trying to use it.
             # If so, read data into datagram; if not,
@@ -230,16 +246,44 @@ def phjConnectToDatabase(phjDBName,
             if phjPymssqlPresent:
             
                 try:
-                    phjTempConnection = pymssql.connect(server = phjTempServer,
-                                                        user = phjTempUser,
-                                                        password = phjTempPwd,
-                                                        port = '1433')
+                    # N.B. Need to use pymssql.connect() because the connection object
+                    #      has a 'cursor' attribute which Pandas uses to read into
+                    #      dataframe; in contrast, using _mssql.connect(), the resulting
+                    #      _mssql.MSSQLConnection object does not have cursor attribute.
+                    if phjTempDBName is None:
+                        # If name of database is not entered then may need to modify
+                        # SQL query, for example, to run query to get info from table1
+                        # on database called ABC, could use:
+                        #    SELECT * FROM ABC.dbo.table1
+                        phjTempConnection = pymssql.connect(server = phjTempServer,
+                                                            user = phjTempUser,
+                                                            password = phjTempPwd,
+                                                            port = '1433')
+                    
+                    else:
+                        phjTempConnection = pymssql.connect(server = phjTempServer,
+                                                            user = phjTempUser,
+                                                            password = phjTempPwd,
+                                                            database = phjTempDBName,
+                                                            port = '1433')
                     
                     break
+                
+                except pymssql.InterfaceError:
+                    print("\nA MSSQLDriverException has been caught.")
                     
-                except pymssql.OperationalError as e:
-                    # For full list of errors that may be raised by pymssql, see https://media.readthedocs.org/pdf/pymssql/latest/pymssql.pdf)
-                    print("\nAn OperationalError occurred and connection to database was unsuccessful.\nError number {0}: {1}.".format(e.args[0],e.args[1]))
+                    if i < (phjMaxAttempts-1):
+                        print('\nPlease re-enter login details.\n')    # Only say 'Please try again' if not last attempt.
+                    
+                    else:
+                        # If connection to database can't be made:
+                        print('\nFailed to connect to database after {0} attempts.\n'.format(i+1))
+                        phjTempConnection = None
+                
+                except pymssql.DatabaseError as e:
+                    # The e variable can be used to express number, severity, state and
+                    # message
+                    print("\nA MSSQLDatabaseException has been caught. ({0})".format(e))
                     
                     if i < (phjMaxAttempts-1):
                         print('\nPlease re-enter login details.\n')    # Only say 'Please try again' if not last attempt.
@@ -248,18 +292,12 @@ def phjConnectToDatabase(phjDBName,
                         # If connection to database can't be made:
                         print('\nFailed to connect to database after {0} attempts.\n'.format(i+1))
                         phjTempConnection = None
-                        
+            
             else:
                 print('\nRequired package PyMsSQL is not available.\n')
                 phjTempConnection = None
                 break
-                
-        else:
-            if phjPrintResults:
-                print('\nDatabase type is not recognised. Connection to database cannot be made.\n')
-                
-            phjTempConnection = None
-            
+    
     return phjTempConnection
 
 
