@@ -20,6 +20,9 @@ else:
     import pandas as pd
 
 
+import collections
+
+
 
 def phjGetStrFromArgOrFile(phjStr = None,
                            phjPathAndFileName = None,
