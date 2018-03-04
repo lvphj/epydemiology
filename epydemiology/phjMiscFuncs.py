@@ -103,6 +103,116 @@ def phjReadTextFromFile(phjFilePathAndName = None,
 
 
 
+def phjCreateNamedGroupRegex(phjTempDF,
+                             phjGroupVarName,
+                             phjRegexVarName,
+                             phjIDVarName = None,
+                             phjRegexPreCompile = False,
+                             phjPrintResults = False):
+    
+    # Check function parameters
+    # =========================
+    try:
+        # Check whether required parameters have been set to correct type
+        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjGroupVarName,str), "Parameter 'phjGroupVarName' needs to be a string."
+        assert isinstance(phjRegexVarName,str), "Parameter 'phjRegexVarName' needs to be a string."
+        
+        if phjIDVarName is not None:
+            assert isinstance(phjIDVarName,str), "Parameter 'phjIDVarName' (if set) needs to be a string."
+
+        # Check whether required columns exist
+        assert phjGroupVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjGroupVarName)
+        assert phjRegexVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjRegexVarName)
+        
+        if phjIDVarName is not None:
+            assert phjIDVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjIDVarName)
+            
+        # Check whether arguments are set to allowable values
+        assert phjRegexPreCompile in [True, False], "Parameter 'phjRegexPreCompile' can only be True or False; it is incorrectly set."
+        assert phjPrintResults in [True, False], "Parameter 'phjPrintResults' can only be True or False; it is incorrectly set."
+        
+    except AssertionError as e:
+        print(e)
+        
+        phjCategoryGroupRegex = None
+        
+    
+    # Complete function if parameter checks are OK and AssertionError not raised
+    else:
+        # Remove any rows where group name is empty (and reset the index)
+        phjEmptyCellMask = ~(phjTempDF[phjGroupVarName] == "")
+        phjTempDF = phjTempDF[phjEmptyCellMask].reset_index(drop = True)
+        
+        
+        # Group dataframe based on phjGroupVarName and concatenate strings in phjRegexVarName, separated
+        # by OR and carriage return (i.e. '|\n').
+        # And sort by ID number if appropriate.
+        try:
+            if phjIDVarName is None:
+                phjCategoryGroupRegexDF = phjTempDF.groupby(phjGroupVarName).agg({phjRegexVarName:'|'.join}).reset_index()
+
+            else:
+                phjCategoryGroupRegexDF = phjTempDF.groupby(phjGroupVarName).agg({phjRegexVarName:'|'.join,
+                                                                                  phjIDVarName: 'mean'}).sort_values(phjIDVarName,
+                                                                                                                     axis = 0,
+                                                                                                                     ascending = True).reset_index()
+                
+        except pd.core.groupby.DataError as e:
+            print("\nA DataError has occurred. This may occur if, for example, the '{0}' variable contains missing values. ({1}.)".format(phjIDVarName,e))
+            
+            phjCategoryGroupRegex = None
+        
+        
+        # Complete function if no exception raised
+        else:
+            # Check that the values in the phjIDVarName variable (after the 'mean' operation) are all integers.
+            # If not, if may indicate an error in the original labelling of category groups.
+            phjIntegerCheckMask = phjCategoryGroupRegexDF[phjIDVarName]%1 == 0
+            
+            if sum(~phjIntegerCheckMask) > 0:
+                if sum(~phjIntegerCheckMask) == 1:
+                    print("\nWarning: there may be an error in the category ID values since one of the mean group values is not an integer.")
+                else:
+                    print("\nWarning: there may be an error in the category ID values since {0} mean group values are not integers.".format(sum(~phjIntegerCheckMask)))
+            
+            
+            # Create a column containing a concatenated and combined named group regex for each group
+            phjCategoryGroupRegexDF['NamedGroupRegex'] = '(?P<' + phjCategoryGroupRegexDF[phjGroupVarName].map(str).str.strip().str.replace(' ','_').str.replace('[^\w\s]','') + '>' + phjCategoryGroupRegexDF[phjRegexVarName].map(str) + ')'
+            
+            
+            # Create a string representing entire regex
+            # Various string patterns are included to ensure the final string is easier to read:
+            # (?P<group1>
+            #    (?:abc)|
+            #    (?:cde))
+            # (?P<group2>
+            #    (?:fgh)|
+            #    (?:ijk))
+            phjCategoryGroupRegexStr = phjCategoryGroupRegexDF['NamedGroupRegex'].map(str).str.replace('>\(\?',
+                                                                                                       '>\n    (?').str.replace('\)\|\(',
+                                                                                                                                ')|\n    (').str.cat(others = None, sep = '|\n')
+            
+            if phjPrintResults == True:
+                print("\nFull Regex string")
+                print(phjCategoryGroupRegexStr)
+            
+            if phjRegexPreCompile == True:
+                try:
+                    phjCategoryGroupRegex = re.compile(phjCategoryGroupRegexStr,flags = re.X|re.I)
+
+                except re.error as e:
+                    print("Regex failed to compile: {0}.".format(e))
+                    phjCategoryGroupRegex = None
+    
+    
+    if phjRegexPreCompile == False:
+        return phjCategoryGroupRegexStr
+    else:
+        return phjCategoryGroupRegex
+
+
+
 def phjMaxLevelOfTaxonomicDetail(phjTempDF,
                                  phjFirstCol,
                                  phjLastCol,
