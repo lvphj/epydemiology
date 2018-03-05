@@ -336,7 +336,7 @@ def phjMaxLevelOfTaxonomicDetail(phjTempDF,
         phjTempDF['posFromR'] = (np.log2( ('1' + phjTempDF['bin']).astype(int) & -('1' + phjTempDF['bin']).astype(int)) + 1).astype(int)
         
         # Count back from the last column to find the column containing the last string entry
-        phjTempDF[phjNewColName] = phjTempDF.columns[phjTempDF.columns.get_loc(phjLastCol) - df['posFromR'] + 1]
+        phjTempDF[phjNewColName] = phjTempDF.columns[phjTempDF.columns.get_loc(phjLastCol) - phjTempDF['posFromR'] + 1]
         
         # If the posFromR value is greater than the number of columns listed then the row of cells
         # must have consisted of all zeroes. Therefore, replace all such occurrences with some
@@ -347,8 +347,8 @@ def phjMaxLevelOfTaxonomicDetail(phjTempDF,
         
         # Remove temporary columns
         if phjCleanup == True:
-            phjTempDF = df.drop(['bin','posFromR'],
-                                 axis = 1)
+            phjTempDF = phjTempDF.drop(['bin','posFromR'],
+                                       axis = 1)
         
         # Print dataframe
         if phjPrintResults == True:
