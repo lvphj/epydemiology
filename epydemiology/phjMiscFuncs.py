@@ -216,6 +216,149 @@ def phjCreateNamedGroupRegex(phjTempDF,
 
 
 
+# This function takes a column of text and uses a regex with named groups to
+# determine the group to which the text best fits.
+def phjFindRegexNamedGroups(phjTempDF,
+                            phjDescriptorVarName,
+                            phjNamedGroupRegexStr,
+                            phjSeparateRegexGroups = False,
+                            phjNumberMatchesVarName = 'numberMatches',
+                            phjMatchedGroupVarName = 'matchedgroup',
+                            phjUnclassifiedStr = 'unclassified',
+                            phjMultipleMatchStr = 'multiple',
+                            phjCleanup = False,
+                            phjPrintResults = False):
+    
+    
+    # Check function parameters are set correctly
+    try:
+        # Check whether required parameters have been set to correct type
+        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDescriptorVarName,str), "Parameter 'phjDescriptorVarName' needs to be a string."
+        assert isinstance(phjNamedGroupRegexStr,str), "Parameter 'phjNamedGroupRegexStr' needs to be a string. The function does not accept a pre-compiled regular expression."
+        assert isinstance(phjNumberMatchesVarName,str), "Parameter 'phjNumberMatchesVarName' needs to be a string."
+        assert isinstance(phjMatchedGroupVarName,str), "Parameter 'phjMatchedGroupVarName' needs to be a string."
+        assert isinstance(phjUnclassifiedStr,str), "Parameter 'phjUnclassifiedStr' needs to be a string."
+        assert isinstance(phjMultipleMatchStr,str), "Parameter 'phjMultipleMatchStr' needs to be a string."
+        
+        # Check whether arguments are set to allowable values
+        assert phjSeparateRegexGroups in [True, False], "Parameter 'phjSeparateRegexGroups' can only be True or False; it is incorrectly set."
+        assert phjCleanup in [True, False], "Parameter 'phjCleanup' can only be True or False; it is incorrectly set."
+        assert phjPrintResults in [True, False], "Parameter 'phjPrintResults' can only be True or False; it is incorrectly set."
+        
+        # Check that referenced columns exist in the dataframe
+        assert phjDescriptorVarName in phjTempDF.columns, "The column '{0}' does not exist in the dataframe.".format(phjDescriptorVarName)
+        
+        # Check that new column names do not already exist
+        assert phjNumberMatchesVarName not in phjTempDF.columns, "The column name '{0}' already exists.".format(phjNumberMatchesVarName)
+        assert phjMatchedGroupVarName not in phjTempDF.columns, "The column name '{0}' already exists.".format(phjMatchedGroupVarName)
+        
+    except AssertionError as e:
+        print("An AssertionError occurred. ({0})".format(e))
+    
+    else:
+        try:
+            # Try to compile the full and complete named-group regex containing
+            # multiple named groups.
+            phjNamedGroupRegex = re.compile(phjNamedGroupRegexStr,flags = re.I|re.X)
+        
+        except re.error as e:
+            print("Regex failed to compile: {0}.".format(e))
+        
+        # Continue with function if regex compiles
+        else:
+            # Run the named-group regex as a single regex. (This may result in some matches being missed
+            # if preceding mathces are found because grouped regexes cannot overlap.)
+            if phjSeparateRegexGroups == False:
+                # Create a dataframe with a column for each named group in the regex
+                phjScratchDF = phjTempDF[phjDescriptorVarName].str.extract(phjNamedGroupRegex, expand = True)
+                
+                # Add the descriptor column only from the original dataframe
+                phjScratchDF = phjScratchDF.join(phjTempDF[phjDescriptorVarName])
+                
+                # Move descriptor column to the front
+                cols = phjScratchDF.columns.tolist()
+                cols = cols[-1:] + cols[:-1]
+                phjScratchDF = phjScratchDF[cols]
+            
+            # Run each named group regex separately to ensure all group matches are identified.
+            # It is more likely that multiple group matches may be identified.
+            else:
+                # Create dataframe containing matched species.
+                # This routine is based on a function supplied by Nathan Vērzemnieks on 19 Feb 2018
+                # on StackOverflow in response to a question.
+                # https://stackoverflow.com/questions/48858357/extract-named-group-regex-pattern-from-a-compiled-regex-in-python
+                # Nathan Vērzemnieks said:
+                # The argument to re.split looks for a literal pipe [and white space] followed by [a non-capturing look-ahead for]
+                # the (?=< , the beginning of a named group. It compiles each subpattern and uses the groupindex attribute to
+                # extract the name.
+                phjScratchDF = phjTempDF.loc[:,[phjDescriptorVarName]]
+                
+                for subpattern in re.split('\|\s*(?=\(\?P<)', phjNamedGroupRegexStr):
+                    phjGroupRegex = re.compile(subpattern,flags = re.I|re.X)
+                    phjGroupName = list(phjGroupRegex.groupindex)[0]
+                    
+                    phjScratchDF[phjGroupName] = phjScratchDF[phjDescriptorVarName].str.extract(phjGroupRegex,
+                                                                                                expand = False)
+                    
+                    if phjPrintResults == True:
+                        print(phjGroupName + ' ... done')
+                    else:
+                        print('.',end = '')
+                        
+                print("\n")
+            
+            # Create a new column that contains a count of the number of matches.
+            # Obviously, it should only be 1 but it is possible that a small number of cases
+            # may have more than 1 match.
+            # Some cases may not be classified.
+            phjGroupNamesList = list(phjNamedGroupRegex.groupindex)
+            phjScratchDF[phjNumberMatchesVarName] = phjScratchDF[phjGroupNamesList].count(axis = 1)
+            
+            if phjPrintResults == True:
+                # Frequency table showing number of group matches
+                print("\nTable of number of group matches identified per description term\n")
+                print(pd.DataFrame(phjScratchDF[phjNumberMatchesVarName].value_counts(sort = False)).rename_axis('Number of matches').rename(columns = {phjNumberMatchesVarName:'Frequency'}))
+                print("\n")
+            
+            # Create a new column that contains the name of the matched group for rows where a regex match was identified
+            phjScratchDF[phjMatchedGroupVarName] = np.nan
+            
+            for grp in phjGroupNamesList:
+                phjScratchDF.loc[(phjScratchDF[grp].notnull()) & (phjScratchDF[phjNumberMatchesVarName] == 1),phjMatchedGroupVarName] = grp
+            
+            # Replace rows with no match to unclassified
+            phjScratchDF.loc[phjScratchDF[phjNumberMatchesVarName] == 0,phjMatchedGroupVarName] = phjUnclassifiedStr
+            
+            # Replace rows with multiple matches to multiple match string
+            phjScratchDF.loc[phjScratchDF[phjNumberMatchesVarName] > 1,phjMatchedGroupVarName] = phjMultipleMatchStr
+            
+            if phjCleanup == False:
+                # Check that none of the regex group names already exist as column headings in
+                # the original dataframe
+                for grp in phjGroupNamesList:
+                    if grp in phjTempDF.columns.values:
+                        print("One or more group names in the regular expression clash with column headings in the dataframe. In order to avoid confusion, the phjCleanup variable has been set to True.")
+                        phjCleanup = True
+            
+            # Remove the temporary columns before joining with original dataframe.
+            if phjCleanup == True:
+                phjScratchDF = phjScratchDF.drop(phjGroupNamesList,
+                                                 axis = 1)
+            
+            # Join phjScratchDF to original database
+            phjTempDF = phjTempDF.join(phjScratchDF.loc[:,phjScratchDF.columns != phjDescriptorVarName],
+                                       how = 'left')
+
+            if phjPrintResults == True:
+                # Print samples of rows of dataframe
+                with pd.option_context('display.max_rows', 20, 'display.max_columns', 20):
+                    print(phjTempDF)
+    
+    return phjTempDF
+
+
+
 def phjMaxLevelOfTaxonomicDetail(phjTempDF,
                                  phjFirstCol,
                                  phjLastCol,

@@ -22,6 +22,7 @@ from .phjMatrices import phjBinaryVarsToSquareMatrix
 from .phjMiscFuncs import phjGetStrFromArgOrFile
 from .phjMiscFuncs import phjReadTextFromFile
 from .phjMiscFuncs import phjCreateNamedGroupRegex
+from .phjMiscFuncs import phjFindRegexNamedGroups
 from .phjMiscFuncs import phjMaxLevelOfTaxonomicDetail
 
 from .phjRROR import phjOddsRatio
