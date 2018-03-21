@@ -387,7 +387,7 @@ def phjCreateWorkingPostcodeDF(phjTempDF,
                         phjReturnWorkingDF = False
 
             else:
-                print("The phjCheckByOption variable '{0}' is not a recognised option.".format(phjCheckBy))
+                print("The phjCheckByOption variable '{0}' is not a recognised option.".format(phjCheckByOption))
                 phjReturnWorkingDF = False
             
             
