@@ -7,6 +7,7 @@ from .phjCalculateProportions import phjCalculateMultinomialProportions
 from .phjCleanData import phjParseDateVar
 
 from .phjCleanUKPostcodes import phjCleanUKPostcodeVariable
+from .phjCleanUKPostcodes import phjPostcodeFormat7
 
 from .phjExploreData import phjViewLogOdds
 from .phjExploreData import phjCategoriseContinuousVariable
