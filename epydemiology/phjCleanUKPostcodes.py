@@ -154,8 +154,8 @@ def phjCleanUKPostcodeVariable(phjTempDF,
                     #                                                                          flags = re.I,
                     #                                                                          expand = True)['pcdDistrict'].unique())
                     phjPostcodeDistrictArr = np.array(phjRealPostcodeSer.str.extract(pat = '''(?P<pcdDistrict>^\w{2,4})\w{3}$''',
-                                                                                              flags = re.I,
-                                                                                              expand = False).unique())
+                                                                                     flags = re.I,
+                                                                                     expand = False).unique())
                     
                     
                     
@@ -240,7 +240,9 @@ def phjCleanUKPostcodeVariable(phjTempDF,
                                                                   phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                                   phjNewPostcodeStrLenVarName = phjNewPostcodeStrLenVarName,
                                                                   phjPostcodeCheckVarName = phjPostcodeCheckVarName,
-                                                                  phjMinDamerauLevenshteinDistanceVarName = phjMinDamerauLevenshteinDistanceVarName)
+                                                                  phjMinDamerauLevenshteinDistanceVarName = phjMinDamerauLevenshteinDistanceVarName,
+                                                                  phjBestAlternativesVarName = phjBestAlternativesVarName,
+                                                                  phjPrintResults = phjPrintResults)
             
             
             # If requested, attempt to salvage the postcode outward (postcode area)
@@ -740,7 +742,7 @@ def phjUKPostcodeCorrectCommonErrors(phjTempDF,
     # Creates a temporary dataframe containing incorrectly formatted postcodes only.
     # Common errors will be corrected and merged back to the original dataframe.
     phjTempUnformattedDF = phjTempDF.loc[(phjTempDF[phjPostcodeCheckVarName] == False) &
-                                         (phjTempDF[phjNewPostcodeVarName].notnull()),[phjNewPostcodeVarName,phjPostcodeCheckVarName]]
+                                         (phjTempDF[phjNewPostcodeVarName].notnull()),[phjNewPostcodeVarName,phjPostcodeCheckVarName]].copy(deep = True)
     
     phjTempUnformattedDF[phjNewPostcodeVarName] = phjTempUnformattedDF[phjNewPostcodeVarName].map(lambda x: phjCorrectPostcodeErrors(x,
                                                                                                                                      phjMissingValueCode = phjMissingValueCode,
@@ -907,7 +909,7 @@ def phjPostcodeFormat7(phjTempDF,
                                                            (phjTempDF[phjPostcodeVarName].str.len() <= 7),phjPostcodeVarName]
             
             # Remove all whitespace and punctuation from the text strings and convert to upper case.
-            phjTempDF[phjPostcode7VarName] = phjTempDF[phjPostcode7VarName].str.replace('[\s\W_]','').str.upper()
+            phjTempDF[phjPostcode7VarName] = phjTempDF[phjPostcode7VarName].str.replace('[\W_]','').str.upper()
         
         else:
             # Copy potential postcode strings to postcode7 variable irrespective of content
@@ -916,7 +918,7 @@ def phjPostcodeFormat7(phjTempDF,
             # Remove all whitespace and punctuation from the text strings, remove strings
             # that contain fewer than 5 characters or greater than 7 characters and 
             # convert to upper case.
-            phjTempDF[phjPostcode7VarName] = phjTempDF[phjPostcode7VarName].str.replace('[\s\W_]','')
+            phjTempDF[phjPostcode7VarName] = phjTempDF[phjPostcode7VarName].str.replace('[\W_]','')
             phjTempDF[phjPostcode7VarName] = phjTempDF.loc[(phjTempDF[phjPostcode7VarName].str.len() >= 5) &
                                                            (phjTempDF[phjPostcode7VarName].str.len() <= 7),phjPostcode7VarName]
             phjTempDF[phjPostcode7VarName] = phjTempDF[phjPostcode7VarName].str.upper()
@@ -944,7 +946,7 @@ def phjSalvagePostcode(phjTempDF,
     # whether format is correct.
     phjTempUnformattedDF = phjTempDF.loc[(phjTempDF[phjPostcodeCheckVarName] == False) &
                                          (phjTempDF[phjNewPostcodeVarName].notnull()),[phjNewPostcodeVarName,
-                                                                                       phjPostcodeCheckVarName]].copy()
+                                                                                       phjPostcodeCheckVarName]].copy(deep = True)
     
     for i in range(1,phjNumberOfCorrectionRuns+1):
         # Create a scatch dataframe consisting of postcode entries that are not matched with regex (in this
@@ -1017,7 +1019,8 @@ def phjGetBestAlternativePostcodes(phjTempDF,
                                    phjNewPostcodeStrLenVarName = 'postcodeCleanStrLen',
                                    phjPostcodeCheckVarName = 'postcodeCheck',
                                    phjMinDamerauLevenshteinDistanceVarName = 'minDamLevDist',
-                                   phjBestAlternativesVarName = 'bestAlternatives',):
+                                   phjBestAlternativesVarName = 'bestAlternatives',
+                                   phjPrintResults = False):
     
     # Add empty columns to the dataframe. It has already been checked that the names
     # passed as parameters do not already exist.
