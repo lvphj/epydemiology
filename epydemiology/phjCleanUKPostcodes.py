@@ -176,8 +176,6 @@ def phjCleanUKPostcodeVariable(phjTempDF,
                 print('\n')
             
             
-### ***** <--HERE
-            
             # Deal with postcode entries that do not match postcode regex (i.e. not formatted correctly)
             phjTempWorkingDF = phjUKPostcodeCorrectCommonErrors(phjTempDF = phjTempWorkingDF,
                                                                 phjNewPostcodeVarName = phjNewPostcodeVarName,
