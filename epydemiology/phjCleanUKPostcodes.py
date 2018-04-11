@@ -877,23 +877,25 @@ def phjPostcodeFormat7(phjTempDF,
     # postcodes to other geographical data.
     
     try:
-        # 1. Check whether required parameters have been set to correct type
+        # 1. Check whether entered parameters have been set to the correct type
         assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
         assert isinstance(phjPostcodeVarName,str), "Parameter 'phjPostcodeVarName' needs to be a string."
         
         if phjPostcodeCheckVarName is not None:
-            assert isinstance(phjPostcodeCheckVarName,str), "Parameter 'phjPostcodeCheckVarName' needs to be a string."
+            assert isinstance(phjPostcodeCheckVarName,str), "If set, parameter 'phjPostcodeCheckVarName' needs to be a string."
         
         assert isinstance(phjPostcode7VarName,str), "Parameter 'phjPostcode7VarName' needs to be a string."
+        
+        # 2. Check whether entered parameters have been set to an appropriate value
         assert phjPrintResults in [True, False], "Parameter 'phjPrintResults' can only be True or False; it is incorrectly set."
         
-        # 2. Check that required variables exist in the supplied dataframe
+        # 3. Check whether variable names exist in dataframe
         assert phjPostcodeVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjPostcodeVarName)
         
         if phjPostcodeCheckVarName is not None:
             assert phjPostcodeCheckVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjPostcodeCheckVarName)
         
-        # 3. Check that new column names do not already exist
+        # 4. Check that new columns that will be created don't already exist
         assert phjPostcode7VarName not in phjTempDF.columns, "The column name '{0}' already exists.".format(phjPostcode7VarName)
     
     except AssertionError as e:
