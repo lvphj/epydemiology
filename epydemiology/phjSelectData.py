@@ -231,117 +231,119 @@ from .phjCleanData import phjParseDateVar
 
 # The following function attempts to automate the selection of case-control datasets.
 def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe containing all variables. Controls will be drawn from this dataframe. Cases may – or may not – be included as well.
-                                  phjConsultationIDVarName,
                                   phjPatientIDVarName,
+                                  phjConsultationIDVarName,
+                                  phjConsultationDateVarName,
+                                  phjFreeTextVarName,
                                   phjCasesDF,               # A dataframe containing all confirmed cases. If not included in phjAllDataDF then needs to contain all variables for analysis as well (with columns having the same names as in phjAllDataDF).
                                   phjMatchingVariablesList = None,   # Needs to be a list - but in future allow for just a string
                                   phjControlsPerCaseInt = 1,
                                   phjScreeningRegexStr = None,
                                   phjScreeningRegexPathAndFileName = None,
-                                  phjFreeTextVarName = None,
                                   phjControlType = 'consultation',   # The only other option would be 'patient'
-                                  phjConsultationDateVarName = None,
                                   phjAggDict = None,
                                   phjPrintResults = False):
     
-    # NEED TO CHECK
-    # =============
-    # 1. Check that phjMatchingVariablesList is a list. If just a string then causes
-    #    problems. In future, all for a string to be entered.
-    
-    
-    ####################################################################################
-    ### STEP 1                                                                       ###
-    ### ======                                                                       ###
-    ### Check that needed columns are present or absent from the complete dataframe. ###
-    ####################################################################################
-    # Create lists of all columns that need to be present and need to be absent in
-    # difference scenarios.
-    
-    # Set list of variables that will be created in matched case-control dataset to None
-    # initially and set to appropriate list if a list of matched variables is defined.
-    # If control type is 'consultation' then matched case-control dataframes will create
-    # columns called 'case' and 'group'; if control type is 'patient' then will also
-    # need to create a column called 'count'.
-    if phjControlType == 'consultation':
-        phjTempAbsentColumnsList = ['case','group']
+    try:
+        # 1. Check whether entered parameters have been set to the correct type
+        assert isinstance(phjAllDataDF,pd.DataFrame), "Parameter 'phjAllDataDF' needs to be a Pandas dataframe."
+        assert isinstance(phjPatientIDVarName,str), "Parameter 'phjPatientIDVarName' needs to be a string."
+        assert isinstance(phjConsultationIDVarName,str), "Parameter 'phjConsultationIDVarName' needs to be a string."
+        assert isinstance(phjConsultationDateVarName,str), "Parameter 'phjConsultationDateVarName' needs to be a string."
+        assert isinstance(phjFreeTextVarName,str), "Parameter 'phjFreeTextVarName' needs to be a string."
+        assert isinstance(phjCasesDF,pd.DataFrame), "Parameter 'phjCasesDF' needs to be a Pandas dataframe."
         
-    elif phjControlType == 'patient':
-        phjTempAbsentColumnsList = ['case','group','count']
+        if phjMatchingVariablesList is not None:
+            assert isinstance(phjMatchingVariablesList,(list,str)), "Parameter 'phjMatchingVariablesList' needs to be a string of a single column heading or a list of column headings."
         
-    else:
-        print("\nContol type ('{0}') is not recognised.".format(phjControlType))
-        phjTempAbsentColumnsList = None
-    
-    # Set columns to be absent list to None initially
-    phjColumnsAbsentList = None
-    
-    
-    # If the control type is 'consultation' or 'patient' then the required columns in the
-    # dataframe containing ALL the data are:
-    #   i. consultation ID variable name
-    #  ii. patient ID variable name
-    # iii. freetext field
-    #  iv. consultation date
-    #   v. matching variables (if required)
-    
-    # Dictionary of required variables (excluding matching variables) when
-    # desired control type is 'consultation'.
-    phjBaselineVarsDict = {'phjConsultationIDVarName':phjConsultationIDVarName,
-                           'phjPatientIDVarName':phjPatientIDVarName,
-                           'phjFreeTextVarName':phjFreeTextVarName,
-                           'phjConsultationDateVarName':phjConsultationDateVarName}
-    
-    # The following checks whether any of the required variables are None.
-    if None in list(phjBaselineVarsDict.values()):
-        phjColumnsPresentList = None
+        assert isinstance(phjControlsPerCaseInt,int), "Parameter 'phjControlsPerCaseInt' needs to be an integer."
         
-        for k,v in phjBaselineVarsDict.items():
-            if v is None:
-                print("\nArgument '{}' cannot be None.".format(k))
-    
-    # If none of the required variables is None, continue to define list of
-    # required variables.
-    else:
+        if phjScreeningRegexStr is not None:
+            assert isinstance(phjScreeningRegexStr,str), "Parameter 'phjScreeningRegexStr' needs to be a string."
+        
+        if phjScreeningRegexPathAndFileName is not None:
+            assert isinstance(phjScreeningRegexPathAndFileName,str), "Parameter 'phjScreeningRegexPathAndFileName' needs to be a string."
+        
+        assert phjControlType in ['consultation','patient'], "Parameter 'phjControlType' can only take the value 'consultation' or 'patient'. The value '{0}' is not recognised.".format(phjControlType)
+        
+        if phjAggDict is not None:
+            assert isinstance(phjAggDict,dict), "Parameter phjAggDict needs to be a dictionary."
+        
+        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
+        
+        
+        # 2. Check whether entered parameters have been set to an appropriate value
+        assert phjControlType in ['consultation','patient'], "Parameter 'phjControlType' can only take the value 'consultation' or 'patient'. The value '{0}' is not recognised.".format(phjControlType)
+        
+        # If phjMatchingVariablesList is not None then it must be a str or a list (as checked
+        # previously). If it is a list, check that none of the elements is None.
         if phjMatchingVariablesList is not None:
             if isinstance(phjMatchingVariablesList,list):
-                
                 # Check if any items in matching variables list is None
-                if None in phjMatchingVariablesList:
-                    print("\nMatching variables list cannot contain None value.")
-                    phjColumnsPresentList = None
+                assert None not in phjMatchingVariablesList, "List of matching variables cannot contain None values."
+        
+        
+        # 3. Check that columns that are referenced by parameters do exist and that new
+        #    columns that will be created don't already exist
+        
+        # Create lists of all columns that need to be present and need to be absent in
+        # different scenarios.
+        
+        # If the control type is 'consultation' or 'patient' then the required columns in the
+        # dataframe containing ALL the data are:
+        #   i. consultation ID variable name
+        #  ii. patient ID variable name
+        # iii. freetext field
+        #  iv. consultation date
+        #   v. matching variables (if required)
+        
+        # Dictionary of required variables (excluding matching variables) when
+        # desired control type is 'consultation'.
+        phjBaselineVarsDict = {'phjConsultationIDVarName':phjConsultationIDVarName,
+                               'phjPatientIDVarName':phjPatientIDVarName,
+                               'phjFreeTextVarName':phjFreeTextVarName,
+                               'phjConsultationDateVarName':phjConsultationDateVarName}
+        
+        if phjMatchingVariablesList is not None:
+            if isinstance(phjMatchingVariablesList,list):
+                phjColumnsPresentList = list(phjBaselineVarsDict.values()) + phjMatchingVariablesList
                 
-                else:
-                    phjColumnsPresentList = list(phjBaselineVarsDict.values()) + phjMatchingVariablesList
-                    phjColumnsAbsentList = phjTempAbsentColumnsList
-            
             elif isinstance(phjMatchingVariablesList,str):
                 phjColumnsPresentList = list(phjBaselineVarsDict.values()) + [phjMatchingVariablesList]
-                phjColumnsAbsentList = phjTempAbsentColumnsList
             
-            else:
-                print("\nMatching variables list is not in an appropriate format. Assume no matching variables are required.")
-                phjColumnsPresentList = list(phjBaselineVarsDict.values())
+            # If control type is 'consultation' then matched case-control dataframes will create
+            # columns called 'case' and 'group'; if control type is 'patient' then will also
+            # need to create a column called 'count'.
+            if phjControlType == 'consultation':
+                phjColumnsAbsentList = ['case','group']
             
+            elif phjControlType == 'patient':
+                phjColumnsAbsentList = ['case','group','count']
+        
         else:
-            # i.e. matching variables list is None
+            # i.e. list of matching variables is None
             phjColumnsPresentList = list(phjBaselineVarsDict.values())
+            phjColumnsAbsentList = None
+        
+        # Check that all the required columns are present or absent from the
+        # complete dataframe containing ALL the data.
+        assert phjCheckColumns(phjTempDF = phjAllDataDF,
+                               phjTempDFDescriptorStr = 'all_data',
+                               phjColumnsPresentList = phjColumnsPresentList,
+                               phjColumnsAbsentList = phjColumnsAbsentList,
+                               phjPrintResults = phjPrintResults), "Parameter check for column headings has failed. Not all required variables are appropriately contained in the dataframe."
     
-    # Check that all the required columns are present or absent from the
-    # complete dataframe containing ALL the data.
-    phjParameterCheck = phjCheckColumns(phjTempDF = phjAllDataDF,
-                                        phjTempDFDescriptorStr = 'all_data',
-                                        phjColumnsPresentList = phjColumnsPresentList,
-                                        phjColumnsAbsentList = phjColumnsAbsentList,
-                                        phjPrintResults = phjPrintResults)
     
-    if phjPrintResults == True:
-        print("\nParameter check variable = True.\nAll required variables are appropriately contained in the dataframe.")
-    
-    if phjParameterCheck == True:
+    except AssertionError as e:
+        print ("An AssertionError has occurred. ({0})".format(e))
+        
+        phjCaseControlDF = None
+        
+    else:
+        
         
         ###############################################################################
-        ### STEPS 2 and 3                                                           ###
+        ### STEPS 1 and 2                                                           ###
         ### =============                                                           ###
         ### Get appropriate dataframes of verified cases and potential controls     ###
         ### and produce a case-control dataframe containing only minimal variables. ###
@@ -352,10 +354,10 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
         #############################################
         if phjControlType == 'consultation':
             
-            # STEP 2: Get dataframes of verified cases and potential controls
+            # STEP 1: Get dataframes of verified cases and potential controls
             # ===============================================================
             phjVerifiedCasesDF = phjGetVerifiedConsultationCases(phjAllDataDF = phjAllDataDF,
-                                                                 phjCasesDF = phjCasesDF,   # Can be a dataframe ideally but could also be a series, array or list.
+                                                                 phjCasesDF = phjCasesDF,   # Can be a dataframe ideally but could also be a series, array or list but, based on initial checks, anything other than a dataframe will cause an AssertionError.
                                                                  phjConsultationIDVarName = phjConsultationIDVarName,   # Either consultation ID or patient ID depending on control type
                                                                  phjPrintResults = phjPrintResults)
             
@@ -377,7 +379,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                                                                  phjControlType = 'consultation',   # Other option would be 'patient'
                                                                  phjAggDict = phjAggDict,
                                                                  phjPrintResults = phjPrintResults)
-                
+            
             else:
                 phjPotentialControlsDF = None
             
@@ -389,17 +391,17 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                 print(phjPotentialControlsDF)
             
             
-            # STEP 3: Get an appropriate dataframe of case-control subjects
+            # STEP 2: Get an appropriate dataframe of case-control subjects
             # =============================================================
             if (phjVerifiedCasesDF is not None) and (phjPotentialControlsDF is not None):
                 
-                # Get case-control dataset
+                # Get a skeleton case-control dataset
                 phjSkeletonCaseControlDF = phjSelectCaseControlDataset(phjCasesDF = phjVerifiedCasesDF,
-                                                                      phjPotentialControlsDF = phjPotentialControlsDF,
-                                                                      phjUniqueIdentifierVarName = phjConsultationIDVarName,
-                                                                      phjMatchingVariablesList = phjMatchingVariablesList,
-                                                                      phjControlsPerCaseInt = phjControlsPerCaseInt,
-                                                                      phjPrintResults = phjPrintResults)
+                                                                       phjPotentialControlsDF = phjPotentialControlsDF,
+                                                                       phjUniqueIdentifierVarName = phjConsultationIDVarName,
+                                                                       phjMatchingVariablesList = phjMatchingVariablesList,
+                                                                       phjControlsPerCaseInt = phjControlsPerCaseInt,
+                                                                       phjPrintResults = phjPrintResults)
             
             else:
                 phjSkeletonCaseControlDF = None
@@ -410,7 +412,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
         #########################################
         elif phjControlType == 'patient':
             
-            # STEP 2: Get dataframes of verified cases and potential controls
+            # STEP 1: Get dataframes of verified cases and potential controls
             # ===============================================================
             phjVerifiedCasesDF = phjGetVerifiedPatientCases(phjAllDataDF = phjAllDataDF,
                                                             phjCasesDF = phjCasesDF,   # Can be a dataframe ideally but could also be a series, array or list.
@@ -439,6 +441,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                                                                  phjAggDict = phjAggDict,
                                                                  phjPrintResults = phjPrintResults)
             
+            
             else:
                 # Otherwise phjVerifiedCasesDF is None
                 phjPotentialControlsDF = None
@@ -451,7 +454,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                 print(phjPotentialControlsDF)
             
             
-            # STEP 3: Get an appropriate dataframe of case-control subjects
+            # STEP 2: Get an appropriate dataframe of case-control subjects
             # =============================================================
             if (phjVerifiedCasesDF is not None) and (phjPotentialControlsDF is not None):
                 
@@ -469,21 +472,14 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                 phjSkeletonCaseControlDF = None
         
         
-        ###################################
-        ### CONTROL TYPE NOT RECOGNISED ###
-        ###################################
-        else:
-            print("\nControl type ('{0}') not recognised.".format(phjControlType))
-            phjSkeletonCaseControlDF = None
-        
-        
+        # Print skeleton case-control dataset
         if phjPrintResults == True:
             print("\nSkeleton case-control dataset")
             print(phjSkeletonCaseControlDF)
-            
+        
         
         ############################################################################################
-        ### STEP 4                                                                               ###
+        ### STEP 3                                                                               ###
         ### ======                                                                               ###
         ### Join skeleton case-control dataframe with full dataframe(s) to retrieve all columns. ###
         ############################################################################################
@@ -659,34 +655,30 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                                                                                        how = 'left')
                             
                             phjGroupsList.append(group)
-                        
+                    
                         phjCaseControlDF = pd.concat(phjGroupsList)
-                    
-                    
+                
+                
                     else:
                         print("\nThe cases are not a subset of all the data and the two dataframes do not contain the same columns. Therefore, verified cases cannot be identified.")
                         phjCaseControlDF = None
-            
+        
             else:
                 # phjControlType is neither 'consultation' nor 'patient'.
                 # Nothing should reach this point because unrecognised control type
                 # should have been filtered out long ago. But hey.
                 print("\nRequested control type ('{0}') is not recognised.".format(phjControlType))
                 phjCaseControlDF = None
-        
+    
         else:
             # Otherwise, skeleton case-control dataframe is None
             print("\nA case-control dataset could not be created.")
             phjCaseControlDF = None
     
-    else:
-        print("\nParameter check variable = False. Variables in dataframe are inappropriate or incorrect.")
-        phjCaseControlDF = None
     
-    
-    if phjPrintResults == True:
-        print("\nFull case-control dataframe")
-        print(phjCaseControlDF)
+        if phjPrintResults == True:
+            print("\nFull case-control dataframe")
+            print(phjCaseControlDF)
     
     
     return phjCaseControlDF
@@ -814,10 +806,10 @@ def phjGetVerifiedConsultationCases(phjAllDataDF,
     # check that the suppled dataframe of cases contains all the required variables and
     # return the cases dataframe as it was supplied by the user.
     
-    # It is tempted – and I have nearly succumbed on several occasions – to have this
+    # It is tempting – and I have nearly succumbed on several occasions – to have this
     # function return a dataframe containing only the bare minimum of variables. However,
     # at a later point, the dataframe of verified cases (returned from this function) will
-    # used to merge to the case-control dataset and, therefore, all variables should be
+    # be used to merge to the case-control dataset and, therefore, all variables should be
     # included at this stage to avoid the need for duplicated effort later on.
     if isinstance(phjCasesDF,pd.DataFrame):
         
@@ -947,7 +939,7 @@ def phjGetVerifiedPatientCases(phjAllDataDF,
     # is generated from the whole dataframe of all consultations by collapsing columns
     # based on patient ID.
     
-    # It is tempted – and I have nearly succumbed on several occasions – to have this
+    # It is tempting – and I have nearly succumbed on several occasions – to have this
     # function return a dataframe containing only the bare minimum of variables. However,
     # at a later point, the dataframe of verified cases (returned from this function) will
     # used to merge to the case-control dataset and, therefore, all variables should be
@@ -961,6 +953,7 @@ def phjGetVerifiedPatientCases(phjAllDataDF,
             phjVerifiedCasesDF = None
             
         else:
+        
             if set(phjCasesDF[phjPatientIDVarName]).issubset(phjAllDataDF[phjPatientIDVarName]):
                 
                 phjCasesMask = phjAllDataDF[phjPatientIDVarName].isin(phjCasesDF[phjPatientIDVarName])
@@ -1061,8 +1054,8 @@ def phjCheckCases(phjAllDataDF,
 
 
 
-def phjGetPotentialControls(phjTempDF,                    # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
-                            phjCasesPatientIDSer = None,  # A pandas series containing patient ID for all confirmed cases
+def phjGetPotentialControls(phjTempDF,                      # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
+                            phjCasesPatientIDSer = None,    # A pandas series containing patient ID for all confirmed cases
                             phjScreeningRegexStr = None,
                             phjScreeningRegexPathAndFileName = None,
                             phjConsultationIDVarName = None,
@@ -1147,6 +1140,7 @@ def phjCollapseOnPatientID(phjAllDataDF,       # Dataframe containing all column
                            phjAggDict = None,
                            phjPrintResults = False):
     
+    
     # The phjAggDict will be assumed to be 'last' unless otherwise defined. Some examples are:
     # i.   'count'
     # ii.  lambda x: ' /// '.join(x.fillna('EMPTY FIELD'))   # concatenates fields separated by ' /// '
@@ -1172,7 +1166,12 @@ def phjCollapseOnPatientID(phjAllDataDF,       # Dataframe containing all column
     # one for the first consultation, one for the last.
     phjColList = phjAllDataDF.columns.values.tolist()
     phjColList = [c for c in phjColList if c != phjPatientIDVarName]
+    
+    # Initially create an ordered dict where each variable reports the 'last' entry
     phjCollapseAggDict = collections.OrderedDict((c,'last') for c in phjColList)   # This creates an ordered dict using a list comprehension-type syntax
+    
+    # Modify the dict so some of the important variables will be collapsed using different
+    # methods (e.g. count, first and last dates and concatenating text)
     phjCollapseAggDict[phjConsultationIDVarName] = 'count'
     
     if phjConsultationDateVarName is not None:
@@ -1183,19 +1182,25 @@ def phjCollapseOnPatientID(phjAllDataDF,       # Dataframe containing all column
     
     # Update phjCollapseAggDict with the phjAggDict items supplied by user. The values in
     # phjAggDict will replace those in phjCollapseAggDict.
+    # Then remove any column names in phjCollapseAggDict that don't exist in dataframe.
     if phjAggDict is not None:
-        phjCollapseAggDict = phjCollapseAggDict.update(phjAggDict)
+        phjCollapseAggDict.update(phjAggDict)
+        phjCollapseAggDict = collections.OrderedDict((k,v) for k,v in phjCollapseAggDict.items() if k in phjAllDataDF.columns.values.tolist())
     
-    # Sort data based on patient ID and date of consultation and groupby patient ID
+    
+    # Sort data based on patient ID and date of consultation and groupby patient ID.
+    # Variables are aggregated based on definitions in the phjCollapseAggDict.
     phjAllDataDF = phjAllDataDF.sort_values([phjPatientIDVarName,phjConsultationDateVarName],
                                             axis = 0,
                                             ascending = True).groupby(phjPatientIDVarName).agg(phjCollapseAggDict).reset_index(drop = False)
+    
     
     # Flatten a column multi-index if there is one.
     # This will produce names of columns that are appended with agg function (e.g. '_last', '_<lambda>', etc.).
     # May decide to rename columns back to something more similar to original, bearing in
     # mind that simply removing some suffixes may leave multiple columns with the same name.
     phjAllDataDF.columns = ['_'.join(col).strip() for col in phjAllDataDF.columns.values]
+    
     
     # If there is a column multi-index, the names of the columns will be named such as:
     # 'patient_', 'gender_last','freetext_<lambda>' etc. The following produces a dict
