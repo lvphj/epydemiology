@@ -31,4 +31,5 @@ from .phjRROR import phjRelativeRisk
 
 from .phjSelectData import phjSelectCaseControlDataset
 from .phjSelectData import phjGenerateCaseControlDataset
-from .phjSelectData import phjGetCollapsedPatientDataframeColumns
+from .phjSelectData import phjCollapseOnPatientID
+
