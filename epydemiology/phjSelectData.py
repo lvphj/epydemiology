@@ -268,6 +268,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
         
         if phjAggDict is not None:
             assert isinstance(phjAggDict,dict), "Parameter phjAggDict needs to be a dictionary."
+            # N.B. Other checks on the contents of phjAggDict are done in the phjCollapseOnPatientID() function
         
         assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
         
@@ -587,9 +588,9 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                         phjTempIncludedPatientsDF = phjAllDataDF.loc[phjTempPatientMask,:]
                         
                         phjTempIncludedPatientsDF = phjCollapseOnPatientID(phjAllDataDF = phjTempIncludedPatientsDF,
+                                                                           phjPatientIDVarName = phjPatientIDVarName,
                                                                            phjConsultationIDVarName = phjConsultationIDVarName,
                                                                            phjConsultationDateVarName = phjConsultationDateVarName,
-                                                                           phjPatientIDVarName = phjPatientIDVarName,
                                                                            phjFreeTextVarName = phjFreeTextVarName,
                                                                            phjAggDict = phjAggDict,
                                                                            phjPrintResults = phjPrintResults)
@@ -606,9 +607,9 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                         phjTempIncludedPatientsDF = phjAllDataDF.loc[phjTempPatientMask,:]
                         
                         phjTempIncludedPatientsDF = phjCollapseOnPatientID(phjAllDataDF = phjTempIncludedPatientsDF,
+                                                                           phjPatientIDVarName = phjPatientIDVarName,
                                                                            phjConsultationIDVarName = phjConsultationIDVarName,
                                                                            phjConsultationDateVarName = phjConsultationDateVarName,
-                                                                           phjPatientIDVarName = phjPatientIDVarName,
                                                                            phjFreeTextVarName = phjFreeTextVarName,
                                                                            phjAggDict = phjAggDict,
                                                                            phjPrintResults = phjPrintResults)
@@ -634,9 +635,9 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                         phjTempIncludedPatientsDF = phjAllDataDF.loc[phjTempPatientMask,:]
                         
                         phjTempIncludedPatientsDF = phjCollapseOnPatientID(phjAllDataDF = phjTempIncludedPatientsDF,
+                                                                           phjPatientIDVarName = phjPatientIDVarName,
                                                                            phjConsultationIDVarName = phjConsultationIDVarName,
                                                                            phjConsultationDateVarName = phjConsultationDateVarName,
-                                                                           phjPatientIDVarName = phjPatientIDVarName,
                                                                            phjFreeTextVarName = phjFreeTextVarName,
                                                                            phjAggDict = phjAggDict,
                                                                            phjPrintResults = phjPrintResults)
@@ -749,6 +750,175 @@ def phjSelectCaseControlDataset(phjCasesDF,
     
     
     return phjTempCaseControlDF
+
+
+
+def phjCollapseOnPatientID(phjAllDataDF,       # Dataframe containing all columns of data to be collapsed based on patient ID
+                           phjPatientIDVarName,
+                           phjConsultationIDVarName = None,
+                           phjConsultationDateVarName = None,
+                           phjFreeTextVarName = None,
+                           phjAggDict = None,
+                           phjPrintResults = False):
+    
+    
+    # The phjAggDict will be assumed to be 'last' unless otherwise defined. Some examples are:
+    # i.   'count'
+    # ii.  lambda x: ' /// '.join(x.fillna('EMPTY FIELD'))   # concatenates fields separated by ' /// '
+    # iii. ['first','last']                                  # finds first and last (and creates a multi-index)
+    # iv.  lambda x:x.value_counts().index[0]                # Gets the most common (i.e. mode)
+    # v.   np.sum
+    # vi.  np.max
+    # vii. np.min
+    
+    
+    # Need to check that:
+    # phjAllDataDF is a dataframe.
+    # phjPatientIDVarName is a string that is contained in the dataframe
+    # Check that phjPatientIDVarName is NOT included in the phjAggDict. 
+    # Check that other variables are also contained in the dataframe.
+    
+    
+    try:
+        # 1. Check whether entered parameters have been set to the correct type:
+        assert isinstance(phjAllDataDF,pd.DataFrame), "Parameter 'phjAllDataDF' needs to be a Pandas dataframe."
+        assert isinstance(phjPatientIDVarName,str), "Parameter 'phjPatientIDVarName' needs to be a string."
+        
+        if phjConsultationIDVarName is not None:
+            assert isinstance(phjConsultationIDVarName,str), "Parameter 'phjConsultationIDVarName' needs to be a string."
+        
+        if phjConsultationDateVarName is not None:
+            assert isinstance(phjConsultationDateVarName,str), "Parameter 'phjConsultationDateVarName' needs to be a string."
+        
+        if phjFreeTextVarName is not None:
+            assert isinstance(phjFreeTextVarName,str), "Parameter 'phjFreeTextVarName' needs to be a string."
+        
+        if phjAggDict is not None:
+            assert isinstance(phjAggDict,dict), "Parameter phjAggDict needs to be a dictionary."
+            
+        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
+        
+        # 2. Check whether entered parameters have been set to an appropriate value
+        # None
+        
+        # 3. Check that columns that are referenced by parameters do exist and that new
+        #    columns that will be created don't already exist
+        phjFullColumnsList = phjAllDataDF.columns.values
+        
+        assert phjPatientIDVarName in phjFullColumnsList, "The patient ID variable ('{0}') is required to collapse the dataframe but it is not present in the list of columns.".format(phjPatientIDVarName)
+        
+        if phjConsultationIDVarName is not None:
+            assert phjConsultationIDVarName in phjFullColumnsList, "The variable '{0}' is not present in the dataframe.".format(phjConsultationIDVarName)
+        
+        if phjConsultationDateVarName is not None:
+            assert phjConsultationDateVarName in phjFullColumnsList, "The variable '{0}' is not present in the dataframe.".format(phjConsultationDateVarName)
+        
+        if phjFreeTextVarName is not None:
+            assert phjFreeTextVarName in phjFullColumnsList, "The variable '{0}' is not present in the dataframe.".format(phjFreeTextVarName)
+        
+        if phjAggDict is not None:
+            phjAggVarsList = [k for k,v in phjAggDict.items()]
+            
+            # Check that the phjPatientIDVarName variable is not included in the phjAggDict dictionary
+            for k,v in phjAggDict.items():
+                assert k != phjPatientIDVarName, "The patient ID variable '{0}' cannot be included in the dictionary defining aggregation functions.".format(phjPatientIDVarName)
+            
+                # It turns out that a dataframe can have multiple columns with the same name. Whilst this is an
+                # intended behaviour, it can cause some problems. Therefore, try to avoid this situation where possible.
+                # In the aggregation dictionary, most variables will be aggregated using a single method (e.g. last,
+                # min, etc.). However, in some cases, a single variable may be aggregated using several methods
+                # (e.g. consultation date will be aggregated using both 'first' and 'last' methods). In this example,
+                # two columns will be produced which will be labelled as datevar_first and datevar_last. We need to make
+                # sure that these new columns do not already exist in the dataframe.
+                # Currently not implemented.
+                # if isinstance(v,list)...
+        
+    except AssertionError as e:
+        print ("An AssertionError has occurred. ({0})".format(e))
+        
+        phjGroupedDF = None
+    
+    else:
+        
+        if phjConsultationDateVarName is not None:
+            # Ensure date of consultation variable is in datetime format
+            phjAllDataDF = phjParseDateVar(phjTempDF = phjAllDataDF,
+                                           phjDateVarName = phjConsultationDateVarName,   # This can be a string or a list of variable names
+                                           phjDateFormat = '%Y-%m-%d',
+                                           phjMissingValue = 'missing',
+                                           phjPrintResults = phjPrintResults)
+        
+        # Construct a dict for aggregating variables.
+        # The consultation variable will be counted and the free text field will be concatenated.
+        # Everything else will be concatenated by taking the last in the list unless otherwise defined
+        # in the phjAggDict argument (in which case, the user-defined options will replace these
+        # values). If the consultation date variable is defined, two columns will be produced,
+        # one for the first consultation, one for the last.
+        phjColList = phjAllDataDF.columns.values.tolist()
+        phjColList = [c for c in phjColList if c != phjPatientIDVarName]
+        
+        
+        # Initially create an ordered dict where each variable reports the 'last' entry
+        phjCollapseAggDict = collections.OrderedDict((c,'last') for c in phjColList)   # This creates an ordered dict using a list comprehension-type syntax
+        
+        
+        # Modify the dict so some of the important variables will be collapsed using different
+        # methods (e.g. count, first and last dates and concatenating text)
+        phjCollapseAggDict[phjConsultationIDVarName] = 'count'
+        
+        if phjConsultationDateVarName is not None:
+            phjCollapseAggDict[phjConsultationDateVarName] = ['first','last']
+        
+        if phjFreeTextVarName is not None:
+            phjCollapseAggDict[phjFreeTextVarName] = lambda x: ' /// '.join(x.fillna('EMPTY FIELD'))
+        
+        # Update phjCollapseAggDict with the phjAggDict items supplied by user. The values in
+        # phjAggDict will replace those in phjCollapseAggDict.
+        # Then remove any column names in phjCollapseAggDict that doesn't exist in dataframe.
+        if phjAggDict is not None:
+            phjCollapseAggDict.update(phjAggDict)
+            phjCollapseAggDict = collections.OrderedDict((k,v) for k,v in phjCollapseAggDict.items() if k in phjAllDataDF.columns.values.tolist())
+        
+        
+        # Sort data based on patient ID and date of consultation and groupby patient ID.
+        # Variables are aggregated based on definitions in the phjCollapseAggDict.
+        phjGroupedDF = phjAllDataDF.sort_values([phjPatientIDVarName,phjConsultationDateVarName],
+                                                axis = 0,
+                                                ascending = True).groupby(phjPatientIDVarName).agg(phjCollapseAggDict)
+        
+        # Set phjMultiIndex to True or False
+        phjMultiIndex = phjGroupedDF.columns.nlevels > 1
+        
+        
+        # Flatten a column multi-index if there is one.
+        if phjMultiIndex == True:
+            
+            # This will produce names of columns that are appended with agg function (e.g. '_last', '_<lambda>', etc.).
+            # May decide to rename columns back to something more similar to original, bearing in
+            # mind that simply removing some suffixes may leave multiple columns with the same name.
+            phjGroupedDF.columns = ['_'.join(col).strip() for col in phjGroupedDF.columns.values]
+        
+        
+        # If there is a column multi-index, the names of the columns will be named such as:
+        # 'patient_', 'gender_last','freetext_<lambda>' etc. The following produces a dict
+        # that will replace necessary column headings with something more readable. If there
+        # is not a column multi-index, the headings will not require changing and the keys
+        # in this dict will not match any columns and therefore no columns will be renamed.
+        phjRenameDict = phjGetRenameCollapsedColumnsDict(phjPatientDataframeColumnHeadingsList = phjGroupedDF.columns.values,
+                                                         phjPatientIDVarName = phjPatientIDVarName,
+                                                         phjConsultationIDVarName = phjConsultationIDVarName,
+                                                         phjAggDict = phjCollapseAggDict,
+                                                         phjMultiIndex = phjMultiIndex,
+                                                         phjPrintResults = phjPrintResults)
+        
+        phjGroupedDF = phjGroupedDF.rename(columns = phjRenameDict)
+        phjGroupedDF = phjGroupedDF.reset_index(drop = False)
+        
+        if phjPrintResults == True:
+            print("Dataframe grouped on patient ID\n")
+            print(phjGroupedDF)
+    
+    return phjGroupedDF
 
 
 
@@ -908,9 +1078,9 @@ def phjGetCollapsedPatientDataframeColumns(phjAllDataDF,       # Dataframe conta
         phjTempSampleDF = phjAllDataDF
         
     phjTempSampleDF = phjCollapseOnPatientID(phjAllDataDF = phjTempSampleDF,       # Dataframe containing all columns of data to be collapsed based on patient ID
+                                             phjPatientIDVarName = phjPatientIDVarName,
                                              phjConsultationIDVarName = phjConsultationIDVarName,
                                              phjConsultationDateVarName = phjConsultationDateVarName,
-                                             phjPatientIDVarName = phjPatientIDVarName,
                                              phjFreeTextVarName = phjFreeTextVarName,
                                              phjAggDict = phjAggDict,
                                              phjPrintResults = phjPrintResults)
@@ -959,9 +1129,9 @@ def phjGetVerifiedPatientCases(phjAllDataDF,
                 phjCasesMask = phjAllDataDF[phjPatientIDVarName].isin(phjCasesDF[phjPatientIDVarName])
                 
                 phjVerifiedCasesDF = phjCollapseOnPatientID(phjAllDataDF = phjAllDataDF.loc[phjCasesMask,:],   # Dataframe containing all columns of data to be collapsed based on patient ID
+                                                            phjPatientIDVarName = phjPatientIDVarName,
                                                             phjConsultationIDVarName = phjConsultationIDVarName,
                                                             phjConsultationDateVarName = phjConsultationDateVarName,
-                                                            phjPatientIDVarName = phjPatientIDVarName,
                                                             phjFreeTextVarName = phjFreeTextVarName,
                                                             phjAggDict = phjAggDict,
                                                             phjPrintResults = phjPrintResults)
@@ -1001,9 +1171,9 @@ def phjGetVerifiedPatientCases(phjAllDataDF,
             phjCasesMask = phjAllDataDF[phjPatientIDVarName].isin(phjCasesDF)
             
             phjVerifiedCasesDF = phjCollapseOnPatientID(phjAllDataDF = phjAllDataDF.loc[phjCasesMask,:],   # Dataframe containing all columns of data to be collapsed based on patient ID
+                                                        phjPatientIDVarName = phjPatientIDVarName,
                                                         phjConsultationIDVarName = phjConsultationIDVarName,
                                                         phjConsultationDateVarName = phjConsultationDateVarName,
-                                                        phjPatientIDVarName = phjPatientIDVarName,
                                                         phjFreeTextVarName = phjFreeTextVarName,
                                                         phjAggDict = phjAggDict,
                                                         phjPrintResults = phjPrintResults)
@@ -1111,9 +1281,9 @@ def phjGetPotentialControls(phjTempDF,                      # A pandas dataframe
             # of the consultations
             # phjPotentialControlsDF = phjControlConsultationsDF.groupby(phjPatientIDVarName).agg('count').rename(columns = {phjConsultationIDVarName:'consultation_count'}).reset_index(drop = False)
             phjPotentialControlsDF = phjCollapseOnPatientID(phjAllDataDF = phjControlConsultationsDF,   # Dataframe containing all columns of data to be collapsed based on patient ID
+                                                            phjPatientIDVarName = phjPatientIDVarName,
                                                             phjConsultationIDVarName = phjConsultationIDVarName,
                                                             phjConsultationDateVarName = phjConsultationDateVarName,
-                                                            phjPatientIDVarName = phjPatientIDVarName,
                                                             phjFreeTextVarName = None,
                                                             phjAggDict = phjAggDict,
                                                             phjPrintResults = phjPrintResults)
@@ -1129,93 +1299,6 @@ def phjGetPotentialControls(phjTempDF,                      # A pandas dataframe
     
     
     return phjPotentialControlsDF
-
-
-
-def phjCollapseOnPatientID(phjAllDataDF,       # Dataframe containing all columns of data to be collapsed based on patient ID
-                           phjConsultationIDVarName = None,
-                           phjConsultationDateVarName = None,
-                           phjPatientIDVarName = None,
-                           phjFreeTextVarName = None,
-                           phjAggDict = None,
-                           phjPrintResults = False):
-    
-    
-    # The phjAggDict will be assumed to be 'last' unless otherwise defined. Some examples are:
-    # i.   'count'
-    # ii.  lambda x: ' /// '.join(x.fillna('EMPTY FIELD'))   # concatenates fields separated by ' /// '
-    # iii. ['first','last']                                  # finds first and last (and creates a multi-index)
-    # iv.  lambda x:x.value_counts().index[0]                # Gets the most common (i.e. mode)
-    # v.   np.sum
-    # vi.  np.max
-    # vii. np.min
-    
-    if phjConsultationDateVarName is not None:
-        # Ensure date of consultation variable is in datetime format
-        phjAllDataDF = phjParseDateVar(phjTempDF = phjAllDataDF,
-                                       phjDateVarName = phjConsultationDateVarName,   # This can be a string or a list of variable names
-                                       phjDateFormat = '%Y-%m-%d',
-                                       phjMissingValue = 'missing',
-                                       phjPrintResults = phjPrintResults)
-    
-    # Construct a dict for aggregating variables.
-    # The consultation variable will be counted and the free text field will be concatenated.
-    # Everything else will be concatenated by taking the last in the list unless otherwise defined
-    # in the phjAggDict argument (in which case, the user-defined options will replace these
-    # values). If the consultation date variable is defined, two columns will be produced,
-    # one for the first consultation, one for the last.
-    phjColList = phjAllDataDF.columns.values.tolist()
-    phjColList = [c for c in phjColList if c != phjPatientIDVarName]
-    
-    # Initially create an ordered dict where each variable reports the 'last' entry
-    phjCollapseAggDict = collections.OrderedDict((c,'last') for c in phjColList)   # This creates an ordered dict using a list comprehension-type syntax
-    
-    # Modify the dict so some of the important variables will be collapsed using different
-    # methods (e.g. count, first and last dates and concatenating text)
-    phjCollapseAggDict[phjConsultationIDVarName] = 'count'
-    
-    if phjConsultationDateVarName is not None:
-        phjCollapseAggDict[phjConsultationDateVarName] = ['first','last']
-    
-    if phjFreeTextVarName is not None:
-        phjCollapseAggDict[phjFreeTextVarName] = lambda x: ' /// '.join(x.fillna('EMPTY FIELD'))
-    
-    # Update phjCollapseAggDict with the phjAggDict items supplied by user. The values in
-    # phjAggDict will replace those in phjCollapseAggDict.
-    # Then remove any column names in phjCollapseAggDict that don't exist in dataframe.
-    if phjAggDict is not None:
-        phjCollapseAggDict.update(phjAggDict)
-        phjCollapseAggDict = collections.OrderedDict((k,v) for k,v in phjCollapseAggDict.items() if k in phjAllDataDF.columns.values.tolist())
-    
-    
-    # Sort data based on patient ID and date of consultation and groupby patient ID.
-    # Variables are aggregated based on definitions in the phjCollapseAggDict.
-    phjAllDataDF = phjAllDataDF.sort_values([phjPatientIDVarName,phjConsultationDateVarName],
-                                            axis = 0,
-                                            ascending = True).groupby(phjPatientIDVarName).agg(phjCollapseAggDict).reset_index(drop = False)
-    
-    
-    # Flatten a column multi-index if there is one.
-    # This will produce names of columns that are appended with agg function (e.g. '_last', '_<lambda>', etc.).
-    # May decide to rename columns back to something more similar to original, bearing in
-    # mind that simply removing some suffixes may leave multiple columns with the same name.
-    phjAllDataDF.columns = ['_'.join(col).strip() for col in phjAllDataDF.columns.values]
-    
-    
-    # If there is a column multi-index, the names of the columns will be named such as:
-    # 'patient_', 'gender_last','freetext_<lambda>' etc. The following produces a dict
-    # that will replace necessary column headings with something more readable. If there
-    # is not a column multi-index, the headings will not require changing and the keys
-    # in this dict will not match any columns and therefore no columns will be renamed.
-    phjRenameDict = phjGetRenameCollapsedColumnsDict(phjPatientIDVarName = phjPatientIDVarName,
-                                                     phjConsultationIDVarName = phjConsultationIDVarName,
-                                                     phjAggDict = phjCollapseAggDict,
-                                                     phjPrintResults = phjPrintResults)
-    
-    phjAllDataDF = phjAllDataDF.rename(columns = phjRenameDict)
-    
-    
-    return phjAllDataDF
 
 
 
@@ -1648,49 +1731,109 @@ def phjGetRegexStr(phjRegexStr = None,
 
 
 
-def phjGetRenameCollapsedColumnsDict(phjPatientIDVarName,
+def phjGetRenameCollapsedColumnsDict(phjPatientDataframeColumnHeadingsList,
+                                     phjPatientIDVarName,
                                      phjConsultationIDVarName,
                                      phjAggDict,
+                                     phjMultiIndex = True,
                                      phjPrintResults = False):
     
-    phjRenameDict = {}
+    # If the agg functions is a list then will generate a multi-index. There are also
+    # some single functions that will generate a multi-index (e.g. 'describe'). After
+    # collapsing a multi-index, the column heading will be of the form varname_func.
+    # In general, if a function results in a multi-index then the column headings
+    # should remain in the form varname_func to ensure multiple functions performed
+    # on a single column can be differentiated (e.g. varname_first and varname_last).
+    # However, if the function does not result in a multi-index then the column heading
+    # should be changed from varname_func to varname (so it matches the headings produced
+    # by aggregation functions that do not produce a multi-index); this will, therefore,
+    # more closely match the column headings that have not been collapsed from a multi-index.
+
+    # Create a temporary dataframe consisting of variable name and function name
+    # for datasets that generated a multi-index.
+    # If there is a multi-index, the level 0 and level 1 component will have been
+    # joined by '_'. This function splits the names back into variable and function
+    # components, discarded those that have 2 or more columns for a single variable
+    # and renames the single columns using the variable names only. I appreciate that
+    # description is unintelligible. Try this description instead. A multi-index
+    # my be represented as follows:
+    #
+    #    -------------------------------
+    #    | var1 | var2          | var3 |
+    #    |------|---------------|------|
+    #    | last | first | last  | max  |
+    #    |------|---------------|------|
+    #
+    # When the multi-index is collapsed, it will produce the following columns:
+    #
+    #    |-----------|------------|-----------|----------|
+    #    | var1_last | var2_first | var2_last | var3_max |
+    #    |-----------|------------|-----------|----------|
+    #
+    # This function takes a list of column headings and splits them into a
+    # dataframe that looks like:
+    # 
+    #    |------|-------|-------|
+    #    | col  | func  | count |
+    #    |------|-------|-------|
+    #    | var1 |  last |     1 |
+    #    | var2 | first |     2 |
+    #    | var2 |  last |     2 |
+    #    | var3 |   max |     1 |
+    #    |------|-------|-------|
+    #
+    # variables with 2 or more occurrences will be left unchanged because it is
+    # important to be able to differentiate which column is which. However, variables
+    # with only 1 occurrence will be renamed to the name of the original column.
+    # Hence, in the above example, var1_last will be renamed to var1 and var3_max
+    # will be renamed to var3 but var2_first and var2_last will remain.
     
-    for k,v in phjAggDict.items():
+    if phjMultiIndex == False:
+        # If the aggregated dataframe has just a single level of column index then
+        # column headings will be the name of the original column. The only column
+        # that would need to be renamed is the consultation ID variable which should
+        # be labelled 'count'.
+        phjRenameDict = {}
+        phjRenameDict[phjConsultationIDVarName] = 'count'
         
-        # In a column multi index, the patient ID column will be renamed from 'patientID'
-        # to 'patientID_'. This dict entry will ensure the patient ID column is renamed.
+    else:
+        # Split the elements in the column headings list to create a dataframe
+        # containing variable name and function
+        phjRenameDF = pd.DataFrame([[i.rsplit('_',1)[0],i.rsplit('_',1)[1]] for i in phjPatientDataframeColumnHeadingsList],
+                                   columns = ['var','func'])
+
+        # Create a column that contains the count of functions for each variable
+        phjRenameGroupbyDF = phjRenameDF.groupby('var').agg({'func':"count"}).reset_index(drop = False)
+        phjRenameGroupbyDF = phjRenameGroupbyDF.rename(columns = {'func':'count'})
+        phjRenameDF = phjRenameDF.merge(phjRenameGroupbyDF,how='left',left_on='var',right_on='var')
+
+        # Keep only those variables with a single row
+        phjRenameDF = phjRenameDF.loc[phjRenameDF['count'] == 1,:]
+
+        # Create a dictionary to use to rename the variable (i.e. var_func to var)
+        phjVarFuncList = phjRenameDF[['var','func']].values.tolist()
+        phjRenameDict = {i[0]+'_'+i[1]:i[0] for i in phjVarFuncList}
+
+        # If the consultation ID variable is counted to indicate how many
+        # consultations were present for each patient then the column will be
+        # named 'consultID_count' (or something similar) after collapsing. The
+        # above dictionary comprehension likely contains a 
+        phjRenameDict['_'.join([phjConsultationIDVarName,'count'])] = 'count'
+
+        # In a dataframe with a multi-index, the patient ID column may be renamed from
+        # 'patientID' to 'patientID_' when collapsing the multi-index to a single index.
+        # This dict entry will ensure the patient ID column is renamed.
+        # N.B. The following may not be required in the latest version of the code
+        #      because the patient ID variable name is created from the index when
+        #      the index is reset. But won't do any harm.
         phjRenameDict[phjPatientIDVarName + '_'] = phjPatientIDVarName
-        
-        # If the agg functions is a list then will generate a multi-index and therefore do
-        # not rename columns. If the column is the consultation ID then label with '_count'
-        # suffix. For all other columns, rename the column back to the original.
-        if not isinstance(v,list):
-            
-            # If the consultation ID variable is counted to indicate how many
-            # consultations were present for each patient then the column will be
-            # named 'consultID_count' (or something similar). In this version, the
-            # column will be renamed with the same heading but it could be changed
-            # in future by editing the following line.
-            if (k == phjConsultationIDVarName) and (v == 'count'):
-                #phjRenameDict['_'.join([phjConsultationIDVarName,'count'])] = '_'.join([phjConsultationIDVarName,'count'])
-                phjRenameDict['_'.join([phjConsultationIDVarName,'count'])] = 'count'
-            
-            # If the aggregation process has involved a lambda function, the column
-            # heading will be 'column1_<lambda>'. The column should be rename to not
-            # included the '<lambda>' label.
-            elif bool(re.search('<lambda>', str(v))):
-                phjRenameDict[k + '_<lambda>'] = k
-            
-            # For other columns (which, for the most part, will be labelled as
-            # 'column2_last') the columns should be renamed with just the original
-            # column heading
-            else:
-                phjRenameDict['_'.join([k,str(v)])] = k
-                
+    
+    
     if phjPrintResults == True:
         print('\nDictionary used to rename the dataframe columns:')
-        pprint.pprint(phjRenameDict)
-    
+        print(phjRenameDict)
+
+  
     return phjRenameDict
 
 
