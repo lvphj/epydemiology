@@ -22,7 +22,6 @@ else:
 
 import collections
 import re
-import pprint
 
 
 from .phjMiscFuncs import phjGetStrFromArgOrFile
