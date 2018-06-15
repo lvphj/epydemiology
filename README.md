@@ -1,7 +1,7 @@
-# epydemiology
+# ePydemiology
 Library of python code for epidemiologists – eventually.
 
-The epydemiology package can be installed using:
+The ePydemiology package can be installed using:
 ```python
 pip install epydemiology as epy
 ```
