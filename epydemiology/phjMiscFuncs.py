@@ -503,6 +503,54 @@ def phjMaxLevelOfTaxonomicDetail(phjTempDF,
     return phjTempDF
 
 
+# This function converts a dataframe containing a grouping variable and a variable
+# containing a series of factors that may or may not be present and converts to a
+# wide dataframe containing a series of binary variables indicating whether to factor
+# is present or not.
+# For example, it converts:
+#
+#       X  Y
+#    0  1  a
+#    1  1  b
+#    2  1  d
+#    3  2  b
+#    4  2  c
+#    5  3  d
+#    6  3  e
+#    7  3  a
+#    8  3  f
+#    9  4  b
+# 
+# to:
+#       X  a  b  d  c  e  f
+#    0  1  1  1  1  0  0  0
+#    1  2  0  1  0  1  0  0
+#    2  3  1  0  1  0  1  1
+#    3  4  0  1  0  0  0  0
+def phjLongToWideBinaryFunc(phjTempDF,
+                            phjGroupbyVar,
+                            phjVariables,
+                            phjValuesDict = {0:0,1:1},
+                            phjPrintResults = False):
+    
+    # Create a scratch DF with appropriate rows and columns, filled with zero
+    phjScratchDF = pd.DataFrame(index = pd.Series(phjTempDF[phjGroupbyVar].unique()),
+                                columns = list(phjTempDF[phjVariables].unique())).fillna(0)
+    
+    phjScratchDF.index.name = phjGroupbyVar
+    
+    # Within each group, create a list contain all variables
+    phjGroup = phjTempDF[[phjGroupbyVar,phjVariables]].groupby(phjGroupbyVar).agg(lambda phjRow: list(phjRow))
+    
+    # Step through each group and change each variable contained in the list of present variables with a 1
+    for g in phjGroup.index.values.tolist():
+        phjScratchDF.loc[g,phjGroup.loc[g,phjVariables]] = 1
+    
+    ### THIS STEP SHOULD ONLY BE RUN IF phjValuesDict HAS BEEN SET TO SOMETHING OTHER THAN DEFAULT
+    phjScratchDF = phjScratchDF.replace(phjValuesDict)
+    
+    return phjScratchDF.reset_index(drop = False)
+
 
 if __name__ == '__main__':
     main()
