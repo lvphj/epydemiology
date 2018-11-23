@@ -556,9 +556,9 @@ def phjLongToWideBinary(phjTempDF,
 
 def phjSummaryTableToBinaryOutcomes(phjTempDF,
                                     phjVarsToIncludeList,
-                                    phjSuccVar,
-                                    phjFailVar,
-                                    phjResultVar,
+                                    phjSuccVarName,
+                                    phjFailVarName,
+                                    phjOutcomeVarName = 'outcome',
                                     phjPrintResults = False):
     
     # This function takes a table of counted binary results and converts it
@@ -574,18 +574,18 @@ def phjSummaryTableToBinaryOutcomes(phjTempDF,
     
     # Make sure the success and failure variables are not included in the list of
     # variables to include. It's OK if they are because this line will correct for it.
-    phjVarsToIncludeList = [x for x in phjVarsToIncludeList if x not in [phjSuccVar,phjFailVar]]
+    phjVarsToIncludeList = [x for x in phjVarsToIncludeList if x not in [phjSuccVarName,phjFailVarName]]
     
     # Stack positive (success) and negative (failure) results one on top of the other
     phjTempDF = phjTempDF.melt(id_vars = phjVarsToIncludeList,
-                               value_vars = [phjSuccVar,phjFailVar],
-                               var_name = phjResultVar,
+                               value_vars = [phjSuccVarName,phjFailVarName],
+                               var_name = phjOutcomeVarName,
                                value_name = 'count').reset_index(drop = True)
     
     phjTempDF = phjTempDF.loc[phjTempDF.index.repeat(phjTempDF['count'])]
     
-    phjTempDF[phjResultVar] = phjTempDF[phjResultVar].replace({phjSuccVar: 1,
-                                                               phjFailVar: 0})
+    phjTempDF[phjOutcomeVarName] = phjTempDF[phjOutcomeVarName].replace({phjSuccVarName: 1,
+                                                                         phjFailVarName: 0})
     
     return phjTempDF[[x for x in phjTempDF.columns if x != 'count']].reset_index(drop = True)
 
