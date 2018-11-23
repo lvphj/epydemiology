@@ -554,6 +554,43 @@ def phjLongToWideBinary(phjTempDF,
 
 
 
+def phjSummaryTableToBinaryOutcomes(phjTempDF,
+                                    phjVarsToIncludeList,
+                                    phjSuccVar,
+                                    phjFailVar,
+                                    phjResultVar = 'result',
+                                    phjPrintResults = False):
+    
+    # This function takes a table of counted binary results and converts it
+    # to a dataframe of binary outcomes, ready for logistic regression.
+    # (This is useful if the function used to do logistic regression does not
+    # include a frequency weight option.)
+    
+    
+    # Do some Assertions
+    # Check all phjVarsToIncludeList are included in columns
+    # Check phjSuccVar and phjFailVar are included in columns
+    # Check that variable 'count' does not already exist
+    
+    # Make sure the success and failure variables are not included in the list of
+    # variables to include. It's OK if they are because this line will correct for it.
+    phjVarsToIncludeList = [x for x in phjVarsToIncludeList if x not in [phjSuccVar,phjFailVar]]
+    
+    # Stack positive (success) and negative (failure) results one on top of the other
+    phjTempDF = phjTempDF.melt(id_vars = phjVarsToIncludeList,
+                               value_vars = [phjSuccVar,phjFailVar],
+                               var_name = phjResultVar,
+                               value_name = 'count').reset_index(drop = True)
+    
+    phjTempDF = phjTempDF.loc[phjTempDF.index.repeat(phjTempDF['count'])]
+    
+    phjTempDF[phjResultVar] = phjTempDF[phjResultVar].replace({phjSuccVar: 1,
+                                                               phjFailVar: 0})
+    
+    return phjTempDF[[x for x in phjTempDF.columns if x != 'count']].reset_index(drop = True)
+
+
+
 if __name__ == '__main__':
     main()
 
