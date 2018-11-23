@@ -558,7 +558,7 @@ def phjSummaryTableToBinaryOutcomes(phjTempDF,
                                     phjVarsToIncludeList,
                                     phjSuccVar,
                                     phjFailVar,
-                                    phjResultVar = 'result',
+                                    phjResultVar,
                                     phjPrintResults = False):
     
     # This function takes a table of counted binary results and converts it
