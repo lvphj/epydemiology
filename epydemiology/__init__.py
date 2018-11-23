@@ -26,6 +26,7 @@ from .phjMiscFuncs import phjCreateNamedGroupRegex
 from .phjMiscFuncs import phjFindRegexNamedGroups
 from .phjMiscFuncs import phjMaxLevelOfTaxonomicDetail
 from .phjMiscFuncs import phjLongToWideBinary
+from .phjMiscFuncs import phjSummaryTableToBinaryOutcomes
 
 from .phjRROR import phjOddsRatio
 from .phjRROR import phjRelativeRisk
@@ -33,4 +34,3 @@ from .phjRROR import phjRelativeRisk
 from .phjSelectData import phjSelectCaseControlDataset
 from .phjSelectData import phjGenerateCaseControlDataset
 from .phjSelectData import phjCollapseOnPatientID
-
