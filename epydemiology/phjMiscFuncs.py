@@ -21,7 +21,7 @@ else:
 
 
 import re
-
+import collections
 
 
 def phjGetStrFromArgOrFile(phjStr = None,
@@ -505,13 +505,13 @@ def phjMaxLevelOfTaxonomicDetail(phjTempDF,
 
 
 def phjLongToWideBinary(phjTempDF,
-                        phjGroupbyVar,
-                        phjVariables,
+                        phjGroupbyVarName,
+                        phjVariablesVarName,
                         phjValuesDict = {0:0,1:1},
                         phjPrintResults = False):
     # This function converts a dataframe containing a grouping variable and a variable
     # containing a series of factors that may or may not be present and converts to a
-    # wide dataframe containing a series of binary variables indicating whether to factor
+    # wide dataframe containing a series of binary variables indicating whether the factor
     # is present or not.
     # For example, it converts:
     #
@@ -534,23 +534,57 @@ def phjLongToWideBinary(phjTempDF,
     #    2  3  1  0  1  0  1  1
     #    3  4  0  1  0  0  0  0
     
-    # Create a scratch DF with appropriate rows and columns, filled with zero
-    phjScratchDF = pd.DataFrame(index = pd.Series(phjTempDF[phjGroupbyVar].unique()),
-                                columns = list(phjTempDF[phjVariables].unique())).fillna(0)
     
-    phjScratchDF.index.name = phjGroupbyVar
-    
-    # Within each group, create a list contain all variables
-    phjGroup = phjTempDF[[phjGroupbyVar,phjVariables]].groupby(phjGroupbyVar).agg(lambda phjRow: list(phjRow))
-    
-    # Step through each group and change each variable contained in the list of present variables with a 1
-    for g in phjGroup.index.values.tolist():
-        phjScratchDF.loc[g,phjGroup.loc[g,phjVariables]] = 1
-    
-    ### THIS STEP SHOULD ONLY BE RUN IF phjValuesDict HAS BEEN SET TO SOMETHING OTHER THAN DEFAULT
-    phjScratchDF = phjScratchDF.replace(phjValuesDict)
-    
-    return phjScratchDF.reset_index(drop = False)
+    # Check function parameters are set correctly
+    try:
+        # Check whether required parameters have been set to correct type
+        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjGroupbyVarName,str), "Parameter 'phjGroupbyVarName' needs to be a string."
+        assert isinstance(phjVariablesVarName,str), "Parameter 'phjVariablesVarName' needs to be a string."
+        assert isinstance(phjValuesDict,collections.Mapping), "Parameter 'phjValuesDict' needs to be a dict." # collections.Mapping will work for dict(), collections.OrderedDict() and collections.UserDict() (see comment by Alexander Ryzhov at https://stackoverflow.com/questions/25231989/how-to-check-if-a-variable-is-a-dictionary-in-python.
+                
+        # Check whether arguments are set to allowable values
+        for k,v in phjValuesDict.items():
+            assert k in [0,1], "The key values in phjValuesDict need to either 0 or 1."
+            
+        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
+        
+        # Check that referenced columns exist in the dataframe
+        assert phjGroupbyVarName in phjTempDF.columns, "The column name 'phjGroupbyVarName' does not exist in dataframe."
+        assert phjVariablesVarName in phjTempDF.columns, "The column name 'phjVariablesVarName' does not exist in dataframe."
+        
+    except AssertionError as e:
+        print("An AssertionError occurred. ({0})".format(e))
+        
+        phjScratchDF = None
+        
+    else:
+        # Create a scratch DF with appropriate rows and columns, filled with zero
+        phjScratchDF = pd.DataFrame(index = pd.Series(phjTempDF[phjGroupbyVarName].unique()),
+                                    columns = list(phjTempDF[phjVariablesVarName].unique())).fillna(0)
+
+        phjScratchDF.index.name = phjGroupbyVarName
+
+        # Within each group, create a list contain all variables
+        phjGroup = phjTempDF[[phjGroupbyVarName,phjVariablesVarName]].groupby(phjGroupbyVarName).agg(lambda phjRow: list(phjRow))
+
+        # Step through each group and change each variable contained in the list of present variables with a 1
+        for g in phjGroup.index.values.tolist():
+            phjScratchDF.loc[g,phjGroup.loc[g,phjVariablesVarName]] = 1
+        
+        # This step replaces the default 0 and 1 with user-defined values. It should only be
+        # run if phjValuesDict has been set to something other than default. Check whether
+        # a passed dict is the same as the default (even if the order of elements has changed).
+        # If simply comparing one dict with another then {0:0,1:1} will be seen to be the
+        # same as {0:False,1:True}. But for the purposes of this exercise, those 2 dicts should
+        # be seen to be different. Therefore, convert the values is both dicts to strings
+        # before comparing.
+        if {k:str(v) for k,v in phjValuesDict.items()} != {k:str(v) for k,v in {0:0,1:1}.items()}:
+            phjScratchDF = phjScratchDF.replace(phjValuesDict)
+        
+        phjScratchDF = phjScratchDF.reset_index(drop = False)
+        
+    return phjScratchDF
 
 
 
