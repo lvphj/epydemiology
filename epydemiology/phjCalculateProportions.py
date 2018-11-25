@@ -178,6 +178,7 @@ def phjCalculateBinomialProportions(phjTempDF,
             # whole columns and return summary dataframe.
             phjPropDF = phjCountSuccesses(x = phjTempDF[phjColumnsList],
                                           phjColumnsList = phjColumnsList,
+                                          phjSuccessValue = phjSuccess,
                                           phjMissingValue = phjMissingValue)
         
         else:
@@ -187,6 +188,7 @@ def phjCalculateBinomialProportions(phjTempDF,
             # Calculate number of successes for each level of group variable and return summary dataframe
             phjPropDF = phjTempDF.groupby(phjGroupVarName).apply(lambda x: phjCountSuccesses(x,
                                                                                              phjColumnsList = phjColumnsList,
+                                                                                             phjSuccessValue = phjSuccess,
                                                                                              phjMissingValue = phjMissingValue))
         
         
@@ -481,6 +483,7 @@ def phjCISuffix(phjAlpha,
 
 def phjCountSuccesses(x,
                       phjColumnsList,
+                      phjSuccessValue = 'yes',
                       phjMissingValue = 'missing'):
     
     # Get a list of the terms used to head columns in summary tables.
@@ -491,8 +494,8 @@ def phjCountSuccesses(x,
                                                                    phjSuffixDict['numbersuccesses']])
     
     for var in phjColumnsList:
-        phjSummaryDF.loc[var,phjSuffixDict['numbertrials']] = ((x[var].replace(phjMissingValue,np.nan).dropna()) == 'yes').count()
-        phjSummaryDF.loc[var,phjSuffixDict['numbersuccesses']] = ((x[var].replace(phjMissingValue,np.nan).dropna()) == 'yes').sum()
+        phjSummaryDF.loc[var,phjSuffixDict['numbertrials']] = ((x[var].replace(phjMissingValue,np.nan).dropna()) == phjSuccessValue).count()
+        phjSummaryDF.loc[var,phjSuffixDict['numbersuccesses']] = ((x[var].replace(phjMissingValue,np.nan).dropna()) == phjSuccessValue).sum()
     
     return phjSummaryDF
 
