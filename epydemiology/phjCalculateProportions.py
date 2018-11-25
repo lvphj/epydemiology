@@ -514,7 +514,7 @@ def phjCalculateBinomialConfInts(phjTempDF,
         assert isinstance(phjSuccessesColumnName,str), "Parameter 'phjSuccessesColumnName' needs to be a string."
         assert isinstance(phjNColumnName,str), "Parameter 'phjNColumnName' needs to be a string."
         assert isinstance(phjBinomialConfIntMethod,str), "Parameter 'phjBinomialConfIntMethod' needs to be a string."
-        assert isinstance(phjAlphj,float), "Parameter 'phjAlpha' needs to be a float."
+        assert isinstance(phjAlpha,float), "Parameter 'phjAlpha' needs to be a float."
         
         # Check whether arguments are set to allowable values
         assert phjBinomialConfIntMethod in ['normal','agresti_coull','beta','wilson','jeffreys','binom_test'], "Requested method for calculating binomial confidence interval ('{0}') is not recognised.".format(phjBinomialConfIntMethod)
