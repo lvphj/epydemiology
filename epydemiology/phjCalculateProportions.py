@@ -502,23 +502,47 @@ def phjCountSuccesses(x,
 
 
 def phjCalculateBinomialConfInts(phjTempDF,
-                                 phjSuccessesColumnName = None,
-                                 phjNColumnName = None,
+                                 phjSuccessesColumnName,
+                                 phjNColumnName,
                                  phjBinomialConfIntMethod = 'normal',
                                  phjAlpha = 0.05,
                                  phjPrintResults = False):
     
-    # Get a list of the terms used to head columns in summary tables
-    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
-    
-    # Get binomial confidence intervals
-    phjBinomConfIntArr = smprop.proportion_confint(count = phjTempDF[phjSuccessesColumnName],
-                                                   nobs = phjTempDF[phjNColumnName],
-                                                   alpha = phjAlpha,
-                                                   method = phjBinomialConfIntMethod)
-    
-    phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])] = [i for i in phjBinomConfIntArr[0]]
-    phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] = [i for i in phjBinomConfIntArr[1]]
+    try:
+        # Check whether required parameters have been set to correct type
+        assert isinstance(phjTempDF,pd.DataFrame), "Parameter 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjSuccessesColumnName,str), "Parameter 'phjSuccessesColumnName' needs to be a string."
+        assert isinstance(phjNColumnName,str), "Parameter 'phjNColumnName' needs to be a string."
+        assert isinstance(phjBinomialConfIntMethod,str), "Parameter 'phjBinomialConfIntMethod' needs to be a string."
+        assert isinstance(phjAlphj,float), "Parameter 'phjAlpha' needs to be a float."
+        
+        # Check whether arguments are set to allowable values
+        assert phjBinomialConfIntMethod in ['normal','agresti_coull','beta','wilson','jeffreys','binom_test'], "Requested method for calculating binomial confidence interval ('{0}') is not recognised.".format(phjBinomialConfIntMethod)
+        assert ((phjAlpha > 0) & (phjAlpha < 1)), "Variable 'phjAlpha' needs to be set between zero and one."
+        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
+        
+        # Check that referenced columns exist in the dataframe
+        for colname in [phjSuccessesColumnName,phjNColumnName]:
+            assert colname in phjTempDF.columns, "The column name '{0}' does not exist in dataframe.".format(colname)
+        
+        # Check that new column names do not already exist
+        # Not checked explicitly.
+        
+    except AssertionError as e:
+        print("An AssertionError occurred. ({0})".format(e))
+        
+    else:
+        # Get a list of the terms used to head columns in summary tables
+        phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+
+        # Get binomial confidence intervals
+        phjBinomConfIntArr = smprop.proportion_confint(count = phjTempDF[phjSuccessesColumnName],
+                                                       nobs = phjTempDF[phjNColumnName],
+                                                       alpha = phjAlpha,
+                                                       method = phjBinomialConfIntMethod)
+
+        phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])] = [i for i in phjBinomConfIntArr[0]]
+        phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] = [i for i in phjBinomConfIntArr[1]]
     
     return phjTempDF
 
