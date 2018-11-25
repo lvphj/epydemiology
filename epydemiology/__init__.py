@@ -2,6 +2,7 @@
 # Other functions that are used internally cannot be accessed
 # directly by end-users.
 from .phjCalculateProportions import phjCalculateBinomialProportions
+from .phjCalculateProportions import phjCalculateBinomialConfInts
 from .phjCalculateProportions import phjCalculateMultinomialProportions
 
 from .phjCleanData import phjParseDateVar
