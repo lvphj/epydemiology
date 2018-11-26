@@ -769,3 +769,8 @@ def phjGetYErrors(phjTempDF,
     #    print(phjYErrors)
         
     return phjYErrors
+
+
+
+if __name__ == '__main__':
+     main()
