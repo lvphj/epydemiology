@@ -192,14 +192,6 @@ def phjCalculateBinomialProportions(phjTempDF,
                                                                                              phjMissingValue = phjMissingValue))
         
         
-        # Ensure count data is stored as integer values. Otherwise,
-        # for some reason, calculations with object columns can go awry.
-        phjPropDF[phjSuffixDict['numbertrials']] = phjPropDF[phjSuffixDict['numbertrials']].astype(int)
-        phjPropDF[phjSuffixDict['numbersuccesses']] = phjPropDF[phjSuffixDict['numbersuccesses']].astype(int)
-        
-        # Calculate proportions
-        phjPropDF[phjSuffixDict['proportion']] = phjPropDF[phjSuffixDict['numbersuccesses']] / phjPropDF[phjSuffixDict['numbertrials']]
-        
         # Calculate confidence intervals
         phjPropDF = phjCalculateBinomialConfInts(phjTempDF = phjPropDF,
                                                  phjSuccessesColumnName = phjSuffixDict['numbersuccesses'],
@@ -508,6 +500,9 @@ def phjCalculateBinomialConfInts(phjTempDF,
                                  phjAlpha = 0.05,
                                  phjPrintResults = False):
     
+    # Get a list of the terms used to head columns in summary tables
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+
     try:
         # Check whether required parameters have been set to correct type
         assert isinstance(phjTempDF,pd.DataFrame), "Parameter 'phjTempDF' needs to be a Pandas dataframe."
@@ -526,15 +521,23 @@ def phjCalculateBinomialConfInts(phjTempDF,
             assert colname in phjTempDF.columns, "The column name '{0}' does not exist in dataframe.".format(colname)
         
         # Check that new column names do not already exist
-        # Not checked explicitly.
+        for newcolname in [phjSuffixDict['proportion'],
+                           phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']]),
+                           phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])]:
+            assert newcolname not in phjTempDF.columns, "The column name '{0}' will be created but already exists. Please rename column and try again.".format(newcolname)
         
     except AssertionError as e:
         print("An AssertionError occurred. ({0})".format(e))
         
     else:
-        # Get a list of the terms used to head columns in summary tables
-        phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
-
+        # Ensure count data is stored as integer values. Otherwise,
+        # for some reason, calculations with object columns can go awry.
+        phjTempDF[phjSuccessesColumnName] = phjTempDF[phjSuccessesColumnName].astype(int)
+        phjTempDF[phjNColumnName] = phjTempDF[phjNColumnName].astype(int)
+        
+        # Calculate proportions
+        phjTempDF[phjSuffixDict['proportion']] = phjTempDF[phjSuccessesColumnName] / phjTempDF[phjNColumnName]
+        
         # Get binomial confidence intervals
         phjBinomConfIntArr = smprop.proportion_confint(count = phjTempDF[phjSuccessesColumnName],
                                                        nobs = phjTempDF[phjNColumnName],
@@ -766,9 +769,3 @@ def phjGetYErrors(phjTempDF,
     #    print(phjYErrors)
         
     return phjYErrors
-
-
-
-if __name__ == '__main__':
-    main()
-
