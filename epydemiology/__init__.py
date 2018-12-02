@@ -4,6 +4,7 @@
 from .phjCalculateProportions import phjCalculateBinomialProportions
 from .phjCalculateProportions import phjCalculateBinomialConfInts
 from .phjCalculateProportions import phjCalculateMultinomialProportions
+from .phjCalculateProportions import phjSummaryTableToBinaryOutcomes
 
 from .phjCleanData import phjParseDateVar
 
@@ -27,7 +28,6 @@ from .phjMiscFuncs import phjCreateNamedGroupRegex
 from .phjMiscFuncs import phjFindRegexNamedGroups
 from .phjMiscFuncs import phjMaxLevelOfTaxonomicDetail
 from .phjMiscFuncs import phjLongToWideBinary
-from .phjMiscFuncs import phjSummaryTableToBinaryOutcomes
 
 from .phjRROR import phjOddsRatio
 from .phjRROR import phjRelativeRisk

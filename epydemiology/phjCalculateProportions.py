@@ -424,6 +424,128 @@ def phjCalculateMultinomialProportions(phjTempDF,
 
 
 
+def phjSummaryTableToBinaryOutcomes(phjTempDF,
+                                    phjVarsToIncludeList,
+                                    phjSuccVarName = None,
+                                    phjFailVarName = None,
+                                    phjTotalVarName = None,
+                                    phjOutcomeVarName = 'outcome',
+                                    phjPrintResults = False):
+    
+    # This function takes a table of counted binary results and converts it
+    # to a dataframe of binary outcomes, ready for logistic regression.
+    # (This is useful if the function used to do logistic regression does not
+    # include a frequency weight option.)
+    
+    # Check function parameters are set correctly
+    try:
+        # Check whether required parameters have been set to correct type
+        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjVarsToIncludeList,(str,list)), "Parameter 'phjVarsToIncludeList' needs to be a list (or a string)."
+        
+        if phjSuccVarName is not None:
+            assert isinstance(phjSuccVarName,str), "Parameter 'phjSuccVarName' needs to be a string."
+        
+        if phjFailVarName is not None:
+            assert isinstance(phjFailVarName,str), "Parameter 'phjFailVarName' needs to be a string."
+        
+        if phjTotalVarName is not None:
+            assert isinstance(phjTotalVarName,str), "Parameter 'phjTotalVarName' needs to be a string."
+        
+        assert isinstance(phjOutcomeVarName,str), "Parameter 'phjOutcomeVarName' needs to be a string."
+        
+        
+        # Check whether arguments are set to allowable values
+        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
+        
+        
+        # Check that referenced columns exist in the dataframe
+        if isinstance(phjVarsToIncludeList,str):
+            assert phjVarsToIncludeList in phjTempDF.columns, "The column name '{0}' does not exist in dataframe.".format(phjVarsToIncludeList)
+        elif isinstance(phjVarsToIncludeList,list):
+            for col in phjVarsToIncludeList:
+                assert col in phjTempDF.columns, "The column name '{0}' does not exist in dataframe.".format(col)
+        
+        for col in [phjSuccVarName,phjFailVarName,phjTotalVarName]:
+            if col is not None:
+                assert col in phjTempDF.columns, "The column name '{0}' does not exist in dataframe.".format(col)
+        
+        
+        # Check that new column names do not already exist
+        assert phjOutcomeVarName not in phjTempDF.columns, "The column name '{0}' already exists.".format(phjOutcomeVarName)
+        
+        
+        # The user can enter two of three parameters in list of successes, failures or total.
+        # Check that at least 2 parameters are entered.
+        nArgs = len([i for i in [phjSuccVarName,phjFailVarName,phjTotalVarName] if i is not None])
+        
+        assert nArgs >= 2, "At least 2 variables from phjSuccVarName, phjFailVarName and phjTotalVarName need to be entered but only {} has been entered.".format(nArgs)
+        
+        
+        # If all three parameters have been entered, check that successes + failures = total
+        if nArgs == 3:
+            assert (phjTempDF[phjSuccVarName] + phjTempDF[phjFailVarName]).equals(phjTempDF[phjTotalVarName]), "The '{0}' and '{1}' columns do not add up to the values in the '{2}' column.".format(phjSuccVarName,phjFailVarName,phjTotalVarName)
+            
+            
+    
+    except AssertionError as e:
+        print("An AssertionError occurred. ({0})".format(e))
+        
+        phjTempDF = None
+    
+    else:
+        # Set default suffixes and join strings to create column names
+        # to use in output dataframe.
+        phjSuffixDict = phjDefineSuffixDict()
+        
+        # Calculations are made using successes and failures.
+        # If 2 column names entered and 1 is totals then calculate either the successes or the failures column.
+        if (nArgs == 2) & (phjTotalVarName is not None):
+            if phjSuccVarName is None:
+                phjSuccVarName = phjSuffixDict['numbersuccesses']
+                phjTempDF[phjSuccVarName] = phjTempDF[phjTotalVarName] - phjTempDF[phjFailVarName]
+            
+            elif phjFailVarName is None:
+                phjFailVarName = phjSuffixDict['numberfailures']
+                phjTempDF[phjFailVarName] = phjTempDF[phjTotalVarName] - phjTempDF[phjSuccVarName]
+        
+        
+        # If the list of variables to include is only a single variable included as a string,
+        # convert to a list before going any further.
+        if isinstance(phjVarsToIncludeList,str):
+            phjVarsToIncludeList = [phjVarsToIncludeList]
+        
+        # Make sure the success and failure variables are not included in the list of
+        # variables to include. It's OK if they are because this line will correct for it.
+        phjVarsToIncludeList = [i for i in phjVarsToIncludeList if i not in [j for j in [phjSuccVarName,phjFailVarName,phjTotalVarName] if j is not None]]
+        
+        if phjPrintResults == True:
+            print('Initial dataframe\n')
+            print(phjTempDF.loc[:,phjVarsToIncludeList + [j for j in [phjSuccVarName,phjFailVarName,phjTotalVarName] if j is not None]])
+            print('\n')
+            
+        
+        # Stack positive (success) and negative (failure) results one on top of the other
+        phjTempDF = phjTempDF.melt(id_vars = phjVarsToIncludeList,
+                                   value_vars = [phjSuccVarName,phjFailVarName],
+                                   var_name = phjOutcomeVarName,
+                                   value_name = 'count').reset_index(drop = True)
+        
+        phjTempDF = phjTempDF.loc[phjTempDF.index.repeat(phjTempDF['count'])]
+        
+        phjTempDF[phjOutcomeVarName] = phjTempDF[phjOutcomeVarName].replace({phjSuccVarName: 1,
+                                                                             phjFailVarName: 0})
+        
+        phjTempDF = phjTempDF[[x for x in phjTempDF.columns if x != 'count']].reset_index(drop = True)
+        
+    if phjPrintResults == True:
+        print('Final dataframe\n')
+        with pd.option_context('display.max_rows',6, 'display.max_columns',2):
+            print(phjTempDF)
+        print('\n')
+    
+    return phjTempDF
+
 # ====================
 # Supporting functions
 # ====================
@@ -440,6 +562,7 @@ def phjDefineSuffixDict(phjAlpha = 0.05):
     # binomial proportions. Statistical Methods in Medical Research 0(0) 1–31)
     phjSuffixDict = {'joinstr':'_',                                    # Character to join name and suffix
                      'numbersuccesses':'success',                      # Number of successes (used to calculate binomial proportions)
+                     'numberfailures': 'failure',                      # Number of failures
                      'numbertrials':'obs',                             # Number of trials (used to calculate binomial proportions)
                      'absfreq':'count',                                # Absolute frequency suffix (used to calcuate multinomial proportions)
                      'proportion':'prop',                              # Relative frequency suffix (used to calcuate multinomial proportions)
