@@ -194,7 +194,7 @@ def phjCalculateBinomialProportions(phjTempDF,
         # Calculate confidence intervals
         phjPropDF = phjCalculateBinomialConfInts(phjTempDF = phjPropDF,
                                                  phjSuccVarName = phjSuffixDict['numbersuccesses'],
-                                                 phjNVarName = phjSuffixDict['numbertrials'],
+                                                 phjTotalVarName = phjSuffixDict['numbertrials'],
                                                  phjBinomialConfIntMethod = phjBinomialConfIntMethod,
                                                  phjAlpha = phjAlpha,
                                                  phjPrintResults = phjPrintResults)
@@ -428,7 +428,7 @@ def phjCalculateMultinomialProportions(phjTempDF,
 def phjCalculateBinomialConfInts(phjTempDF,
                                  phjSuccVarName = None,
                                  phjFailVarName = None,
-                                 phjNVarName = None,
+                                 phjTotalVarName = None,
                                  phjBinomialConfIntMethod = 'normal',
                                  phjAlpha = 0.05,
                                  phjPrintResults = False):
@@ -446,8 +446,8 @@ def phjCalculateBinomialConfInts(phjTempDF,
         if phjFailVarName is not None:
             assert isinstance(phjFailVarName,str), "Parameter 'phjFailVarName' needs to be a string."
  
-        if phjNVarName is not None:
-            assert isinstance(phjNVarName,str), "Parameter 'phjNVarName' needs to be a string."
+        if phjTotalVarName is not None:
+            assert isinstance(phjTotalVarName,str), "Parameter 'phjTotalVarName' needs to be a string."
  
         assert isinstance(phjBinomialConfIntMethod,str), "Parameter 'phjBinomialConfIntMethod' needs to be a string."
         assert isinstance(phjAlpha,float), "Parameter 'phjAlpha' needs to be a float."
@@ -458,7 +458,7 @@ def phjCalculateBinomialConfInts(phjTempDF,
         assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
  
         # Check that referenced columns exist in the dataframe
-        for colname in [phjSuccVarName,phjFailVarName,phjNVarName]:
+        for colname in [phjSuccVarName,phjFailVarName,phjTotalVarName]:
             if colname is not None:
                 assert colname in phjTempDF.columns, "The column name '{0}' does not exist in dataframe.".format(colname)
  
@@ -470,13 +470,13 @@ def phjCalculateBinomialConfInts(phjTempDF,
  
         # The user can enter two of three parameters in list of successes, failures or total.
         # Check that at least 2 parameters are entered.
-        nArgs = len([i for i in [phjSuccVarName,phjFailVarName,phjNVarName] if i is not None])
+        nArgs = len([i for i in [phjSuccVarName,phjFailVarName,phjTotalVarName] if i is not None])
  
-        assert nArgs >= 2, "At least 2 variables from phjSuccessColumnName, phjFailVarName and phjNVarName need to be entered but only {} has been entered.".format(nArgs)
+        assert nArgs >= 2, "At least 2 variables from phjSuccessColumnName, phjFailVarName and phjTotalVarName need to be entered but only {} has been entered.".format(nArgs)
  
         # If all three parameters have been entered, check that successes + failures = total
         if nArgs == 3:
-            assert (phjTempDF[phjSuccVarName] + phjTempDF[phjFailVarName]).equals(phjTempDF[phjNVarName]), "The '{0}' and '{1}' columns do not add up to the values in the '{2}' column.".format(phjSuccVarName,phjFailVarName,phjNVarName)
+            assert (phjTempDF[phjSuccVarName] + phjTempDF[phjFailVarName]).equals(phjTempDF[phjTotalVarName]), "The '{0}' and '{1}' columns do not add up to the values in the '{2}' column.".format(phjSuccVarName,phjFailVarName,phjTotalVarName)
  
  
     except AssertionError as e:
@@ -488,28 +488,31 @@ def phjCalculateBinomialConfInts(phjTempDF,
         if (nArgs == 2) & (phjFailVarName is not None):
             if phjSuccVarName is None:
                 phjSuccVarName = phjSuffixDict['numbersuccess']
-                phjTempDF[phjSuccVarName] = phjTempDF[phjNVarName] - phjTempDF[phjFailVarName]
-            elif phjNVarName is None:
-                phjNVarName = phjSuffixDict['numbertrials']
-                phjTempDF[phjNVarName] = phjTempDF[phjSuccVarName] + phjTempDF[phjFailVarName]
+                phjTempDF[phjSuccVarName] = phjTempDF[phjTotalVarName] - phjTempDF[phjFailVarName]
+            elif phjTotalVarName is None:
+                phjTotalVarName = phjSuffixDict['numbertrials']
+                phjTempDF[phjTotalVarName] = phjTempDF[phjSuccVarName] + phjTempDF[phjFailVarName]
  
         # Ensure count data is stored as integer values. Otherwise,
         # for some reason, calculations with object columns can go awry.
         phjTempDF[phjSuccVarName] = phjTempDF[phjSuccVarName].astype(int)
-        phjTempDF[phjNVarName] = phjTempDF[phjNVarName].astype(int)
+        phjTempDF[phjTotalVarName] = phjTempDF[phjTotalVarName].astype(int)
  
         # Calculate proportions
-        phjTempDF[phjSuffixDict['proportion']] = phjTempDF[phjSuccVarName] / phjTempDF[phjNVarName]
+        phjTempDF[phjSuffixDict['proportion']] = phjTempDF[phjSuccVarName] / phjTempDF[phjTotalVarName]
  
         # Get binomial confidence intervals
         phjBinomConfIntArr = smprop.proportion_confint(count = phjTempDF[phjSuccVarName],
-                                                       nobs = phjTempDF[phjNVarName],
+                                                       nobs = phjTempDF[phjTotalVarName],
                                                        alpha = phjAlpha,
                                                        method = phjBinomialConfIntMethod)
  
         phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])] = [i for i in phjBinomConfIntArr[0]]
         phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] = [i for i in phjBinomConfIntArr[1]]
- 
+        
+        phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowint']])] = phjTempDF[phjSuffixDict['proportion']] - phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]
+        phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciuppint']])] = phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjTempDF[phjSuffixDict['proportion']]
+        
     return phjTempDF
  
  
@@ -662,6 +665,8 @@ def phjDefineSuffixDict(phjAlpha = 0.05):
                      'cisuffix':phjCISuffix(phjAlpha,phjCIAbbrev),     # Confidence interval suffix
                      'cilowlim':'llim',                                # lower limit of confidence interval
                      'ciupplim':'ulim',                                # upper limit of confidence interval
+                     'cilowint':'lint',                                # lower interval for confidence interval
+                     'ciuppint':'uint',                                # upper interval for confidence interval
                      'woolf':'woolf',                                  # Used to describe Woolf confidence interval of OR
                      'gart':'gart',                                    # Used to describe Gart confidence interval of OR
                      'katz':'katz',                                    # Used to describe Katz confidence interval of RR
