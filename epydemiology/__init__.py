@@ -5,6 +5,7 @@ from .phjCalculateProportions import phjCalculateBinomialProportions
 from .phjCalculateProportions import phjCalculateBinomialConfInts
 from .phjCalculateProportions import phjCalculateMultinomialProportions
 from .phjCalculateProportions import phjSummaryTableToBinaryOutcomes
+from .phjCalculateProportions import phjAnnualDiseaseTrend
 
 from .phjCleanData import phjParseDateVar
 
