@@ -21,6 +21,16 @@ else:
 
 
 try:
+    pkg_resources.get_distribution('matplotlib')
+except pkg_resources.DistributionNotFound:
+    matplotlibPresent = False
+    print("Error: Matplotlib package not available.")
+else:
+    matplotlibPresent = True
+    import matplotlib.pyplot as plt
+
+
+try:
     pkg_resources.get_distribution('scipy')
 except pkg_resources.DistributionNotFound:
     scipyPresent = False
@@ -37,7 +47,18 @@ except pkg_resources.DistributionNotFound:
     print("Error: Statsmodels package not available.")
 else:
     statsmodelsPresent = True
+    import statsmodels.api as sm
     import statsmodels.stats.proportion as smprop
+
+
+try:
+    pkg_resources.get_distribution('patsy')
+except pkg_resources.DistributionNotFound:
+    patsyPresent = False
+    print("Error: Patsy package not available.")
+else:
+    patsyPresent = True
+    import patsy
 
 
 import collections
@@ -423,8 +444,6 @@ def phjCalculateMultinomialProportions(phjTempDF,
  
  
  
-# NEW DEFINITION OF FUNCTION TO ALLOW FAILURES TO BE INCLUDED
-# AND RENAME VARIABLES TO BE MORE CONSISTENCY
 def phjCalculateBinomialConfInts(phjTempDF,
                                  phjSuccVarName = None,
                                  phjFailVarName = None,
@@ -641,6 +660,159 @@ def phjSummaryTableToBinaryOutcomes(phjTempDF,
  
  
  
+def phjAnnualDiseaseTrend(phjTempDF,
+                          phjYearVarName,
+                          phjPositivesVarName = None,
+                          phjNegativesVarName = None,
+                          phjTotalVarName = None,
+                          phjConfIntMethod = 'normal',
+                          phjAlpha = 0.05,
+                          phjPlotProportions = True,
+                          phjPlotPrediction = True,
+                          phjGraphTitleStr = None,
+                          phjPrintResults = False):
+    
+    # Get a list of the terms used to head columns in summary tables
+    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+    
+    phjPropDF = phjCalculateBinomialConfInts(phjTempDF = phjTempDF,
+                                             phjSuccVarName = phjPositivesVarName,
+                                             phjFailVarName = phjNegativesVarName,
+                                             phjTotalVarName = phjTotalVarName,
+                                             phjBinomialConfIntMethod = phjConfIntMethod,
+                                             phjAlpha = phjAlpha,
+                                             phjPrintResults = phjPrintResults)
+    
+    phjLongDF = phjSummaryTableToBinaryOutcomes(phjTempDF = phjPropDF,
+                                                phjVarsToIncludeList = [phjYearVarName],
+                                                phjSuccVarName = phjPositivesVarName,
+                                                phjFailVarName = phjNegativesVarName,
+                                                phjTotalVarName = phjTotalVarName,
+                                                phjOutcomeVarName = phjSuffixDict['outcome'],
+                                                phjPrintResults = False)
+    
+    
+    # Logistic regression model
+    phjFormulaStr = '{} ~ {}'.format(phjSuffixDict['outcome'],phjYearVarName)
+    
+    # Calculating post-estimation using matrices
+    y, X = patsy.dmatrices(formula_like = phjFormulaStr,
+                           data = phjLongDF,
+                           NA_action = 'drop',
+                           return_type='dataframe')
+    
+    model = sm.Logit(endog = y,
+                     exog = X,
+                     missing = 'drop').fit()
+    
+    if phjPrintResults == True:
+        print(model.summary2())
+        print('\n')
+    
+    
+    # Calculate predicted probabilities
+    phjPredProbName = ''.join([phjSuffixDict['predicted'],phjSuffixDict['probability']])
+    X[phjPredProbName] = model.predict() # predicted probability
+    
+    # Estimate confidence interval for predicted probabilities using Delta method
+    # This method is taken from an answer by David Dale on StackOverflow (see https://stackoverflow.com/questions/47414842/confidence-interval-of-probability-prediction-from-logistic-regression-statsmode/47419474).
+    cov = model.cov_params()
+    gradient = (X[phjPredProbName] * (1 - X[phjPredProbName]) * X[[x for x in X if x != phjPredProbName]].T).T.values # matrix of gradients for each observation
+    
+    # Add column contain SE of predicted probabilities
+    X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])] = [np.sqrt(np.dot(np.dot(g, cov), g)) for g in gradient]
+    
+    # Add column containing CI lower and upper limits
+    # The format of ci_limit = np.maximum(0, np.minimum(1, prob + std_errors * c)) ensures limit lies between 0 and 1.
+    # Multiplier for standard error calculated as:
+    #     norm.ppf(.025) = -1.960063984540054
+    #     norm.ppf(.975) = 1.959963984540054
+    
+    # Lower
+    X[phjSuffixDict['joinstr'].join([phjPredProbName,
+                                     phjSuffixDict['cisuffix'],
+                                     phjSuffixDict['cilowlim']])] = np.maximum(0,
+                                                                               np.minimum(1,
+                                                                                          X[phjPredProbName] + (norm.ppf(phjAlpha/0.5) * X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])])))   # N.B. The norm.pdf(0.025) is negative therefore equates to mean minus interval.
+    # Upper
+    X[phjSuffixDict['joinstr'].join([phjPredProbName,
+                                     phjSuffixDict['cisuffix'],
+                                     phjSuffixDict['ciupplim']])] = np.maximum(0,
+                                                                               np.minimum(1,
+                                                                                          X[phjPredProbName] + (norm.ppf(1 - (phjAlpha/0.5)) * X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])])))
+    
+    # Keep only a single value for each group
+    X = X.drop_duplicates(keep = 'first')
+    
+    # Join predicted probabilities with original dataframe
+    phjPropDF = phjPropDF.merge(right = X,
+                                left_on = phjYearVarName,
+                                right_on = phjYearVarName)
+    
+    if phjPrintResults == True:
+        print(phjPropDF)
+        print('\n')
+    
+    
+    # Plot actual proportion as barchart and predicted probabilities as line
+    if (phjPlotProportions == True) | (phjPlotPrediction == True):
+    
+        fig = plt.figure(figsize = (10,6))
+        ax = fig.add_subplot(111)
+    
+        if phjPlotProportions == True:
+            rects = ax.bar(phjPropDF[phjYearVarName],
+                           phjPropDF[phjSuffixDict['proportion']],
+                           yerr = [phjPropDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowint']])],
+                                   phjPropDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciuppint']])]],
+                           capsize = 4)
+    
+        if phjPlotPrediction == True:
+            # Only plot trend line if logistic regression model converge. Otherwise, just plot bars.
+            if model.mle_retvals['converged']:
+                # Plot pred prob
+                pprobline = ax.plot(phjPropDF[phjYearVarName],
+                                    phjPropDF[phjPredProbName],
+                                    linestyle = 'solid',
+                                    color = 'green')
+                
+                # Plot lower limit of ci for pred prob
+                pprobllimline = ax.plot(phjPropDF[phjYearVarName],
+                                        phjPropDF[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])],
+                                        linestyle = 'dashed',
+                                        color = 'red')
+                
+                # Plot upper limit of ci for pred prob
+                pprobulimline = ax.plot(phjPropDF[phjYearVarName],
+                                        phjPropDF[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])],
+                                        linestyle = 'dashed',
+                                        color = 'red')
+                
+                phjText = "Trend line p-value = {0:.4f}".format(model.pvalues[phjYearVarName])
+                
+            else:
+                phjText = "Logistic regression model failed to converge"
+            
+            # Add p value for logistic regression model (or failure-to-converge notice)
+            ax.text(ax.get_xlim()[1],
+                    ax.get_ylim()[1],
+                    phjText,
+                    horizontalalignment = 'right',
+                    verticalalignment = 'bottom')
+        
+        ax.set_xlabel(phjYearVarName)
+        ax.set_ylabel('Proportion / probability')
+        ax.set_title(phjGraphTitleStr)
+        
+        major_xticks = phjPropDF[phjYearVarName].tolist()
+        ax.set_xticks(major_xticks, minor = False)
+         
+        plt.show()
+    
+    return phjPropDF
+ 
+ 
+ 
 # ====================
 # Supporting functions
 # ====================
@@ -661,7 +833,10 @@ def phjDefineSuffixDict(phjAlpha = 0.05):
                      'numbertrials':'obs',                             # Number of trials (used to calculate binomial proportions)
                      'absfreq':'count',                                # Absolute frequency suffix (used to calcuate multinomial proportions)
                      'proportion':'prop',                              # Relative frequency suffix (used to calcuate multinomial proportions)
+                     'probability':'prob',                             # Probability suffix
+                     'predicted':'pred',                               # Used as suffix for predicted parameters
                      'totalnumber':'total',                            # Total number (e.g. cases plus controls)
+                     'outcome':'outcome',                              # Name of outcome variable
                      'cisuffix':phjCISuffix(phjAlpha,phjCIAbbrev),     # Confidence interval suffix
                      'cilowlim':'llim',                                # lower limit of confidence interval
                      'ciupplim':'ulim',                                # upper limit of confidence interval
