@@ -691,6 +691,7 @@ def phjAnnualDiseaseTrend(phjTempDF,
                                                 phjOutcomeVarName = phjSuffixDict['outcome'],
                                                 phjPrintResults = False)
     
+    #import pdb; pdb.set_trace()
     
     # Logistic regression model
     phjFormulaStr = '{} ~ {}'.format(phjSuffixDict['outcome'],phjYearVarName)
@@ -699,7 +700,7 @@ def phjAnnualDiseaseTrend(phjTempDF,
     y, X = patsy.dmatrices(formula_like = phjFormulaStr,
                            data = phjLongDF,
                            NA_action = 'drop',
-                           return_type='dataframe')
+                           return_type = 'dataframe')
     
     model = sm.Logit(endog = y,
                      exog = X,
@@ -708,7 +709,8 @@ def phjAnnualDiseaseTrend(phjTempDF,
     if phjPrintResults == True:
         print(model.summary2())
         print('\n')
-    
+    else:
+        model.summary2()    # It seems that the .summary2() method needs to be run even if not printed, otherwise an error occurs.
     
     # Calculate predicted probabilities
     phjPredProbName = ''.join([phjSuffixDict['predicted'],phjSuffixDict['probability']])
@@ -733,13 +735,13 @@ def phjAnnualDiseaseTrend(phjTempDF,
                                      phjSuffixDict['cisuffix'],
                                      phjSuffixDict['cilowlim']])] = np.maximum(0,
                                                                                np.minimum(1,
-                                                                                          X[phjPredProbName] + (norm.ppf(phjAlpha/0.5) * X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])])))   # N.B. The norm.pdf(0.025) is negative therefore equates to mean minus interval.
+                                                                                          X[phjPredProbName] + (norm.ppf(phjAlpha/2) * X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])])))   # N.B. The norm.pdf(0.025) is negative therefore equates to mean minus interval.
     # Upper
     X[phjSuffixDict['joinstr'].join([phjPredProbName,
                                      phjSuffixDict['cisuffix'],
                                      phjSuffixDict['ciupplim']])] = np.maximum(0,
                                                                                np.minimum(1,
-                                                                                          X[phjPredProbName] + (norm.ppf(1 - (phjAlpha/0.5)) * X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])])))
+                                                                                          X[phjPredProbName] + (norm.ppf(1 - (phjAlpha/2)) * X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])])))
     
     # Keep only a single value for each group
     X = X.drop_duplicates(keep = 'first')
@@ -749,10 +751,9 @@ def phjAnnualDiseaseTrend(phjTempDF,
                                 left_on = phjYearVarName,
                                 right_on = phjYearVarName)
     
-    if phjPrintResults == True:
-        print(phjPropDF)
-        print('\n')
-    
+    #if phjPrintResults == True:
+    #    print(phjPropDF)
+    #    print('\n')
     
     # Plot actual proportion as barchart and predicted probabilities as line
     if (phjPlotProportions == True) | (phjPlotPrediction == True):
