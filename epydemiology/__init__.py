@@ -29,6 +29,7 @@ from .phjMiscFuncs import phjCreateNamedGroupRegex
 from .phjMiscFuncs import phjFindRegexNamedGroups
 from .phjMiscFuncs import phjMaxLevelOfTaxonomicDetail
 from .phjMiscFuncs import phjLongToWideBinary
+from .phjMiscFuncs import phjReverseMap
 
 from .phjRROR import phjOddsRatio
 from .phjRROR import phjRelativeRisk

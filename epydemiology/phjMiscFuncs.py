@@ -41,9 +41,9 @@ def phjGetStrFromArgOrFile(phjStr = None,
         # File name and path given preference (i.e. check this first)
         if phjPathAndFileName is not None:
             # Load SQL query from text file
-            phjTempStr = phjReadTextFromFile(phjFilePathAndName = phjPathAndFileName,
+            phjTempStr = phjReadTextFromFile(phjPathAndFileName = phjPathAndFileName,
                                              phjMaxAttempts = phjAllowedAttempts,
-                                             phjPrintResults = phjPrintResults)
+                                             phjPrintResults = False)
             
             if phjPrintResults == True:
                 print("\nString retrieved from file ('{0}'):".format(phjPathAndFileName))
@@ -64,14 +64,14 @@ def phjGetStrFromArgOrFile(phjStr = None,
 
 
 
-def phjReadTextFromFile(phjFilePathAndName = None,
+def phjReadTextFromFile(phjPathAndFileName = None,
                         phjMaxAttempts = 3,
                         phjPrintResults = False):
     
     for i in range(phjMaxAttempts):
         
-        if (phjFilePathAndName is None) or (i > 0):
-            phjFilePathAndName = input('Enter path and filename for file containing text (e.g. query or regex): ')
+        if (phjPathAndFileName is None) or (i > 0):
+            phjPathAndFileName = input('Enter path and filename for file containing text (e.g. query or regex): ')
         
         try:
             # The following original code ran the risk of not closing the file if a
@@ -80,7 +80,7 @@ def phjReadTextFromFile(phjFilePathAndName = None,
             # phjTempText = phjTempFileObject.read()
             # phjTempFileObject.close()
             
-            with open(phjFilePathAndName,'r') as phjTempFileObject:
+            with open(phjPathAndFileName,'r') as phjTempFileObject:
                 phjTempText = phjTempFileObject.read()
             
             if phjPrintResults:
@@ -92,7 +92,7 @@ def phjReadTextFromFile(phjFilePathAndName = None,
         
         except FileNotFoundError as e:
             
-            print("\nA FileNotFoundError occurred.\nError number {0}: {1}. File named \'{2}\' does not exist at that location.".format(e.args[0],e.args[1],phjFilePathAndName))
+            print("\nA FileNotFoundError occurred.\nError number {0}: {1}. File named \'{2}\' does not exist at that location.".format(e.args[0],e.args[1],phjPathAndFileName))
             
             if i < (phjMaxAttempts-1):
                 print('\nPlease re-enter path and filename details.\n')    # Only say 'Please try again' if not last attempt.
@@ -161,28 +161,25 @@ def phjCreateNamedGroupRegex(phjTempDF,
                                                                                                                      axis = 0,
                                                                                                                      ascending = True).reset_index()
                 
+                # Check that the values in the phjIDVarName variable (after the 'mean' operation) are all integers.
+                # If not, itq may indicate an error in the original labelling of category groups.
+                phjIntegerCheckMask = phjCategoryGroupRegexDF[phjIDVarName]%1 == 0
+            
+                if sum(~phjIntegerCheckMask) > 0:
+                    if sum(~phjIntegerCheckMask) == 1:
+                        print("\nWarning: there may be an error in the category ID values since one of the mean group values is not an integer.")
+                    else:
+                        print("\nWarning: there may be an error in the category ID values since {0} mean group values are not integers.".format(sum(~phjIntegerCheckMask)))
+        
         except pd.core.groupby.DataError as e:
             print("\nA DataError has occurred. This may occur if, for example, the '{0}' variable contains missing values. ({1}.)".format(phjIDVarName,e))
             
             phjCategoryGroupRegex = None
         
-        
         # Complete function if no exception raised
         else:
-            # Check that the values in the phjIDVarName variable (after the 'mean' operation) are all integers.
-            # If not, if may indicate an error in the original labelling of category groups.
-            phjIntegerCheckMask = phjCategoryGroupRegexDF[phjIDVarName]%1 == 0
-            
-            if sum(~phjIntegerCheckMask) > 0:
-                if sum(~phjIntegerCheckMask) == 1:
-                    print("\nWarning: there may be an error in the category ID values since one of the mean group values is not an integer.")
-                else:
-                    print("\nWarning: there may be an error in the category ID values since {0} mean group values are not integers.".format(sum(~phjIntegerCheckMask)))
-            
-            
             # Create a column containing a concatenated and combined named group regex for each group
             phjCategoryGroupRegexDF['NamedGroupRegex'] = '(?P<' + phjCategoryGroupRegexDF[phjGroupVarName].map(str).str.strip().str.replace(' ','_').str.replace('[^\w\s]','') + '>' + phjCategoryGroupRegexDF[phjRegexVarName].map(str) + ')'
-            
             
             # Create a string representing entire regex
             # Various string patterns are included to ensure the final string is easier to read:
@@ -203,7 +200,7 @@ def phjCreateNamedGroupRegex(phjTempDF,
             if phjRegexPreCompile == True:
                 try:
                     phjCategoryGroupRegex = re.compile(phjCategoryGroupRegexStr,flags = re.X|re.I)
-
+                
                 except re.error as e:
                     print("Regex failed to compile: {0}.".format(e))
                     phjCategoryGroupRegex = None
@@ -391,28 +388,21 @@ def phjMaxLevelOfTaxonomicDetail(phjTempDF,
             assert 'posFromR' not in phjTempDF.columns.values, "A column named 'posFromR' will be temporarily created but already exists; please rename."
             assert phjNewColName not in phjTempDF.columns.values, "A column named '{0}' (phjNewColName) will be permanently created but already exists; please choose a different name.".format(phjNewColName)
         
-        phjCheckPassed = True
-    
-    
     except AssertionError as e:
-        print(e)
+        print("An AssertionError occurred. ({0})".format(e))
         
-        phjCheckPassed = False
-    
-    
-    
-    if phjCheckPassed == True:
+    else:
         
         # If columns already exist, drop from dataframe
         if phjDropPreExisting == True:
             if 'bin' in phjTempDF.columns.values:
                 phjTempDF = phjTempDF.drop('bin',axis = 1)
-
+            
             if 'posFromR' in phjTempDF.columns.values:
                 phjTempDF = phjTempDF.drop('posFromR',axis = 1)
-
-            if 'bin' in phjTempDF.columns.values:
-                phjTempDF = phjTempDF.drop('bin',axis = 1)
+            
+            if phjNewColName in phjTempDF.columns.values:
+                phjTempDF = phjTempDF.drop(phjNewColName,axis = 1)
         
         
         # A discussion of solutions to convert a dataframe with strings and empty cells to binary is given at:
@@ -497,9 +487,6 @@ def phjMaxLevelOfTaxonomicDetail(phjTempDF,
         if phjPrintResults == True:
             print(phjTempDF)
     
-    else:
-        phjTempDF = phjTempDF
-        
     return phjTempDF
 
 
@@ -585,6 +572,96 @@ def phjLongToWideBinary(phjTempDF,
         phjScratchDF = phjScratchDF.reset_index(drop = False)
         
     return phjScratchDF
+
+
+
+def phjReverseMap(phjTempDF,
+                  phjDict,
+                  phjCategoryVarName,
+                  phjMappedVarName = 'mapped_cat',
+                  phjUnmapped = np.nan,
+                  phjDropPreExisting = False,
+                  phjTreatAsRegex = False,
+                  phjPrintResults = False):
+    
+    # Check function parameters are set correctly
+    try:
+        # Check whether required parameters have been set to correct type
+        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDict,collections.Mapping), "Parameter 'phjDict' needs to be a dict." # collections.Mapping will work for dict(), collections.OrderedDict() and collections.UserDict() (see comment by Alexander Ryzhov at https://stackoverflow.com/questions/25231989/how-to-check-if-a-variable-is-a-dictionary-in-python.
+        assert isinstance(phjMappedVarName,str), "Parameter 'phjMappedVarName' needs to be a string."
+        assert isinstance(phjUnmapped,(str,int,float)), "Parameter 'phjUnmapped' needs to be a string, an integer, a float or numpy.nan."   # The np.nan seems to be picked up at a float.
+        
+        # Check whether arguments are set to allowable values
+        assert isinstance(phjDropPreExisting,bool), "Parameter 'phjDropPreExisting' needs to be a boolean (True, False) value."
+        assert isinstance(phjTreatAsRegex,bool), "Parameter 'phjTreatAsRegex' needs to be a boolean (True, False) value."
+        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
+        
+        # Check that referenced columns exist in the dataframe
+        assert phjCategoryVarName in phjTempDF.columns, "The column name 'phjCategoryVarName' does not exist in dataframe."
+        
+        # Check whether columns that will be created already exist
+        if phjDropPreExisting == False:
+            assert phjMappedVarName not in phjTempDF.columns.values, "A column named '{0}' (phjMappedVarName) will be permanently created but already exists; please choose a different name.".format(phjMappedVarName)
+        
+        # Check that all the items in the dictionary values are uniquely represented, otherwise
+        # the dictionary entry will only reflect the last occurrence.
+        # Make a flat list of items in the dict values using list comprehension and check there
+        # are no duplicates. List comprehension taken from:
+        # https://stackoverflow.com/questions/952914/how-to-make-a-flat-list-out-of-list-of-lists
+        phjItems = [item for sublist in list(phjDict.values()) for item in sublist]
+        assert len(set(phjItems)) == len(phjItems), 'Items in dictionary values are not unique.'
+    
+    except AssertionError as e:
+        print("An AssertionError occurred. ({0})".format(e))
+        
+    else:
+        if phjTreatAsRegex == True:
+            # The dict as entered is converted to a 'long' format with one regex
+            # per row. A named group regex is then created using phjCreateNamedGroupRegex()
+            # and matches identified using phjFindRegexNamedGroups().
+            # Converting the dictionary to a long dataframe is based on an answer
+            # by aws_apprentice at https://stackoverflow.com/questions/54368318/reshaping-a-python-dict-to-a-pandas-dataframe.
+            phjRegexDF = pd.DataFrame.from_dict(phjDict, orient='index').stack().reset_index().drop('level_1', axis=1).rename(columns={'level_0': 'key', 0: 'value'})
+            
+            phjRegexStr = phjCreateNamedGroupRegex(phjTempDF = phjRegexDF,
+                                                       phjGroupVarName = 'key',
+                                                       phjRegexVarName = 'value',
+                                                       phjIDVarName = None,
+                                                       phjRegexPreCompile = False,
+                                                       phjPrintResults = phjPrintResults)
+            
+            phjTempDF = phjFindRegexNamedGroups(phjTempDF = phjTempDF,
+                                                    phjDescriptorVarName = phjCategoryVarName,
+                                                    phjNamedGroupRegexStr = phjRegexStr,
+                                                    phjSeparateRegexGroups = True,
+                                                    phjNumberMatchesVarName = 'numberMatches',
+                                                    phjMatchedGroupVarName = 'matchedgroup',
+                                                    phjUnclassifiedStr = phjUnmapped,
+                                                    phjMultipleMatchStr = 'multiple',
+                                                    phjCleanup = False,
+                                                    phjPrintResults = phjPrintResults)
+            
+        else:
+            # A function to reverse a dict was given in an answer by MSeifert at:
+            # https://stackoverflow.com/questions/35491223/inverting-a-dictionary-with-list-values
+            # Alternatively, use a dictionary comprehension but must be careful that no duplicates
+            # are found in the items in the dictionary values.
+            # Taken from: https://stackoverflow.com/questions/37082877/map-pandas-dataframe-columns-to-dictionary-values
+            phjRevDict = {v: k for k in phjDict for v in phjDict[k]}
+            
+            if phjPrintResults == True:
+                print("Reversed dictionary\n")
+                print(phjRevDict)
+                print('\n')
+            
+            phjTempDF[phjMappedVarName] = phjTempDF[phjCategoryVarName].map(phjRevDict).fillna(phjUnmapped)
+            
+            if phjPrintResults == True:
+                print(phjTempDF)
+                print('\n')
+    
+    return phjTempDF
 
 
 

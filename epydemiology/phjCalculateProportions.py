@@ -721,7 +721,7 @@ def phjAnnualDiseaseTrend(phjTempDF,
     cov = model.cov_params()
     gradient = (X[phjPredProbName] * (1 - X[phjPredProbName]) * X[[x for x in X if x != phjPredProbName]].T).T.values # matrix of gradients for each observation
     
-    # Add column contain SE of predicted probabilities
+    # Add column containing SE of predicted probabilities
     X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])] = [np.sqrt(np.dot(np.dot(g, cov), g)) for g in gradient]
     
     # Add column containing CI lower and upper limits
@@ -730,13 +730,16 @@ def phjAnnualDiseaseTrend(phjTempDF,
     #     norm.ppf(.025) = -1.960063984540054
     #     norm.ppf(.975) = 1.959963984540054
     
-    # Lower
+    # Calculate confidence intervals. The max(0,min(1,interval)) construct ensures that
+    # the interval does not extend beyond 1 or 0. Again this was taken from the answer
+    # by David Dale on StackOverflow (see https://stackoverflow.com/questions/47414842/confidence-interval-of-probability-prediction-from-logistic-regression-statsmode/47419474).
+    # Lower interval
     X[phjSuffixDict['joinstr'].join([phjPredProbName,
                                      phjSuffixDict['cisuffix'],
                                      phjSuffixDict['cilowlim']])] = np.maximum(0,
                                                                                np.minimum(1,
                                                                                           X[phjPredProbName] + (norm.ppf(phjAlpha/2) * X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])])))   # N.B. The norm.pdf(0.025) is negative therefore equates to mean minus interval.
-    # Upper
+    # Upper interval
     X[phjSuffixDict['joinstr'].join([phjPredProbName,
                                      phjSuffixDict['cisuffix'],
                                      phjSuffixDict['ciupplim']])] = np.maximum(0,
