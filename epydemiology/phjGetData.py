@@ -72,7 +72,7 @@ def phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = None,
             if phjPrintResults == True:
                 print('\nData could not be retrieved from Excel workbook.\n')
             
-            phjTempDF = None
+            phjDF = None
         
         else:
             # Get name of worksheet from cell range instance
@@ -128,7 +128,7 @@ def phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = None,
             # Each column now headed with original column headers as seen in Excel file
             # if header row present or with generic labels of 'var1', 'var2', etc. if no
             # header row present.
-            phjTempDF = pd.DataFrame(phjTempImportedData, columns=phjTempVariableNames)
+            phjDF = pd.DataFrame(phjTempImportedData, columns=phjTempVariableNames)
             
             
     else:
@@ -149,7 +149,7 @@ def phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = None,
             if phjPrintResults == True:
                 print('\nData could not be retrieved from Excel workbook.\n')
             
-            phjTempDF = None
+            phjDF = None
         
         else:
             phjTempCellRange = phjLoadExcelNamedCellRangeNewOpenpyxl(phjExcelFileNameOnly = os.path.basename(phjExcelPathAndFileName),
@@ -162,7 +162,7 @@ def phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = None,
                 if phjPrintResults == True:
                     print('\nCell range could not be retrieved from Excel workbook.\n')
                 
-                phjTempDF = None
+                phjDF = None
             
             else:
                 # Get name of worksheet and cell co-ordintes from named cell range
@@ -199,16 +199,16 @@ def phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = None,
                 # Each column now headed with original column headers as seen in Excel file
                 # if header row present or with generic labels of 'var1', 'var2', etc. if no
                 # header row present.
-                phjTempDF = pd.DataFrame(phjTempImportedData, columns=phjTempVariableNames)
+                phjDF = pd.DataFrame(phjTempImportedData, columns=phjTempVariableNames)
     
     
     if phjPrintResults == True:
         print("\nImported data")
         print("-------------")
-        print(phjTempDF)
+        print(phjDF)
         print('\n')
     
-    return phjTempDF
+    return phjDF
 
 
 
