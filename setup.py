@@ -1,15 +1,29 @@
 from setuptools import setup
 from setuptools import find_packages
-import pypandoc
+
+import pkg_resources
+
+try:
+    pkg_resources.get_distribution('pypandoc')
+except pkg_resources.DistributionNotFound:
+    pypandocPresent = False
+    print("Error: Pypandoc package not available.")
+else:
+    pypandocPresent = True
+    import pypandoc
+
 
 # Converts the Markdown README in the RST format that PyPi expects.
 # Had some issues with pypandoc. Needed to install pandoc first.
 # In the meantime, catch exceptions as follows:
-try:
-    long_description = pypandoc.convert('README.md', 'rst')
-except (IOError, ImportError):
-    long_description = ''
-
+if pypandocPresent == True:
+	try:
+		long_description = pypandoc.convert('README.md', 'rst')
+	except (IOError, ImportError):
+		long_description = ''
+else:
+	long_description = ''
+	
 setup(name = 'epydemiology',
       packages = ['epydemiology'], # this must be the same as the name above
       # packages=find_packages(exclude=[list_of_things_to_exclude]),
@@ -39,5 +53,5 @@ setup(name = 'epydemiology',
                      # that you indicate whether you support Python 2, Python 3 or both.
                      'Programming Language :: Python :: 3',
                      'Programming Language :: Python :: 3.4'],
-      install_requires=['numpy','pandas>=0.19.2','openpyxl','pymysql'],
+      install_requires=['numpy','pandas>=0.19.2','openpyxl'],
       )
