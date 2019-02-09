@@ -46,7 +46,7 @@ from .phjCalculateProportions import phjDefineSuffixDict
 
 
 
-def phjOddsRatio(phjTempDF,
+def phjOddsRatio(phjDF,
                  phjCaseVarName,
                  phjCaseValue,
                  phjRiskFactorVarName,
@@ -56,7 +56,7 @@ def phjOddsRatio(phjTempDF,
                  phjPrintResults = False):
     
     # Call the phjRatios() function to do the work
-    phjContTable = phjRatios(phjTempDF = phjTempDF,
+    phjContTable = phjRatios(phjDF = phjDF,
                              phjRatioType = 'oddsratio',    # Should be one of the keys in phjSuffixDict
                              phjCaseVarName = phjCaseVarName,
                              phjCaseValue = phjCaseValue,
@@ -71,7 +71,7 @@ def phjOddsRatio(phjTempDF,
 
 
 
-def phjRelativeRisk(phjTempDF,
+def phjRelativeRisk(phjDF,
                     phjCaseVarName,
                     phjCaseValue,
                     phjRiskFactorVarName,
@@ -81,7 +81,7 @@ def phjRelativeRisk(phjTempDF,
                     phjPrintResults = False):
     
     # Call the phjRatios() function to do the work
-    phjContTable = phjRatios(phjTempDF = phjTempDF,
+    phjContTable = phjRatios(phjDF = phjDF,
                              phjRatioType = 'relrisk',    # Should be one of the keys in phjSuffixDict
                              phjCaseVarName = phjCaseVarName,
                              phjCaseValue = phjCaseValue,
@@ -96,7 +96,7 @@ def phjRelativeRisk(phjTempDF,
 
 
 
-def phjRatios(phjTempDF,
+def phjRatios(phjDF,
               phjRatioType,    # Should be one of the keys in phjSuffixDict
               phjCaseVarName,
               phjCaseValue,
@@ -113,10 +113,10 @@ def phjRatios(phjTempDF,
     # Retain only those columns that will be analysed (otherwise, it is feasible that
     # unrelated columns that contain np.nan values will cause removal of rows in
     # unexpected ways.
-    phjTempDF = phjTempDF[[phjCaseVarName,phjRiskFactorVarName]]
+    phjDF = phjDF[[phjCaseVarName,phjRiskFactorVarName]]
     
     # Check passed parameters are useable
-    phjCheckPassed = phjRRORCheckArgs(phjTempDF = phjTempDF,
+    phjCheckPassed = phjRRORCheckArgs(phjDF = phjDF,
                                       phjCaseVarName = phjCaseVarName,
                                       phjCaseValue = phjCaseValue,
                                       phjRiskFactorVarName = phjRiskFactorVarName,
@@ -124,13 +124,13 @@ def phjRatios(phjTempDF,
     
     if phjCheckPassed:
         # Data to use - remove rows that have a missing value
-        phjTempDF = phjRemoveNaNRows(phjTempDF = phjTempDF,
+        phjDF = phjRemoveNaNRows(phjDF = phjDF,
                                      phjCaseVarName = phjCaseVarName,
                                      phjRiskFactorVarName = phjRiskFactorVarName,
                                      phjMissingValue = phjMissingValue)
         
         # Create a basic 2 x 2 (or n x 2) contingency table
-        phjContTable = phjCreateContingencyTable(phjTempDF = phjTempDF,
+        phjContTable = phjCreateContingencyTable(phjDF = phjDF,
                                                  phjCaseVarName = phjCaseVarName,
                                                  phjCaseValue = phjCaseValue,
                                                  phjRiskFactorVarName = phjRiskFactorVarName,
@@ -196,14 +196,14 @@ def phjRatios(phjTempDF,
 
 
 
-def phjRRORCheckArgs(phjTempDF,
+def phjRRORCheckArgs(phjDF,
                     phjCaseVarName,
                     phjCaseValue,
                     phjRiskFactorVarName,
                     phjRiskFactorBaseValue):
     
     # Check cases variable occurs and there are only 2 categories
-    phjCheckPassed = phjCaseVarCheck(phjTempDF = phjTempDF,
+    phjCheckPassed = phjCaseVarCheck(phjDF = phjDF,
                                      phjCaseVarName = phjCaseVarName)
     
     # Check values occur in variables.
@@ -212,7 +212,7 @@ def phjRRORCheckArgs(phjTempDF,
     if phjCheckPassed == True:
         for i,j in [[phjCaseValue,phjCaseVarName],[phjRiskFactorBaseValue,phjRiskFactorVarName]]:
             if phjCheckPassed == True:
-                phjCheckPassed = phjValueCheck(phjTempDF = phjTempDF,
+                phjCheckPassed = phjValueCheck(phjDF = phjDF,
                                                phjVarName = j,
                                                phjValue = i)
     
@@ -220,19 +220,19 @@ def phjRRORCheckArgs(phjTempDF,
 
 
 
-def phjCaseVarCheck(phjTempDF,
+def phjCaseVarCheck(phjDF,
                     phjCaseVarName):
     
     # This function checks the following:
     # i.  The name passed to the function giving the case variable actually exists in the dataframe
     # ii. The case variable contains only 2 levels
     try:
-        assert phjCaseVarName in phjTempDF.columns, 'The selected name for the case variable does not exist in the dataframe.'
+        assert phjCaseVarName in phjDF.columns, 'The selected name for the case variable does not exist in the dataframe.'
         phjCheckPassed = True
         
         # Check that case variable contains 2 and only 2 levels
         try:
-            assert phjTempDF[phjCaseVarName].nunique() == 2, 'The selected variable must contain only 2 levels, one representing a case and one a control.'
+            assert phjDF[phjCaseVarName].nunique() == 2, 'The selected variable must contain only 2 levels, one representing a case and one a control.'
             phjCheckPassed = True
             
         except AssertionError as e:
@@ -247,14 +247,14 @@ def phjCaseVarCheck(phjTempDF,
 
 
 
-def phjValueCheck(phjTempDF,
+def phjValueCheck(phjDF,
                   phjVarName,
                   phjValue):
     
     # This function check that values passed to the function actually exist in the variable where they are supposed to occur,
     # e.g. if a case is identified with 'y', make sure that 'y' occurs in the case variable.
     try:
-        assert phjValue in phjTempDF[phjVarName].unique(),'The value {0} does not exist in variable {1}.'.format(phjValue,phjVarName)
+        assert phjValue in phjDF[phjVarName].unique(),'The value {0} does not exist in variable {1}.'.format(phjValue,phjVarName)
         phjCheckPassed = True
         
     except AssertionError as e:
@@ -265,11 +265,11 @@ def phjValueCheck(phjTempDF,
 
 
 
-def phjCaseFirst(phjTempDF,
+def phjCaseFirst(phjDF,
                  phjCaseValue):
     
     # Creates a list with case value first. This can be used to order the dataframe columns
-    phjCaseOrder = phjTempDF.columns.tolist()
+    phjCaseOrder = phjDF.columns.tolist()
     
     phjCaseOrder.remove(phjCaseValue)
     
@@ -280,29 +280,29 @@ def phjCaseFirst(phjTempDF,
 
 
 
-def phjRemoveNaNRows(phjTempDF,
+def phjRemoveNaNRows(phjDF,
                      phjCaseVarName,
                      phjRiskFactorVarName,
                      phjMissingValue = np.nan):
     
     # Replace empty cells with np.nan
-    phjTempDF = phjTempDF.replace('',np.nan)
+    phjDF = phjDF.replace('',np.nan)
     
     # Replace missing values with np.nan
     if isinstance(phjMissingValue,str):
-        phjTempDF = phjTempDF.replace(phjMissingValue,np.nan)
+        phjDF = phjDF.replace(phjMissingValue,np.nan)
         
     elif not np.isnan(phjMissingValue):
-        phjTempDF = phjTempDF.replace(phjMissingValue,np.nan)
+        phjDF = phjDF.replace(phjMissingValue,np.nan)
     
     # Remove np.nan cells
-    phjTempDF = phjTempDF[[phjCaseVarName,phjRiskFactorVarName]].dropna(axis = 0, how = 'any').reset_index(drop = True)
+    phjDF = phjDF[[phjCaseVarName,phjRiskFactorVarName]].dropna(axis = 0, how = 'any').reset_index(drop = True)
     
-    return phjTempDF
+    return phjDF
 
 
 
-def phjCreateContingencyTable(phjTempDF,
+def phjCreateContingencyTable(phjDF,
                               phjCaseVarName,
                               phjCaseValue,
                               phjRiskFactorVarName,
@@ -310,13 +310,13 @@ def phjCreateContingencyTable(phjTempDF,
 
     # Calculated univariable contingency table with risk factor levels as index and
     # cases and controls as columns.
-    phjContTable = pd.crosstab(phjTempDF[phjRiskFactorVarName],phjTempDF[phjCaseVarName])
+    phjContTable = pd.crosstab(phjDF[phjRiskFactorVarName],phjDF[phjCaseVarName])
     
     # Rearrange the order of columns so that cases come first
     # N.B. There was a bug in Pandas 0.19.2 that resulted in re-ordered dataframe columns
     # being accessed in the wrong order. This did not affect the calculation of odds ratios
     # or 95% CI. The bug was reported to Pandas GitHub on 28 Mar 2017.
-    phjContTable = phjContTable[phjCaseFirst(phjTempDF = phjContTable,
+    phjContTable = phjContTable[phjCaseFirst(phjDF = phjContTable,
                                              phjCaseValue = phjCaseValue)]
     
     return phjContTable

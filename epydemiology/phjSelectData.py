@@ -327,8 +327,8 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
         
         # Check that all the required columns are present or absent from the
         # complete dataframe containing ALL the data.
-        assert phjCheckColumns(phjTempDF = phjAllDataDF,
-                               phjTempDFDescriptorStr = 'all_data',
+        assert phjCheckColumns(phjDF = phjAllDataDF,
+                               phjDFDescriptorStr = 'all_data',
                                phjColumnsPresentList = phjColumnsPresentList,
                                phjColumnsAbsentList = phjColumnsAbsentList,
                                phjPrintResults = phjPrintResults), "Parameter check for column headings has failed. Not all required variables are appropriately contained in the dataframe."
@@ -367,7 +367,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                 phjRequiredColumnsList = phjColumnsPresentList
                 phjRequiredColumnsList.remove(phjFreeTextVarName)
                 
-                phjPotentialControlsDF = phjGetPotentialControls(phjTempDF = phjAllDataDF,   # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
+                phjPotentialControlsDF = phjGetPotentialControls(phjDF = phjAllDataDF,   # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
                                                                  phjCasesPatientIDSer = phjVerifiedCasesDF[phjPatientIDVarName],   # A pandas series containing patient ID for all confirmed cases
                                                                  phjScreeningRegexStr = phjScreeningRegexStr,
                                                                  phjScreeningRegexPathAndFileName = phjScreeningRegexPathAndFileName,
@@ -428,7 +428,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                 phjRequiredColumnsList = phjColumnsPresentList
                 phjRequiredColumnsList.remove(phjFreeTextVarName)
                 
-                phjPotentialControlsDF = phjGetPotentialControls(phjTempDF = phjAllDataDF,   # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
+                phjPotentialControlsDF = phjGetPotentialControls(phjDF = phjAllDataDF,   # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
                                                                  phjCasesPatientIDSer = phjVerifiedCasesDF[phjPatientIDVarName],   # A pandas series containing patient ID for all confirmed cases
                                                                  phjScreeningRegexStr = phjScreeningRegexStr,
                                                                  phjScreeningRegexPathAndFileName = phjScreeningRegexPathAndFileName,
@@ -841,7 +841,7 @@ def phjCollapseOnPatientID(phjAllDataDF,       # Dataframe containing all column
         
         if phjConsultationDateVarName is not None:
             # Ensure date of consultation variable is in datetime format
-            phjAllDataDF = phjParseDateVar(phjTempDF = phjAllDataDF,
+            phjAllDataDF = phjParseDateVar(phjDF = phjAllDataDF,
                                            phjDateVarName = phjConsultationDateVarName,   # This can be a string or a list of variable names
                                            phjDateFormat = '%Y-%m-%d',
                                            phjMissingValue = 'missing',
@@ -923,8 +923,8 @@ def phjCollapseOnPatientID(phjAllDataDF,       # Dataframe containing all column
 
 # Secondary functions
 # ===================
-def phjCheckColumns(phjTempDF,
-                    phjTempDFDescriptorStr = None,      # An optional parameter used to describe the dataframe being checked in feedback
+def phjCheckColumns(phjDF,
+                    phjDFDescriptorStr = None,      # An optional parameter used to describe the dataframe being checked in feedback
                     phjColumnsPresentList = None,
                     phjColumnsAbsentList = ['case','group'],
                     phjPrintResults = False):
@@ -936,20 +936,20 @@ def phjCheckColumns(phjTempDF,
     phjTempCheckVar = True
     
     # Convert the column headings in the dataframe to a list
-    phjFullColumnsList = phjTempDF.columns.values
+    phjFullColumnsList = phjDF.columns.values
     
     # Check that parameters that need to be included in column heading list are indeed present
     if set(phjColumnsPresentList).issubset(phjFullColumnsList) == False:
-        print("\nNot all required columns are present in the '{0}' dataframe.".format(phjTempDFDescriptorStr))
+        print("\nNot all required columns are present in the '{0}' dataframe.".format(phjDFDescriptorStr))
         
         for c in phjColumnsPresentList:
             if c not in phjFullColumnsList:
-                print("Column '{0}' does not exist in the '{1}' dataframe.".format(c,phjTempDFDescriptorStr))
+                print("Column '{0}' does not exist in the '{1}' dataframe.".format(c,phjDFDescriptorStr))
         
         phjTempCheckVar = False
     
     else:
-        print("\nAll necessary columns are present in the '{0}' dataframe.".format(phjTempDFDescriptorStr))
+        print("\nAll necessary columns are present in the '{0}' dataframe.".format(phjDFDescriptorStr))
         
     # Check that parameters that need to NOT be included in column heading list are indeed absent
     if phjColumnsAbsentList is not None:
@@ -1223,7 +1223,7 @@ def phjCheckCases(phjAllDataDF,
 
 
 
-def phjGetPotentialControls(phjTempDF,                      # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
+def phjGetPotentialControls(phjDF,                      # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
                             phjCasesPatientIDSer = None,    # A pandas series containing patient ID for all confirmed cases
                             phjScreeningRegexStr = None,
                             phjScreeningRegexPathAndFileName = None,
@@ -1251,10 +1251,10 @@ def phjGetPotentialControls(phjTempDF,                      # A pandas dataframe
         # Run regex against freetext field and create a binary mask to identify all
         # consultations that match the regex.
         # NA values are set to FALSE.
-        phjRegexMask = phjTempDF[phjFreeTextVarName].str.contains(phjRegex, na = False)
+        phjRegexMask = phjDF[phjFreeTextVarName].str.contains(phjRegex, na = False)
         
         # Retrieve patient IDs for consultations where freetext field contains a match
-        phjCasesPatientID = phjTempDF.loc[phjRegexMask,phjPatientIDVarName]
+        phjCasesPatientID = phjDF.loc[phjRegexMask,phjPatientIDVarName]
         
         # Combine with Patient IDs passed to function to produce an array of all
         # patient IDs that should not be included in potential control dataframe
@@ -1263,11 +1263,11 @@ def phjGetPotentialControls(phjTempDF,                      # A pandas dataframe
         
         # Create a mask of all patients that could be included in potentials control
         # list. (This is, in fact, the inverse of the output from .isin() method)
-        phjControlConsultationsMask = ~phjTempDF[phjPatientIDVarName].isin(phjCasesPatientIDArr)
+        phjControlConsultationsMask = ~phjDF[phjPatientIDVarName].isin(phjCasesPatientIDArr)
         
         # Use the mask to remove all cases patients from the dataframe
         # Only retain the required columns variables
-        phjControlConsultationsDF = phjTempDF.loc[phjControlConsultationsMask,phjRequiredColumnsList].reset_index(drop = True)
+        phjControlConsultationsDF = phjDF.loc[phjControlConsultationsMask,phjRequiredColumnsList].reset_index(drop = True)
         
         if phjControlType == 'consultation':
             # Return the dataframe of patient IDs that have already been calculated

@@ -77,7 +77,7 @@ from .phjExtFuncs import getJenksBreaks
 # Main functions
 # ==============
 #
-def phjViewLogOdds(phjTempDF,
+def phjViewLogOdds(phjDF,
                    phjBinaryDepVarName = None,
                    phjCaseValue = 1,
                    phjContIndepVarName = None,
@@ -106,10 +106,10 @@ def phjViewLogOdds(phjTempDF,
     # Retain only those columns that will be analysed (otherwise, it is feasible that
     # unrelated columns that contain np.nan values will cause removal of rows in
     # unexpected ways.
-    phjTempDF = phjTempDF[[col for col in [phjBinaryDepVarName,phjContIndepVarName,phjGroupVarName] if col is not None]]
+    phjDF = phjDF[[col for col in [phjBinaryDepVarName,phjContIndepVarName,phjGroupVarName] if col is not None]]
     
     # Data to use - remove rows that have a missing value
-    phjTempDF = phjRemoveNaNRows(phjTempDF = phjTempDF,
+    phjDF = phjRemoveNaNRows(phjDF = phjDF,
                                  phjCaseVarName = phjBinaryDepVarName,
                                  phjRiskFactorVarName = phjContIndepVarName,
                                  phjMissingValue = phjMissingValue)
@@ -117,7 +117,7 @@ def phjViewLogOdds(phjTempDF,
     # Convert a continuous variable to a categorical variable using a variety of methods.
     # If phjReturnBreaks = True then function also returns a list of the break points
     # for the continuous variable.
-    phjTempDF, phjBreaks = phjCategoriseContinuousVariable(phjTempDF = phjTempDF,
+    phjDF, phjBreaks = phjCategoriseContinuousVariable(phjDF = phjDF,
                                                            phjContinuousVarName = phjContIndepVarName,
                                                            phjMissingValue = phjMissingValue,
                                                            phjNumberOfCategoriesInt = phjNumberOfCategoriesInt,
@@ -131,7 +131,7 @@ def phjViewLogOdds(phjTempDF,
     if phjBreaks is not None:
         
         # The following DF contains an index that may be numeric.
-        phjOR = phjOddsRatio(phjTempDF = phjTempDF,
+        phjOR = phjOddsRatio(phjDF = phjDF,
                              phjCaseVarName = phjBinaryDepVarName,
                              phjCaseValue = phjCaseValue,
                              phjRiskFactorVarName = phjNewCategoryVarName,
@@ -146,7 +146,7 @@ def phjViewLogOdds(phjTempDF,
             phjOR[phjSuffixDict['logodds']] = np.log(phjOR[phjSuffixDict['odds']])
             
             # Calculate log odds using logistic regression and retrieve the se from the statistical model
-            phjSE = phjCalculateLogOddsSE(phjTempDF = phjTempDF,
+            phjSE = phjCalculateLogOddsSE(phjDF = phjDF,
                                           phjCaseVarName = phjBinaryDepVarName,
                                           phjCaseValue = phjCaseValue,
                                           phjCategoricalVarName = phjNewCategoryVarName,
@@ -173,7 +173,7 @@ def phjViewLogOdds(phjTempDF,
             
             
             # Plot log odds against midpoints of categories
-            phjYErrors = phjGetYErrors(phjTempDF = phjOR,
+            phjYErrors = phjGetYErrors(phjDF = phjOR,
                                        phjCategoriesToPlotList = phjOR.index.tolist(),
                                        phjParameterValue = 'logodds',
                                        phjGroupVarName = None,
@@ -220,7 +220,7 @@ def phjViewLogOdds(phjTempDF,
 # Supporting functions
 # ====================
 
-def phjCalculateLogOddsSE(phjTempDF,
+def phjCalculateLogOddsSE(phjDF,
                           phjCaseVarName,
                           phjCaseValue,
                           phjCategoricalVarName,
@@ -241,15 +241,15 @@ def phjCalculateLogOddsSE(phjTempDF,
     # Get a list of values in the case variable, create a dictionary to convert values
     # to binary representation (based on given value of case value) – assuming it's not
     # already binary – and use the dictionary to convert case variable to a binary format.
-    phjCaseLevelsList = phjTempDF[phjCaseVarName].unique()
+    phjCaseLevelsList = phjDF[phjCaseVarName].unique()
     
     if set(phjCaseLevelsList) != set([0,1]):
         phjBinaryConvertDict = {c:(1 if c==phjCaseValue else 0) for c in phjCaseLevelsList}
-        phjTempDF[phjCaseVarName] = phjTempDF[phjCaseVarName].replace(phjBinaryConvertDict)
+        phjDF[phjCaseVarName] = phjDF[phjCaseVarName].replace(phjBinaryConvertDict)
     
     # Run a logistic regression model with no constant term (in patsy package, the -1 removes the constant term)
     phjLogisticRegressionResults = smf.glm(formula='{0} ~ C({1}) -1'.format(phjCaseVarName,phjCategoricalVarName),
-                                           data=phjTempDF,
+                                           data=phjDF,
                                            family = sm.families.Binomial(link = sm.genmod.families.links.logit)).fit()
     
     if phjPrintResults == True:
@@ -289,7 +289,7 @@ def phjCalculateLogOddsSE(phjTempDF,
 
 
 
-def phjCategoriseContinuousVariable(phjTempDF,
+def phjCategoriseContinuousVariable(phjDF,
                                     phjContinuousVarName = None,
                                     phjMissingValue = 'missing',
                                     phjNumberOfCategoriesInt = 5,
@@ -310,7 +310,7 @@ def phjCategoriseContinuousVariable(phjTempDF,
             
             phjBreaks = phjCategorisationMethod
             
-            phjTempDF[phjNewCategoryVarName] = pd.cut(phjTempDF[phjContinuousVarName],
+            phjDF[phjNewCategoryVarName] = pd.cut(phjDF[phjContinuousVarName],
                                                       bins = phjBreaks,
                                                       right = True,
                                                       labels = False)
@@ -318,20 +318,20 @@ def phjCategoriseContinuousVariable(phjTempDF,
         else:
             # If a list has been entered but it is not correct, return
             # the dataframe unchanged.
-            phjTempDF = phjTempDF
+            phjDF = phjDF
             phjBreaks = None
     
     
     elif phjCategorisationMethod == 'jenks':
         
-        phjBreaks = phjImplementGetBreaks(phjTempDF = phjTempDF,
+        phjBreaks = phjImplementGetBreaks(phjDF = phjDF,
                                           phjContinuousVarName = phjContinuousVarName,
                                           phjMissingValue = phjMissingValue,
                                           phjNumberOfCategoriesInt = phjNumberOfCategoriesInt,
                                           phjPrintResults = phjPrintResults)
         
         # Cut data series based on Jenks breaks
-        phjTempDF[phjNewCategoryVarName] = pd.cut(phjTempDF[phjContinuousVarName],
+        phjDF[phjNewCategoryVarName] = pd.cut(phjDF[phjContinuousVarName],
                                                   bins = phjBreaks,
                                                   right = True,
                                                   labels = False)
@@ -343,7 +343,7 @@ def phjCategoriseContinuousVariable(phjTempDF,
     elif phjCategorisationMethod == 'quantile':
         
         # Cut data series based on quantiles / number of required bins
-        phjTempDF[phjNewCategoryVarName], phjBreaks = pd.cut(phjTempDF[phjContinuousVarName],
+        phjDF[phjNewCategoryVarName], phjBreaks = pd.cut(phjDF[phjContinuousVarName],
                                                              bins = phjNumberOfCategoriesInt,
                                                              right = True,
                                                              retbins = True,
@@ -358,9 +358,9 @@ def phjCategoriseContinuousVariable(phjTempDF,
         phjBreaks = None
     
     if phjReturnBreaks == True:
-        return phjTempDF,phjBreaks
+        return phjDF,phjBreaks
     else:
-        return phjTempDF
+        return phjDF
 
 
 
@@ -413,14 +413,14 @@ def phjCheckIsNumber(i):
 
 
 
-def phjImplementGetBreaks(phjTempDF,
+def phjImplementGetBreaks(phjDF,
                           phjContinuousVarName = None,
                           phjMissingValue = 'missing',
                           phjNumberOfCategoriesInt = 5,
                           phjCategorisationMethod = 'jenks',
                           phjPrintResults = False):
     
-    phjTempSer = phjTempDF[phjContinuousVarName].replace('missing',np.nan).dropna(axis = 0)
+    phjTempSer = phjDF[phjContinuousVarName].replace('missing',np.nan).dropna(axis = 0)
     
     if phjCategorisationMethod == 'jenks':
         if len(phjTempSer.index) <= 1000:

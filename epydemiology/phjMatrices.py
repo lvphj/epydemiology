@@ -19,70 +19,72 @@ else:
     pandasPresent = True
     import pandas as pd
 
+import collections
+import inspect
 
 
-def phjRemoveUnwantedRows(phjTempDF,
+def phjRemoveUnwantedRows(phjDF,
                           phjColumnNamesList,
                           phjPrintResults = False):
     
     # Remove any rows with one or more NaN values
-    phjNumberRowsPreNaN = len(phjTempDF.index)
+    phjNumberRowsPreNaN = len(phjDF.index)
     
-    phjTempDF = phjTempDF.dropna(how = 'any').reset_index(drop = True)
+    phjDF = phjDF.dropna(how = 'any').reset_index(drop = True)
     
-    phjNumberRowsPostNaN = len(phjTempDF.index)
+    phjNumberRowsPostNaN = len(phjDF.index)
     
     if phjPrintResults == True:
         print('Number of rows removed with NaN values = ', phjNumberRowsPreNaN - phjNumberRowsPostNaN)
         print('\n')
         print('Dataframe with NaN values removed')
-        print(phjTempDF)
+        print(phjDF)
         print('\n')
     
     
     # Convert each column to numeric values - strings will be converted to NaN and removed
-    phjNumberRowsPreStrings = len(phjTempDF.index)
+    phjNumberRowsPreStrings = len(phjDF.index)
     
     for c in phjColumnNamesList:
-        phjTempDF[c] = pd.to_numeric(phjTempDF[c],errors = 'coerce')
+        phjDF[c] = pd.to_numeric(phjDF[c],errors = 'coerce')
     
-    phjTempDF = phjTempDF.dropna(how = 'any').reset_index(drop = True)
+    phjDF = phjDF.dropna(how = 'any').reset_index(drop = True)
         
-    phjNumberRowsPostStrings = len(phjTempDF.index)
+    phjNumberRowsPostStrings = len(phjDF.index)
     
     if phjPrintResults == True:
         print('Number of rows removed due to containing string values = ', phjNumberRowsPreStrings - phjNumberRowsPostStrings)
         print('\n')
         print('Dataframe with strings values removed')
-        print(phjTempDF)
+        print(phjDF)
         print('\n')
 
 
     # Convert all columns to integers
     for c in phjColumnNamesList:
-        phjTempDF[c] = phjTempDF[c].astype(int)
+        phjDF[c] = phjDF[c].astype(int)
     
     
     # Remove rows that contain values that are not zero or 1
-    phjNumberRowsPreBinaryRange = len(phjTempDF.index)
+    phjNumberRowsPreBinaryRange = len(phjDF.index)
     
     for c in phjColumnNamesList:
-        phjTempDF['isin'] = phjTempDF[c].isin([0,1])
-        phjTempDF = phjTempDF.loc[phjTempDF['isin'] == True,:]
+        phjDF['isin'] = phjDF[c].isin([0,1])
+        phjDF = phjDF.loc[phjDF['isin'] == True,:]
     
-    phjTempDF = phjTempDF.drop('isin', 1).reset_index(drop = True)
+    phjDF = phjDF.drop('isin', 1).reset_index(drop = True)
     
-    phjNumberRowsPostBinaryRange = len(phjTempDF.index)
+    phjNumberRowsPostBinaryRange = len(phjDF.index)
 
     if phjPrintResults == True:
         print('Number of rows removed due to values being out of range = ', phjNumberRowsPreBinaryRange - phjNumberRowsPostBinaryRange)
         print('\n')
         print('Dataframe containing zero and 1 values only')
-        print(phjTempDF)
+        print(phjDF)
         print('\n')
     
     
-    return phjTempDF[phjColumnNamesList].reset_index(drop = True)
+    return phjDF[phjColumnNamesList].reset_index(drop = True)
 
 
 
@@ -92,28 +94,28 @@ def phjBinaryVarsToSquareMatrix(phjDataDF,
                                 phjPrintResults = False):
     
     try:
-        phjTempDF = phjDataDF[phjColumnNamesList]
+        phjDF = phjDataDF[phjColumnNamesList]
         
     except KeyError as e:
         print('A KeyError has occurred ({0}). Check that the column names provided exist in the dataframe.'.format(e))
         return None
     
-    phjNumberRowsOriginal = len(phjTempDF.index)
+    phjNumberRowsOriginal = len(phjDF.index)
     
     if phjPrintResults == True:
         print('Number of rows in original database = ', phjNumberRowsOriginal)
         print('\n')
         print('Original dataframe')
-        print(phjTempDF)
+        print(phjDF)
         print('\n')
     
     # Remove rows where any values are missing, strings, or not a zero or 1
-    phjTempDF = phjRemoveUnwantedRows(phjTempDF = phjTempDF,
+    phjDF = phjRemoveUnwantedRows(phjDF = phjDF,
                                       phjColumnNamesList = phjColumnNamesList,
                                       phjPrintResults = phjPrintResults)
     
     
-    phjTempDF['rowSum'] = phjTempDF[phjColumnNamesList].sum(axis=1)
+    phjDF['rowSum'] = phjDF[phjColumnNamesList].sum(axis=1)
     
     # Create a blank square matrix (in dataframe form) with column and row indices the same
     phjTempMatrixDF = pd.DataFrame(columns=phjColumnNamesList,index=phjColumnNamesList)
@@ -125,7 +127,7 @@ def phjBinaryVarsToSquareMatrix(phjDataDF,
     # (For some reason, if the dataframe contains one or more rows where rowSum equals 1 then
     # the series contains integers but, if there are no rowSum values equal to 1 (and, therefore, the values
     # sum of the columns equal zero), then the series contains floats. Use astype(int) to avoid issues.)
-    phjTempSer = phjTempDF.loc[phjTempDF['rowSum']==1,phjColumnNamesList].sum(axis=0).astype(int)
+    phjTempSer = phjDF.loc[phjDF['rowSum']==1,phjColumnNamesList].sum(axis=0).astype(int)
     
     # Step through each diagonal cell in the matrix and enter tbe sum value
     for c in phjColumnNamesList:
@@ -137,7 +139,7 @@ def phjBinaryVarsToSquareMatrix(phjDataDF,
     # of all OTHER variables and the number of entries or those variables
     for c in phjColumnNamesList:
         phjOtherCols = [i for i in phjColumnNamesList if i!=c]
-        phjTempSer = phjTempDF.loc[(phjTempDF['rowSum']>1) & (phjTempDF[c]==1),phjOtherCols].sum(axis=0).astype(int)
+        phjTempSer = phjDF.loc[(phjDF['rowSum']>1) & (phjDF[c]==1),phjOtherCols].sum(axis=0).astype(int)
         
         # For each row index, step through each column and add the data
         for oc in phjOtherCols:
@@ -158,6 +160,103 @@ def phjBinaryVarsToSquareMatrix(phjDataDF,
         print('The phjOutputFormat parammeter was set to an unknown value (\'{0}\'). The return value was set to None.'.format(phjOutputFormat))
         print('\n')
         return None
+
+
+
+def phjLongToWideBinary(phjDF,
+                        phjGroupbyVarName,
+                        phjVariablesVarName,
+                        phjValuesDict = {0:0,1:1},
+                        phjPrintResults = False):
+    # This function converts a dataframe containing a grouping variable and a variable
+    # containing a series of factors that may or may not be present and converts to a
+    # wide dataframe containing a series of binary variables indicating whether the factor
+    # is present or not.
+    # For example, it converts:
+    #
+    #       X  Y
+    #    0  1  a
+    #    1  1  b
+    #    2  1  d
+    #    3  2  b
+    #    4  2  c
+    #    5  3  d
+    #    6  3  e
+    #    7  3  a
+    #    8  3  f
+    #    9  4  b
+    # 
+    # to:
+    #       X  a  b  d  c  e  f
+    #    0  1  1  1  1  0  0  0
+    #    1  2  0  1  0  1  0  0
+    #    2  3  1  0  1  0  1  1
+    #    3  4  0  1  0  0  0  0
+    
+    
+    # Check function parameters are set correctly
+    try:
+        # Check whether required parameters have been set to correct type
+        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
+        assert isinstance(phjGroupbyVarName,str), "Parameter 'phjGroupbyVarName' needs to be a string."
+        assert isinstance(phjVariablesVarName,str), "Parameter 'phjVariablesVarName' needs to be a string."
+        assert isinstance(phjValuesDict,collections.Mapping), "Parameter 'phjValuesDict' needs to be a dict." # collections.Mapping will work for dict(), collections.OrderedDict() and collections.UserDict() (see comment by Alexander Ryzhov at https://stackoverflow.com/questions/25231989/how-to-check-if-a-variable-is-a-dictionary-in-python.
+                
+        # Check whether arguments are set to allowable values
+        for k,v in phjValuesDict.items():
+            assert k in [0,1], "The key values in phjValuesDict need to either 0 or 1."
+            
+        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
+        
+        # Check that referenced columns exist in the dataframe
+        assert phjGroupbyVarName in phjDF.columns, "The column name 'phjGroupbyVarName' does not exist in dataframe."
+        assert phjVariablesVarName in phjDF.columns, "The column name 'phjVariablesVarName' does not exist in dataframe."
+        
+    except AssertionError as e:
+        # Set return value to none
+        phjScratchDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+        
+    else:
+        # Create a scratch DF with appropriate rows and columns, filled with zero
+        phjScratchDF = pd.DataFrame(index = pd.Series(phjDF[phjGroupbyVarName].unique()),
+                                    columns = list(phjDF[phjVariablesVarName].unique())).fillna(0)
+
+        phjScratchDF.index.name = phjGroupbyVarName
+
+        # Within each group, create a list contain all variables
+        phjGroup = phjDF[[phjGroupbyVarName,phjVariablesVarName]].groupby(phjGroupbyVarName).agg(lambda phjRow: list(phjRow))
+
+        # Step through each group and change each variable contained in the list of present variables with a 1
+        for g in phjGroup.index.values.tolist():
+            phjScratchDF.loc[g,phjGroup.loc[g,phjVariablesVarName]] = 1
+        
+        # This step replaces the default 0 and 1 with user-defined values. It should only be
+        # run if phjValuesDict has been set to something other than default. Check whether
+        # a passed dict is the same as the default (even if the order of elements has changed).
+        # If simply comparing one dict with another then {0:0,1:1} will be seen to be the
+        # same as {0:False,1:True}. But for the purposes of this exercise, those 2 dicts should
+        # be seen to be different. Therefore, convert the values is both dicts to strings
+        # before comparing.
+        if {k:str(v) for k,v in phjValuesDict.items()} != {k:str(v) for k,v in {0:0,1:1}.items()}:
+            phjScratchDF = phjScratchDF.replace(phjValuesDict)
+        
+        phjScratchDF = phjScratchDF.reset_index(drop = False)
+    
+    finally:
+        # Return phjScratchDF which will be a dataframe if successful or None if not
+        return phjScratchDF
 
 
 

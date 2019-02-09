@@ -21,7 +21,7 @@ else:
 
 
 
-def phjParseDateVar(phjTempDF,
+def phjParseDateVar(phjDF,
                     phjDateVarName = None,   # This can be a string or a list of variable names
                     phjDateFormat = '%Y-%m-%d',
                     phjMissingValue = 'missing',
@@ -29,7 +29,7 @@ def phjParseDateVar(phjTempDF,
     
     # Copy the entered dataframe to a working version so can
     # revert back to original if necessary.
-    phjWorkingDF = phjTempDF.copy()
+    phjWorkingDF = phjDF.copy()
     
     # Convert the column headings to a list for future use
     phjColumnHeadingsList = phjWorkingDF.columns.values
@@ -77,7 +77,7 @@ def phjParseDateVar(phjTempDF,
                             # If user requests to leave, reset the working DF back to the original
                             if phjChoice == 'L' or phjChoice == 'l':
                                 # User elects to leave function; revert dataframe back to original
-                                phjWorkingDF = phjTempDF
+                                phjWorkingDF = phjDF
                                 print('\nYou have elected to leave the function to evaluate your data. Your original dataframe has not been modified.')
                             
                             # If user requests to re-parse the variable then do so but
@@ -142,7 +142,7 @@ def phjParseDateVar(phjTempDF,
                                 # trying to format any other columns.
                                 if phjChoice == 'L' or phjChoice == 'l':
                                     # User elects to leave function; revert dataframe back to original
-                                    phjWorkingDF = phjTempDF
+                                    phjWorkingDF = phjDF
                                     print('\nYou have elected to leave the function to evaluate your data. Your original dataframe has not been modified.')
                                     break
                                 

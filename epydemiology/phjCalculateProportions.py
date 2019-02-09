@@ -96,7 +96,7 @@ import collections
 #        g2     B       4         2    0.50
 #        g2     C       4         2    0.50
  
-def phjCalculateBinomialProportions(phjTempDF,
+def phjCalculateBinomialProportions(phjDF,
                                     phjColumnsList,
                                     phjSuccess = 'yes',
                                     phjGroupVarName = None,
@@ -111,7 +111,7 @@ def phjCalculateBinomialProportions(phjTempDF,
  
     try:
         # 1. Check whether entered parameters have been set to the correct type
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
         assert isinstance(phjColumnsList,list), "Parameter, 'phjColumnsList' needs to be a list."
  
         # N.B. isinstance() can take a tuple to test against multiple types.
@@ -141,10 +141,10 @@ def phjCalculateBinomialProportions(phjTempDF,
  
         # 2. Check whether entered parameters have been set to an appropriate value
         for col in phjColumnsList:
-            assert col in phjTempDF.columns.tolist(), "Variable '{0}' does not exist in dataframe.".format(col)
+            assert col in phjDF.columns.tolist(), "Variable '{0}' does not exist in dataframe.".format(col)
  
         if phjGroupVarName is not None:
-            assert phjGroupVarName in phjTempDF.columns.tolist(), "Variable '{0}' does not exist in dataframe.".format(phjGroupVarName)
+            assert phjGroupVarName in phjDF.columns.tolist(), "Variable '{0}' does not exist in dataframe.".format(phjGroupVarName)
             assert phjGroupVarName not in phjColumnsList, "The group variable name ('{0}') cannot be included in the list of columns ({1}).".format(phjGroupVarName,phjColumnsList)
  
         if (phjGroupVarName is not None) & (phjPlotProportions == True):
@@ -154,7 +154,7 @@ def phjCalculateBinomialProportions(phjTempDF,
             assert phjGroupsToPlotList is None, "The required groups to plot have been set but the group variable name is undefined."
  
         if (phjGroupVarName is not None) & (phjGroupsToPlotList is not None):
-            assert ((phjGroupsToPlotList == 'all') or set(phjGroupsToPlotList).issubset(phjTempDF[phjGroupVarName].unique())), "Groups to plot do not exist in variable '{0}'.".format(phjGroupVarName)
+            assert ((phjGroupsToPlotList == 'all') or set(phjGroupsToPlotList).issubset(phjDF[phjGroupVarName].unique())), "Groups to plot do not exist in variable '{0}'.".format(phjGroupVarName)
  
         assert phjBinomialConfIntMethod in ['normal','agresti_coull','beta','wilson','jeffreys','binom_test'], "Requested method for calculating binomial confidence interval ('{0}') is not recognised.".format(phjBinomialConfIntMethod)
         assert ((phjAlpha > 0) & (phjAlpha < 1)), "Variable 'phjAlpha' needs to be set between zero and one."
@@ -183,7 +183,7 @@ def phjCalculateBinomialProportions(phjTempDF,
         # to determine which groups to plot data for.
         # (N.B. If no group name is given, a default value 'group' is used.)
         # i. Categories
-        phjGroupLevelsList = phjGetGroupLevelsList(phjTempDF = phjTempDF,
+        phjGroupLevelsList = phjGetGroupLevelsList(phjDF = phjDF,
                                                    phjGroupVarName = phjGroupVarName,
                                                    phjPrintResults = phjPrintResults)
  
@@ -196,24 +196,24 @@ def phjCalculateBinomialProportions(phjTempDF,
         if phjGroupVarName is None:
             # If no group var name is supplied then calculate success for
             # whole columns and return summary dataframe.
-            phjPropDF = phjCountSuccesses(x = phjTempDF[phjColumnsList],
+            phjPropDF = phjCountSuccesses(x = phjDF[phjColumnsList],
                                           phjColumnsList = phjColumnsList,
                                           phjSuccessValue = phjSuccess,
                                           phjMissingValue = phjMissingValue)
  
         else:
             # Copy required columns to new dataframe
-            phjTempDF = phjTempDF[phjColumnsList + [phjGroupVarName]].copy()
+            phjDF = phjDF[phjColumnsList + [phjGroupVarName]].copy()
  
             # Calculate number of successes for each level of group variable and return summary dataframe
-            phjPropDF = phjTempDF.groupby(phjGroupVarName).apply(lambda x: phjCountSuccesses(x,
+            phjPropDF = phjDF.groupby(phjGroupVarName).apply(lambda x: phjCountSuccesses(x,
                                                                                              phjColumnsList = phjColumnsList,
                                                                                              phjSuccessValue = phjSuccess,
                                                                                              phjMissingValue = phjMissingValue))
  
  
         # Calculate confidence intervals
-        phjPropDF = phjCalculateBinomialConfInts(phjTempDF = phjPropDF,
+        phjPropDF = phjCalculateBinomialConfInts(phjDF = phjPropDF,
                                                  phjSuccVarName = phjSuffixDict['numbersuccesses'],
                                                  phjTotalVarName = phjSuffixDict['numbertrials'],
                                                  phjBinomialConfIntMethod = phjBinomialConfIntMethod,
@@ -291,7 +291,7 @@ def phjCalculateBinomialProportions(phjTempDF,
         if phjPlotProportions == True:
  
             # Plot chart
-            phjPlotProportionsBarChart(phjTempDF = phjPropDF,
+            phjPlotProportionsBarChart(phjDF = phjPropDF,
                                        phjCategoriesToPlotList = phjColumnsList,
                                        phjGroupVarName = phjGroupVarName,
                                        phjGroupLevelsList = phjGroupLevelsList,
@@ -311,7 +311,7 @@ def phjCalculateBinomialProportions(phjTempDF,
 # This function calculates proportions, simultaneous confidence intervals for a categorical
 # variable and plots bar charts with asymmetrical error bars.
  
-def phjCalculateMultinomialProportions(phjTempDF,
+def phjCalculateMultinomialProportions(phjDF,
                                        phjCategoryVarName = None,
                                        phjGroupVarName = None,
                                        phjMissingValue = 'missing',
@@ -334,7 +334,7 @@ def phjCalculateMultinomialProportions(phjTempDF,
  
  
     # Copy required columns to dataframe
-    phjTempDF = phjKeepRequiredData(phjTempDF = phjTempDF,
+    phjDF = phjKeepRequiredData(phjDF = phjDF,
                                     phjColumnsList = [phjCategoryVarName],
                                     phjGroupVarName = phjGroupVarName,
                                     phjMissingValue = phjMissingValue)
@@ -343,12 +343,12 @@ def phjCalculateMultinomialProportions(phjTempDF,
     # Create lists of unique category and group levels
     # (N.B. If no group name is given, a default value 'group' is used.)
     # i. Categories
-    phjCategoryLevelsList = phjGetCategoryLevelsList(phjTempDF = phjTempDF,
+    phjCategoryLevelsList = phjGetCategoryLevelsList(phjDF = phjDF,
                                                      phjCategoryVarName = phjCategoryVarName,
                                                      phjPrintResults = phjPrintResults)
  
     # ii. Groups
-    phjGroupLevelsList = phjGetGroupLevelsList(phjTempDF = phjTempDF,
+    phjGroupLevelsList = phjGetGroupLevelsList(phjDF = phjDF,
                                                phjGroupVarName = phjGroupVarName,
                                                phjPrintResults = phjPrintResults)
  
@@ -371,12 +371,12 @@ def phjCalculateMultinomialProportions(phjTempDF,
  
         # Calculate frequencies and relative frequencies for each group
         if phjGroupVarName is None:
-            phjTempRelFreqDF = pd.DataFrame(phjTempDF[phjCategoryVarName].value_counts(normalize = phjNormalize))
+            phjTempRelFreqDF = pd.DataFrame(phjDF[phjCategoryVarName].value_counts(normalize = phjNormalize))
             phjTempRelFreqDF = phjTempRelFreqDF.rename(columns = {phjCategoryVarName: phjSuffix})
  
             # Use non-normalized data to calculate simultaneous confidence intervals
             if phjNormalize == False:
-                phjTempRelFreqDF = phjCalculateMultinomialConfInts(phjTempDF = phjTempRelFreqDF,
+                phjTempRelFreqDF = phjCalculateMultinomialConfInts(phjDF = phjTempRelFreqDF,
                                                                    phjAbsFreqColumnName = phjSuffix,
                                                                    phjSimultConfIntColumnName = phjSuffixDict['cisuffix'],
                                                                    phjMultinomialConfIntMethod = phjMultinomialConfIntMethod,
@@ -394,12 +394,12 @@ def phjCalculateMultinomialProportions(phjTempDF,
  
         else:
             for phjGroup in phjGroupLevelsList:
-                phjTempRelFreqDF = pd.DataFrame(phjTempDF.loc[phjTempDF[phjGroupVarName] == phjGroup,phjCategoryVarName].value_counts(normalize = phjNormalize))
+                phjTempRelFreqDF = pd.DataFrame(phjDF.loc[phjDF[phjGroupVarName] == phjGroup,phjCategoryVarName].value_counts(normalize = phjNormalize))
                 phjTempRelFreqDF = phjTempRelFreqDF.rename(columns = {phjCategoryVarName: phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffix])})
  
                 # Use non-normalized data to calculate simultaneous confidence intervals
                 if phjNormalize == False:
-                    phjTempRelFreqDF = phjCalculateMultinomialConfInts(phjTempDF = phjTempRelFreqDF,
+                    phjTempRelFreqDF = phjCalculateMultinomialConfInts(phjDF = phjTempRelFreqDF,
                                                                        phjAbsFreqColumnName = phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffix]),
                                                                        phjSimultConfIntColumnName = phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix']]),
                                                                        phjMultinomialConfIntMethod = phjMultinomialConfIntMethod,
@@ -415,7 +415,7 @@ def phjCalculateMultinomialProportions(phjTempDF,
  
  
  
-    phjRelFreqDF = phjReorderCols(phjTempDF = phjRelFreqDF,
+    phjRelFreqDF = phjReorderCols(phjDF = phjRelFreqDF,
                                   phjGroupVarName = phjGroupVarName,
                                   phjGroupLevelsList = phjGroupLevelsList,
                                   phjAlpha = phjAlpha,
@@ -429,7 +429,7 @@ def phjCalculateMultinomialProportions(phjTempDF,
     if phjPlotRelFreq == True:
  
         # Plot chart
-        phjPlotProportionsBarChart(phjTempDF = phjRelFreqDF,
+        phjPlotProportionsBarChart(phjDF = phjRelFreqDF,
                                    phjCategoriesToPlotList = phjCategoriesToPlotList,
                                    phjGroupVarName = phjGroupVarName,
                                    phjGroupLevelsList = phjGroupLevelsList,
@@ -444,7 +444,7 @@ def phjCalculateMultinomialProportions(phjTempDF,
  
  
  
-def phjCalculateBinomialConfInts(phjTempDF,
+def phjCalculateBinomialConfInts(phjDF,
                                  phjSuccVarName = None,
                                  phjFailVarName = None,
                                  phjTotalVarName = None,
@@ -457,7 +457,7 @@ def phjCalculateBinomialConfInts(phjTempDF,
  
     try:
         # Check whether required parameters have been set to correct type
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDF,pd.DataFrame), "Parameter 'phjDF' needs to be a Pandas dataframe."
  
         if phjSuccVarName is not None:
             assert isinstance(phjSuccVarName,str), "Parameter 'phjSuccVarName' needs to be a string."
@@ -479,13 +479,13 @@ def phjCalculateBinomialConfInts(phjTempDF,
         # Check that referenced columns exist in the dataframe
         for colname in [phjSuccVarName,phjFailVarName,phjTotalVarName]:
             if colname is not None:
-                assert colname in phjTempDF.columns, "The column name '{0}' does not exist in dataframe.".format(colname)
+                assert colname in phjDF.columns, "The column name '{0}' does not exist in dataframe.".format(colname)
  
         # Check that new column names do not already exist
         for newcolname in [phjSuffixDict['proportion'],
                            phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']]),
                            phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])]:
-            assert newcolname not in phjTempDF.columns, "The column name '{0}' will be created but already exists. Please rename column and try again.".format(newcolname)
+            assert newcolname not in phjDF.columns, "The column name '{0}' will be created but already exists. Please rename column and try again.".format(newcolname)
  
         # The user can enter two of three parameters in list of successes, failures or total.
         # Check that at least 2 parameters are entered.
@@ -495,7 +495,7 @@ def phjCalculateBinomialConfInts(phjTempDF,
  
         # If all three parameters have been entered, check that successes + failures = total
         if nArgs == 3:
-            assert (phjTempDF[phjSuccVarName] + phjTempDF[phjFailVarName]).equals(phjTempDF[phjTotalVarName]), "The '{0}' and '{1}' columns do not add up to the values in the '{2}' column.".format(phjSuccVarName,phjFailVarName,phjTotalVarName)
+            assert (phjDF[phjSuccVarName] + phjDF[phjFailVarName]).equals(phjDF[phjTotalVarName]), "The '{0}' and '{1}' columns do not add up to the values in the '{2}' column.".format(phjSuccVarName,phjFailVarName,phjTotalVarName)
  
  
     except AssertionError as e:
@@ -507,36 +507,36 @@ def phjCalculateBinomialConfInts(phjTempDF,
         if (nArgs == 2) & (phjFailVarName is not None):
             if phjSuccVarName is None:
                 phjSuccVarName = phjSuffixDict['numbersuccess']
-                phjTempDF[phjSuccVarName] = phjTempDF[phjTotalVarName] - phjTempDF[phjFailVarName]
+                phjDF[phjSuccVarName] = phjDF[phjTotalVarName] - phjDF[phjFailVarName]
             elif phjTotalVarName is None:
                 phjTotalVarName = phjSuffixDict['numbertrials']
-                phjTempDF[phjTotalVarName] = phjTempDF[phjSuccVarName] + phjTempDF[phjFailVarName]
+                phjDF[phjTotalVarName] = phjDF[phjSuccVarName] + phjDF[phjFailVarName]
  
         # Ensure count data is stored as integer values. Otherwise,
         # for some reason, calculations with object columns can go awry.
-        phjTempDF[phjSuccVarName] = phjTempDF[phjSuccVarName].astype(int)
-        phjTempDF[phjTotalVarName] = phjTempDF[phjTotalVarName].astype(int)
+        phjDF[phjSuccVarName] = phjDF[phjSuccVarName].astype(int)
+        phjDF[phjTotalVarName] = phjDF[phjTotalVarName].astype(int)
  
         # Calculate proportions
-        phjTempDF[phjSuffixDict['proportion']] = phjTempDF[phjSuccVarName] / phjTempDF[phjTotalVarName]
+        phjDF[phjSuffixDict['proportion']] = phjDF[phjSuccVarName] / phjDF[phjTotalVarName]
  
         # Get binomial confidence intervals
-        phjBinomConfIntArr = smprop.proportion_confint(count = phjTempDF[phjSuccVarName],
-                                                       nobs = phjTempDF[phjTotalVarName],
+        phjBinomConfIntArr = smprop.proportion_confint(count = phjDF[phjSuccVarName],
+                                                       nobs = phjDF[phjTotalVarName],
                                                        alpha = phjAlpha,
                                                        method = phjBinomialConfIntMethod)
  
-        phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])] = [i for i in phjBinomConfIntArr[0]]
-        phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] = [i for i in phjBinomConfIntArr[1]]
+        phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])] = [i for i in phjBinomConfIntArr[0]]
+        phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] = [i for i in phjBinomConfIntArr[1]]
         
-        phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowint']])] = phjTempDF[phjSuffixDict['proportion']] - phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]
-        phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciuppint']])] = phjTempDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjTempDF[phjSuffixDict['proportion']]
+        phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowint']])] = phjDF[phjSuffixDict['proportion']] - phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]
+        phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciuppint']])] = phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjDF[phjSuffixDict['proportion']]
         
-    return phjTempDF
+    return phjDF
  
  
  
-def phjSummaryTableToBinaryOutcomes(phjTempDF,
+def phjSummaryTableToBinaryOutcomes(phjDF,
                                     phjVarsToIncludeList,
                                     phjSuccVarName = None,
                                     phjFailVarName = None,
@@ -552,7 +552,7 @@ def phjSummaryTableToBinaryOutcomes(phjTempDF,
     # Check function parameters are set correctly
     try:
         # Check whether required parameters have been set to correct type
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
         assert isinstance(phjVarsToIncludeList,(str,list)), "Parameter 'phjVarsToIncludeList' needs to be a list (or a string)."
         
         if phjSuccVarName is not None:
@@ -573,18 +573,18 @@ def phjSummaryTableToBinaryOutcomes(phjTempDF,
         
         # Check that referenced columns exist in the dataframe
         if isinstance(phjVarsToIncludeList,str):
-            assert phjVarsToIncludeList in phjTempDF.columns, "The column name '{0}' does not exist in dataframe.".format(phjVarsToIncludeList)
+            assert phjVarsToIncludeList in phjDF.columns, "The column name '{0}' does not exist in dataframe.".format(phjVarsToIncludeList)
         elif isinstance(phjVarsToIncludeList,list):
             for col in phjVarsToIncludeList:
-                assert col in phjTempDF.columns, "The column name '{0}' does not exist in dataframe.".format(col)
+                assert col in phjDF.columns, "The column name '{0}' does not exist in dataframe.".format(col)
         
         for col in [phjSuccVarName,phjFailVarName,phjTotalVarName]:
             if col is not None:
-                assert col in phjTempDF.columns, "The column name '{0}' does not exist in dataframe.".format(col)
+                assert col in phjDF.columns, "The column name '{0}' does not exist in dataframe.".format(col)
         
         
         # Check that new column names do not already exist
-        assert phjOutcomeVarName not in phjTempDF.columns, "The column name '{0}' already exists.".format(phjOutcomeVarName)
+        assert phjOutcomeVarName not in phjDF.columns, "The column name '{0}' already exists.".format(phjOutcomeVarName)
         
         
         # The user can enter two of three parameters in list of successes, failures or total.
@@ -596,14 +596,14 @@ def phjSummaryTableToBinaryOutcomes(phjTempDF,
         
         # If all three parameters have been entered, check that successes + failures = total
         if nArgs == 3:
-            assert (phjTempDF[phjSuccVarName] + phjTempDF[phjFailVarName]).equals(phjTempDF[phjTotalVarName]), "The '{0}' and '{1}' columns do not add up to the values in the '{2}' column.".format(phjSuccVarName,phjFailVarName,phjTotalVarName)
+            assert (phjDF[phjSuccVarName] + phjDF[phjFailVarName]).equals(phjDF[phjTotalVarName]), "The '{0}' and '{1}' columns do not add up to the values in the '{2}' column.".format(phjSuccVarName,phjFailVarName,phjTotalVarName)
             
             
     
     except AssertionError as e:
         print("An AssertionError occurred. ({0})".format(e))
         
-        phjTempDF = None
+        phjDF = None
     
     else:
         # Set default suffixes and join strings to create column names
@@ -615,11 +615,11 @@ def phjSummaryTableToBinaryOutcomes(phjTempDF,
         if (nArgs == 2) & (phjTotalVarName is not None):
             if phjSuccVarName is None:
                 phjSuccVarName = phjSuffixDict['numbersuccesses']
-                phjTempDF[phjSuccVarName] = phjTempDF[phjTotalVarName] - phjTempDF[phjFailVarName]
+                phjDF[phjSuccVarName] = phjDF[phjTotalVarName] - phjDF[phjFailVarName]
             
             elif phjFailVarName is None:
                 phjFailVarName = phjSuffixDict['numberfailures']
-                phjTempDF[phjFailVarName] = phjTempDF[phjTotalVarName] - phjTempDF[phjSuccVarName]
+                phjDF[phjFailVarName] = phjDF[phjTotalVarName] - phjDF[phjSuccVarName]
         
         
         # If the list of variables to include is only a single variable included as a string,
@@ -633,34 +633,34 @@ def phjSummaryTableToBinaryOutcomes(phjTempDF,
         
         if phjPrintResults == True:
             print('Initial dataframe\n')
-            print(phjTempDF.loc[:,phjVarsToIncludeList + [j for j in [phjSuccVarName,phjFailVarName,phjTotalVarName] if j is not None]])
+            print(phjDF.loc[:,phjVarsToIncludeList + [j for j in [phjSuccVarName,phjFailVarName,phjTotalVarName] if j is not None]])
             print('\n')
             
         
         # Stack positive (success) and negative (failure) results one on top of the other
-        phjTempDF = phjTempDF.melt(id_vars = phjVarsToIncludeList,
+        phjDF = phjDF.melt(id_vars = phjVarsToIncludeList,
                                    value_vars = [phjSuccVarName,phjFailVarName],
                                    var_name = phjOutcomeVarName,
                                    value_name = 'count').reset_index(drop = True)
         
-        phjTempDF = phjTempDF.loc[phjTempDF.index.repeat(phjTempDF['count'])]
+        phjDF = phjDF.loc[phjDF.index.repeat(phjDF['count'])]
         
-        phjTempDF[phjOutcomeVarName] = phjTempDF[phjOutcomeVarName].replace({phjSuccVarName: 1,
+        phjDF[phjOutcomeVarName] = phjDF[phjOutcomeVarName].replace({phjSuccVarName: 1,
                                                                              phjFailVarName: 0})
         
-        phjTempDF = phjTempDF[[x for x in phjTempDF.columns if x != 'count']].reset_index(drop = True)
+        phjDF = phjDF[[x for x in phjDF.columns if x != 'count']].reset_index(drop = True)
         
     if phjPrintResults == True:
         print('Final dataframe\n')
         with pd.option_context('display.max_rows',6, 'display.max_columns',2):
-            print(phjTempDF)
+            print(phjDF)
         print('\n')
     
-    return phjTempDF
+    return phjDF
  
  
  
-def phjAnnualDiseaseTrend(phjTempDF,
+def phjAnnualDiseaseTrend(phjDF,
                           phjYearVarName,
                           phjPositivesVarName = None,
                           phjNegativesVarName = None,
@@ -675,7 +675,7 @@ def phjAnnualDiseaseTrend(phjTempDF,
     # Get a list of the terms used to head columns in summary tables
     phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
     
-    phjPropDF = phjCalculateBinomialConfInts(phjTempDF = phjTempDF,
+    phjPropDF = phjCalculateBinomialConfInts(phjDF = phjDF,
                                              phjSuccVarName = phjPositivesVarName,
                                              phjFailVarName = phjNegativesVarName,
                                              phjTotalVarName = phjTotalVarName,
@@ -683,7 +683,7 @@ def phjAnnualDiseaseTrend(phjTempDF,
                                              phjAlpha = phjAlpha,
                                              phjPrintResults = phjPrintResults)
     
-    phjLongDF = phjSummaryTableToBinaryOutcomes(phjTempDF = phjPropDF,
+    phjLongDF = phjSummaryTableToBinaryOutcomes(phjDF = phjPropDF,
                                                 phjVarsToIncludeList = [phjYearVarName],
                                                 phjSuccVarName = phjPositivesVarName,
                                                 phjFailVarName = phjNegativesVarName,
@@ -892,30 +892,30 @@ def phjCountSuccesses(x,
  
  
  
-def phjKeepRequiredData(phjTempDF,
+def phjKeepRequiredData(phjDF,
                         phjColumnsList = None,
                         phjGroupVarName = None,
                         phjMissingValue = 'missing'):
  
     # Copy required columns to dataframe
     if phjGroupVarName is not None:
-        phjTempDF = phjTempDF.loc[:,[phjGroupVarName] + phjColumnsList].copy()
+        phjDF = phjDF.loc[:,[phjGroupVarName] + phjColumnsList].copy()
     else:
-        phjTempDF = phjTempDF.loc[:,phjColumnsList].copy()
+        phjDF = phjDF.loc[:,phjColumnsList].copy()
  
     # Remove rows with missing values
-    phjTempDF = phjTempDF.replace(phjMissingValue,np.nan)
-    phjTempDF = phjTempDF.dropna(axis = 0, how = 'any')
+    phjDF = phjDF.replace(phjMissingValue,np.nan)
+    phjDF = phjDF.dropna(axis = 0, how = 'any')
  
-    return phjTempDF
+    return phjDF
  
  
  
-def phjGetCategoryLevelsList(phjTempDF,
+def phjGetCategoryLevelsList(phjDF,
                              phjCategoryVarName = None,
                              phjPrintResults = False):
  
-    phjCategoryLevelsList = list(phjTempDF[phjCategoryVarName].unique())
+    phjCategoryLevelsList = list(phjDF[phjCategoryVarName].unique())
  
     if phjPrintResults == True:
         print('\nCategory levels: ',phjCategoryLevelsList)
@@ -924,7 +924,7 @@ def phjGetCategoryLevelsList(phjTempDF,
  
  
  
-def phjGetGroupLevelsList(phjTempDF,
+def phjGetGroupLevelsList(phjDF,
                           phjGroupVarName = None,
                           phjPrintResults = False):
     # This function returns a list of group names that will be used as
@@ -936,7 +936,7 @@ def phjGetGroupLevelsList(phjTempDF,
     if phjGroupVarName is None:
         phjGroupLevelsList = ['group']
     else:
-        phjGroupLevelsList = list(phjTempDF[phjGroupVarName].unique())
+        phjGroupLevelsList = list(phjDF[phjGroupVarName].unique())
  
     if phjPrintResults == True:
         print('Group levels: ',phjGroupLevelsList,'\n')
@@ -945,7 +945,7 @@ def phjGetGroupLevelsList(phjTempDF,
  
  
  
-def phjCalculateMultinomialConfInts(phjTempDF,
+def phjCalculateMultinomialConfInts(phjDF,
                                     phjAbsFreqColumnName = None,
                                     phjSimultConfIntColumnName = None,
                                     phjMultinomialConfIntMethod = 'goodman',
@@ -956,18 +956,18 @@ def phjCalculateMultinomialConfInts(phjTempDF,
     phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
  
     # Get simultaneous confidence intervals
-    phjSimultConfIntArr = smprop.multinomial_proportions_confint(phjTempDF[phjAbsFreqColumnName],
+    phjSimultConfIntArr = smprop.multinomial_proportions_confint(phjDF[phjAbsFreqColumnName],
                                                                  alpha = phjAlpha,
                                                                  method = phjMultinomialConfIntMethod)
  
-    phjTempDF[phjSuffixDict['joinstr'].join([phjSimultConfIntColumnName,phjSuffixDict['cilowlim']])] = [i[0] for i in phjSimultConfIntArr]
-    phjTempDF[phjSuffixDict['joinstr'].join([phjSimultConfIntColumnName,phjSuffixDict['ciupplim']])] = [i[1] for i in phjSimultConfIntArr]
+    phjDF[phjSuffixDict['joinstr'].join([phjSimultConfIntColumnName,phjSuffixDict['cilowlim']])] = [i[0] for i in phjSimultConfIntArr]
+    phjDF[phjSuffixDict['joinstr'].join([phjSimultConfIntColumnName,phjSuffixDict['ciupplim']])] = [i[1] for i in phjSimultConfIntArr]
  
-    return phjTempDF
+    return phjDF
  
  
  
-def phjReorderCols(phjTempDF,
+def phjReorderCols(phjDF,
                    phjGroupVarName = None,
                    phjGroupLevelsList = None,
                    phjAlpha = 0.05,
@@ -989,13 +989,13 @@ def phjReorderCols(phjTempDF,
         phjColOrder.extend([phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['proportion']]) for phjGroup in phjGroupLevelsList])
         phjColOrder.extend([phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix'],phjLimit]) for phjGroup in phjGroupLevelsList for phjLimit in [phjSuffixDict['cilowlim'],phjSuffixDict['ciupplim']]])
  
-    phjTempDF = phjTempDF[phjColOrder]
+    phjDF = phjDF[phjColOrder]
  
-    return phjTempDF
+    return phjDF
  
  
  
-def phjPlotProportionsBarChart(phjTempDF,
+def phjPlotProportionsBarChart(phjDF,
                                phjCategoriesToPlotList = 'all',
                                phjGroupVarName = None,
                                phjGroupLevelsList = None,
@@ -1015,17 +1015,17 @@ def phjPlotProportionsBarChart(phjTempDF,
     # Define which categories to plot
     if phjCategoriesToPlotList == 'all':
         # Get a list of all categories from the dataframe index.
-        phjIndexItemsToPlot = list(phjTempDF.index.values)
+        phjIndexItemsToPlot = list(phjDF.index.values)
     else:
         # The following list comprehension ensures that the columns are plotting in the
         # same order in which they appear in the dataframe, regardless of the order in
         # which they were listed by the user.
-        phjIndexItemsToPlot = [i for i in list(phjTempDF.index.values) if i in phjCategoriesToPlotList]
+        phjIndexItemsToPlot = [i for i in list(phjDF.index.values) if i in phjCategoriesToPlotList]
  
  
     if phjGroupVarName is None:                        
         # Calculate y errors
-        phjYErrors = phjGetYErrors(phjTempDF = phjTempDF,
+        phjYErrors = phjGetYErrors(phjDF = phjDF,
                                    phjCategoriesToPlotList = phjIndexItemsToPlot,
                                    phjGroupVarName = phjGroupVarName,
                                    phjGroupLevelsList = phjGroupLevelsList,
@@ -1033,7 +1033,7 @@ def phjPlotProportionsBarChart(phjTempDF,
                                    phjPrintResults = phjPrintResults)
  
         # Plot bar chart of relative frequencies
-        ax = phjTempDF.loc[phjIndexItemsToPlot,
+        ax = phjDF.loc[phjIndexItemsToPlot,
                            phjSuffixDict['proportion']].plot(kind = 'bar',
                                                              title = phjGraphTitle,
                                                              yerr = phjYErrors,
@@ -1042,7 +1042,7 @@ def phjPlotProportionsBarChart(phjTempDF,
  
     else:
         # Calculate y errors
-        phjYErrors = phjGetYErrors(phjTempDF = phjTempDF,
+        phjYErrors = phjGetYErrors(phjDF = phjDF,
                                    phjCategoriesToPlotList = phjIndexItemsToPlot,
                                    phjGroupVarName = phjGroupVarName,
                                    phjGroupLevelsList = phjGroupLevelsList,
@@ -1051,7 +1051,7 @@ def phjPlotProportionsBarChart(phjTempDF,
  
  
         # Plot bar chart of relative frequencies
-        ax = phjTempDF.loc[phjIndexItemsToPlot,
+        ax = phjDF.loc[phjIndexItemsToPlot,
                            [phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['proportion']]) for phjGroup in phjGroupLevelsList]].plot(kind = 'bar',
                                                                                                                                                  title = phjGraphTitle,
                                                                                                                                                  yerr = phjYErrors,
@@ -1065,7 +1065,7 @@ def phjPlotProportionsBarChart(phjTempDF,
  
  
  
-def phjGetYErrors(phjTempDF,
+def phjGetYErrors(phjDF,
                   phjCategoriesToPlotList = None,
                   phjParameterValue = 'proportion',   # This is the value that is plotted (e.g. proportion, logodds etc.)
                   phjGroupVarName = None,
@@ -1087,8 +1087,8 @@ def phjGetYErrors(phjTempDF,
     # [ [[1,1,1,1],[1,1,1,1]],[[1,1,1,1],[1,1,1,1]],[[1,1,1,1],[1,1,1,1]] ]
     #
     # N.B. The single column referred to in .loc[] must not be a list otherwise tolist() will
-    # not work e.g. phjTempDF.loc[['A','B'],'col1'].tolist() works, but
-    #               phjTempDF.loc[['A','B'],['col1']].tolist() does not.
+    # not work e.g. phjDF.loc[['A','B'],'col1'].tolist() works, but
+    #               phjDF.loc[['A','B'],['col1']].tolist() does not.
     #
     # Remember, the CI functions produces the lower and upper limits of the CI whereas the
     # error bars plot the intervals between the proportion and the upper and lower limits.
@@ -1096,12 +1096,12 @@ def phjGetYErrors(phjTempDF,
     # in order to plot error bars.
  
     if phjGroupVarName is None:
-        phjYErrors = [[ (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict[phjParameterValue]] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]).tolist(),
-                        (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict[phjParameterValue]]).tolist() ]]
+        phjYErrors = [[ (phjDF.loc[phjCategoriesToPlotList,phjSuffixDict[phjParameterValue]] - phjDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]).tolist(),
+                        (phjDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjDF.loc[phjCategoriesToPlotList,phjSuffixDict[phjParameterValue]]).tolist() ]]
  
     else:
-        phjYErrors = [[ (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict[phjParameterValue]])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]).tolist(),
-                        (phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjTempDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict[phjParameterValue]])]).tolist() ] for phjGroup in phjGroupLevelsList]
+        phjYErrors = [[ (phjDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict[phjParameterValue]])] - phjDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]).tolist(),
+                        (phjDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjDF.loc[phjCategoriesToPlotList,phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict[phjParameterValue]])]).tolist() ] for phjGroup in phjGroupLevelsList]
  
  
     #if phjPrintResults == True:

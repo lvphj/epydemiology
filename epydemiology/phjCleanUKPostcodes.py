@@ -59,7 +59,7 @@ import math
 # Define functions to check UK postcodes
 # ======================================
 
-def phjCleanUKPostcodeVariable(phjTempDF,
+def phjCleanUKPostcodeVariable(phjDF,
                                phjRealPostcodeSer = None,
                                phjOrigPostcodeVarName = 'postcode',
                                phjNewPostcodeVarName = 'postcodeClean',
@@ -81,7 +81,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
         print('Missing value code cannot be NaN. Please re-run the function with a string value.')
         
         # Return an unchanged dataframe
-        phjTempWorkingDF = phjTempDF
+        phjTempWorkingDF = phjDF
         
     else:
         # Create a working dataframe containing postcode variable only and
@@ -89,7 +89,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
         # postcodes) don't already exist. If phjDropExisting is set to True,
         # pre-existing columns will be dropped from th original dataframe before
         # joining the data from the working dataframe.
-        phjTempWorkingDF = phjCreateWorkingPostcodeDF(phjTempDF = phjTempDF,
+        phjTempWorkingDF = phjCreateWorkingPostcodeDF(phjDF = phjDF,
                                                       phjRealPostcodeSer = phjRealPostcodeSer,
                                                       phjOrigPostcodeVarName = phjOrigPostcodeVarName,
                                                       phjNewPostcodeVarName = phjNewPostcodeVarName,
@@ -107,7 +107,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
         # Only continue to clean-up postcode values if a valid working directory is returned.
         if phjTempWorkingDF is not None:
             # Some basic clean-up house-keeping
-            phjTempWorkingDF = phjUKPostcodeBasicCleanUp(phjTempDF = phjTempWorkingDF,
+            phjTempWorkingDF = phjUKPostcodeBasicCleanUp(phjDF = phjTempWorkingDF,
                                                          phjOrigPostcodeVarName = phjOrigPostcodeVarName,
                                                          phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                          phjMissingValueCode = phjMissingValueCode,
@@ -124,7 +124,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
             if (phjCheckByOption == 'format') or (phjCheckByOption == 'dictionary'):
                 if phjCheckByOption == 'format':
                     # Identify correctly (and incorrectly) formatted postcodes
-                    phjTempWorkingDF = phjUKPostcodeFormatCheck(phjTempDF = phjTempWorkingDF,
+                    phjTempWorkingDF = phjUKPostcodeFormatCheck(phjDF = phjTempWorkingDF,
                                                                 phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                                 phjPostcodeCheckVarName = phjPostcodeCheckVarName,
                                                                 phjPostcodeComponent = 'all',
@@ -161,7 +161,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
                     
                     # Check if new postcode strings are real postcodes
                     # and, if so, set phjPostcodeCheckVarName to True
-                    phjTempWorkingDF = phjUKPostcodeRealityCheck(phjTempDF = phjTempWorkingDF,
+                    phjTempWorkingDF = phjUKPostcodeRealityCheck(phjDF = phjTempWorkingDF,
                                                                  phjRealPostcodeArr = phjRealPostcodeArr,
                                                                  phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                                  phjPostcodeCheckVarName = phjPostcodeCheckVarName,
@@ -177,7 +177,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
             
             
             # Deal with postcode entries that do not match postcode regex (i.e. not formatted correctly)
-            phjTempWorkingDF = phjUKPostcodeCorrectCommonErrors(phjTempDF = phjTempWorkingDF,
+            phjTempWorkingDF = phjUKPostcodeCorrectCommonErrors(phjDF = phjTempWorkingDF,
                                                                 phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                                 phjPostcodeCheckVarName = phjPostcodeCheckVarName,
                                                                 phjPrintResults = phjPrintResults)
@@ -188,7 +188,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
             if (phjCheckByOption == 'format') or (phjCheckByOption == 'dictionary'):
                 if phjCheckByOption == 'format':
                     # Identify correctly (and incorrectly) formatted postcodes
-                    phjTempWorkingDF = phjUKPostcodeFormatCheck(phjTempDF = phjTempWorkingDF,
+                    phjTempWorkingDF = phjUKPostcodeFormatCheck(phjDF = phjTempWorkingDF,
                                                                 phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                                 phjPostcodeCheckVarName = phjPostcodeCheckVarName,
                                                                 phjPostcodeComponent = 'all',
@@ -197,7 +197,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
                 else:
                     # Check if new postcode strings are real postcodes
                     # and, if so, set phjPostcodeCheckVarName to True
-                    phjTempWorkingDF = phjUKPostcodeRealityCheck(phjTempDF = phjTempWorkingDF,
+                    phjTempWorkingDF = phjUKPostcodeRealityCheck(phjDF = phjTempWorkingDF,
                                                                  phjRealPostcodeArr = phjRealPostcodeArr,
                                                                  phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                                  phjPostcodeCheckVarName = phjPostcodeCheckVarName,
@@ -212,7 +212,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
                 print('\n')
             
             # Produce variable containing 7-character postcode
-            phjTempWorkingDF = phjPostcodeFormat7(phjTempDF = phjTempWorkingDF,
+            phjTempWorkingDF = phjPostcodeFormat7(phjDF = phjTempWorkingDF,
                                                   phjPostcodeVarName = phjNewPostcodeVarName,
                                                   phjPostcodeCheckVarName = phjPostcodeCheckVarName,
                                                   phjPostcode7VarName = phjPostcode7VarName,
@@ -224,7 +224,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
             # full regex that was designed to check the structure of the postcode. This
             # is, perhaps, a bit of overkill as correctly-formatted postcodes could be
             # split using a much simpler regex.
-            phjTempWorkingDF = phjExtractPostcodeComponents(phjTempDF = phjTempWorkingDF,
+            phjTempWorkingDF = phjExtractPostcodeComponents(phjDF = phjTempWorkingDF,
                                                             phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                             phjPostcodeCheckVarName = phjPostcodeCheckVarName,
                                                             phjPostcodeComponent = 'all',
@@ -235,7 +235,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
             # Damerau-Levenshtein distances
             if phjCheckByOption == 'dictionary':
                 # Try to identify the postcodes to which unidentitied postcode strings most closely match
-                phjTempWorkingDF = phjGetBestAlternativePostcodes(phjTempDF = phjTempWorkingDF,
+                phjTempWorkingDF = phjGetBestAlternativePostcodes(phjDF = phjTempWorkingDF,
                                                                   phjRealPostcodeArr = phjRealPostcodeArr,
                                                                   phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                                   phjNewPostcodeStrLenVarName = phjNewPostcodeStrLenVarName,
@@ -254,7 +254,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
                     # To salvage postcode district, the string could only be 2, 3 or 4 characters long.
                     # Error correction will be applied and the format of the resulting string tested using the
                     # postcodeOutward group of the regular expression.
-                    phjTempWorkingDF = phjSalvagePostcode(phjTempDF = phjTempWorkingDF,
+                    phjTempWorkingDF = phjSalvagePostcode(phjDF = phjTempWorkingDF,
                                                           phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                           phjPostcodeCheckVarName = phjPostcodeCheckVarName,
                                                           phjPrintResults = phjPrintResults)
@@ -266,7 +266,7 @@ def phjCleanUKPostcodeVariable(phjTempDF,
             
             
             # Extract postcode area from postcodeOutward variable
-            phjTempWorkingDF = phjExtractPostcodeArea(phjTempDF = phjTempWorkingDF,
+            phjTempWorkingDF = phjExtractPostcodeArea(phjDF = phjTempWorkingDF,
                                                       phjPostcodeAreaVarName = phjPostcodeAreaVarName,
                                                       phjPrintResults = phjPrintResults)
             
@@ -291,26 +291,26 @@ def phjCleanUKPostcodeVariable(phjTempDF,
             # Remove pre-existing columns from original dataframe
             if phjDropExisting == True:
                 for phjCol in phjTempWorkingDF.columns:
-                    if phjCol in phjTempDF.columns:
-                        phjTempDF = phjTempDF.drop(phjCol,axis=1)
+                    if phjCol in phjDF.columns:
+                        phjDF = phjDF.drop(phjCol,axis=1)
             
             # Join the new working dataframe to the original dataframe based on index
-            phjTempDF = phjTempDF.join(phjTempWorkingDF)
+            phjDF = phjDF.join(phjTempWorkingDF)
             
             
     # If a valid working dataframe was created then changes would have been made in above code
-    # and copied to phjTempDF.
-    # If working dataframe was not valid, then no changes would have been made and phjTempDF
+    # and copied to phjDF.
+    # If working dataframe was not valid, then no changes would have been made and phjDF
     # would remain unaltered.
-    # Either way, return phjTempDF.
-    return phjTempDF
+    # Either way, return phjDF.
+    return phjDF
 
 
 
 ##########
 ##########
 
-def phjCreateWorkingPostcodeDF(phjTempDF,
+def phjCreateWorkingPostcodeDF(phjDF,
                                phjRealPostcodeSer = None,
                                phjOrigPostcodeVarName = 'postcode',
                                phjNewPostcodeVarName =  'postcodeClean',
@@ -339,7 +339,7 @@ def phjCreateWorkingPostcodeDF(phjTempDF,
     
     try:
         # Check whether required parameters have been set to correct type
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
         assert phjCheckByOption in ['format','dictionary'], "Parameter 'phjCheckByOption' can only take the value 'format' or 'dictionary'; the value '{0}' is not a recognised option.".format(phjCheckByOption)
         
         # If phjCheckByOption is either 'format' or 'dictionary' then the following
@@ -365,7 +365,7 @@ def phjCreateWorkingPostcodeDF(phjTempDF,
             assert isinstance(phjBestAlternativesVarName,str), "Parameter 'phjBestAlternativesVarName' needs to be a string."
         
         # Check that phjOrigPostcodeVarName variable exists in the supplied dataframe
-        assert phjOrigPostcodeVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjOrigPostcodeVarName)
+        assert phjOrigPostcodeVarName in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjOrigPostcodeVarName)
         
         # If all the above are OK then set phjReturnWorkingDF to True
         phjReturnWorkingDF = True
@@ -401,7 +401,7 @@ def phjCreateWorkingPostcodeDF(phjTempDF,
             # that will need to be created.
             phjPreExistingColumns = 0
             for phjVarName in phjColumnList:
-                if phjVarName in phjTempDF.columns:
+                if phjVarName in phjDF.columns:
                     print("Column '{0}' needs to be added to the dataframe but the variable already exists; please delete the column and re-run the function.".format(phjVarName))
                     phjPreExistingColumns = phjPreExistingColumns + 1
             
@@ -412,7 +412,7 @@ def phjCreateWorkingPostcodeDF(phjTempDF,
     if phjReturnWorkingDF is True:
         # Working dataframe only needs the original postcode variable, and some additional empty columns.
         # The other required columns will be created as required.
-        phjWorkingDF = phjTempDF.loc[:,[phjOrigPostcodeVarName]].copy()
+        phjWorkingDF = phjDF.loc[:,[phjOrigPostcodeVarName]].copy()
         phjWorkingDF = phjWorkingDF.reindex(columns = [phjOrigPostcodeVarName,
                                                        phjNewPostcodeVarName,
                                                        phjPostcodeCheckVarName])
@@ -424,33 +424,33 @@ def phjCreateWorkingPostcodeDF(phjTempDF,
 
 
 
-def phjUKPostcodeBasicCleanUp(phjTempDF,
+def phjUKPostcodeBasicCleanUp(phjDF,
                               phjOrigPostcodeVarName = 'postcode',
                               phjNewPostcodeVarName = 'postcodeClean',
                               phjMissingValueCode = 'missing',
                               phjPrintResults = False):
     
     # Copy original postcode data to new variable
-    phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjOrigPostcodeVarName]
+    phjDF[phjNewPostcodeVarName] = phjDF[phjOrigPostcodeVarName]
     
     # Replace Python None values with Pandas phjMissingValueCode in original postcode variable
-    phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].fillna(value = phjMissingValueCode)
+    phjDF[phjNewPostcodeVarName] = phjDF[phjNewPostcodeVarName].fillna(value = phjMissingValueCode)
     
     # Strip white space and punctuation and convert postcode text to all uppercase
-    phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].replace('''[\W_]+''',value='',regex = True)
-    phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].str.upper()
+    phjDF[phjNewPostcodeVarName] = phjDF[phjNewPostcodeVarName].replace('''[\W_]+''',value='',regex = True)
+    phjDF[phjNewPostcodeVarName] = phjDF[phjNewPostcodeVarName].str.upper()
     
     # Empty cells should be replaced with missing value code.
-    phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].replace('',value = phjMissingValueCode,regex = False)
+    phjDF[phjNewPostcodeVarName] = phjDF[phjNewPostcodeVarName].replace('',value = phjMissingValueCode,regex = False)
     
     # Replace cells containing indication of missing or unknown with missing value code.
-    phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].replace(re.compile('''^[\W_]*mis+i?n?g?[\W_]*$''',flags=re.I),value = phjMissingValueCode,regex = True)
-    phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].replace(re.compile('''^[\W_]*(?:un|not)[\W_]*(?:k?nown)[\W_]*$''',flags=re.I),value = phjMissingValueCode,regex = True)
+    phjDF[phjNewPostcodeVarName] = phjDF[phjNewPostcodeVarName].replace(re.compile('''^[\W_]*mis+i?n?g?[\W_]*$''',flags=re.I),value = phjMissingValueCode,regex = True)
+    phjDF[phjNewPostcodeVarName] = phjDF[phjNewPostcodeVarName].replace(re.compile('''^[\W_]*(?:un|not)[\W_]*(?:k?nown)[\W_]*$''',flags=re.I),value = phjMissingValueCode,regex = True)
     
     # Postcodes that consist of all numbers should be changed to missing value code.
-    phjTempDF[phjNewPostcodeVarName] = phjTempDF[phjNewPostcodeVarName].replace(re.compile('''^\s*\d+\s*$'''),value = phjMissingValueCode,regex = True)
+    phjDF[phjNewPostcodeVarName] = phjDF[phjNewPostcodeVarName].replace(re.compile('''^\s*\d+\s*$'''),value = phjMissingValueCode,regex = True)
     
-    return phjTempDF
+    return phjDF
 
 
 
@@ -578,7 +578,7 @@ def phjGetCompiledPostcodeRegex(phjPostcodeComponent = 'all',
 
 
 
-def phjUKPostcodeRealityCheck(phjTempDF,
+def phjUKPostcodeRealityCheck(phjDF,
                               phjRealPostcodeArr,
                               phjNewPostcodeVarName = 'postcodeClean',
                               phjPostcodeCheckVarName = 'postcodeCheck',
@@ -587,7 +587,7 @@ def phjUKPostcodeRealityCheck(phjTempDF,
     
     try:
         # Check whether required parameters have been set to correct types
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
         assert isinstance(phjRealPostcodeArr,np.ndarray), "Parameter, 'phjRealPostcodeArr' needs to be a numpy array."
         assert isinstance(phjNewPostcodeVarName,str), "Parameter 'phjNewPostcodeVarName' needs to be a string."
         assert isinstance(phjPostcodeCheckVarName,str), "Parameter 'phjPostcodeCheckVarName' needs to be a string."
@@ -601,13 +601,13 @@ def phjUKPostcodeRealityCheck(phjTempDF,
         assert phjPrintResults in [True, False], "Parameter 'phjPrintResults' can only be True or False; it is incorrectly set."
         
         # Check that column names exist in the supplied dataframe
-        assert phjNewPostcodeVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjNewPostcodeVarName)
-        assert phjPostcodeCheckVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjPostcodeCheckVarName)
+        assert phjNewPostcodeVarName in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjNewPostcodeVarName)
+        assert phjPostcodeCheckVarName in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjPostcodeCheckVarName)
     
     except AssertionError as e:
         print("An AssertionError has occurred. ({0})".format(e))
         
-        phjTempDF = None
+        phjDF = None
         
     else:
         # This function populates the phjPostcodeCheckVarName column in the passed dataframe to indicate
@@ -620,21 +620,21 @@ def phjUKPostcodeRealityCheck(phjTempDF,
         # The updated version of the code uses Numpy isin() function and only those cells
         # that need to be compared with the array are compared. Therefore, the new code
         # should be faster for large dataframes and arrays (although not tested).
-        #phjTempDF.loc[((phjTempDF[phjPostcodeCheckVarName].isnull())|
-        #               (phjTempDF[phjPostcodeCheckVarName]==False))&
-        #              (phjTempDF[phjNewPostcodeVarName]!=phjMissingValueCode),[phjPostcodeCheckVarName]] = phjTempDF[phjNewPostcodeVarName].isin(phjRealPostcodeArr)
-        phjTempDF.loc[((phjTempDF[phjPostcodeCheckVarName].isnull())|
-                       (phjTempDF[phjPostcodeCheckVarName]==False))&
-                      (phjTempDF[phjNewPostcodeVarName]!=phjMissingValueCode),[phjPostcodeCheckVarName]] = np.isin(phjTempDF.loc[((phjTempDF[phjPostcodeCheckVarName].isnull())|
-                                                                                                                                  (phjTempDF[phjPostcodeCheckVarName]==False))&
-                                                                                                                                 (phjTempDF[phjNewPostcodeVarName]!=phjMissingValueCode),[phjNewPostcodeVarName]],phjRealPostcodeArr)
+        #phjDF.loc[((phjDF[phjPostcodeCheckVarName].isnull())|
+        #               (phjDF[phjPostcodeCheckVarName]==False))&
+        #              (phjDF[phjNewPostcodeVarName]!=phjMissingValueCode),[phjPostcodeCheckVarName]] = phjDF[phjNewPostcodeVarName].isin(phjRealPostcodeArr)
+        phjDF.loc[((phjDF[phjPostcodeCheckVarName].isnull())|
+                       (phjDF[phjPostcodeCheckVarName]==False))&
+                      (phjDF[phjNewPostcodeVarName]!=phjMissingValueCode),[phjPostcodeCheckVarName]] = np.isin(phjDF.loc[((phjDF[phjPostcodeCheckVarName].isnull())|
+                                                                                                                                  (phjDF[phjPostcodeCheckVarName]==False))&
+                                                                                                                                 (phjDF[phjNewPostcodeVarName]!=phjMissingValueCode),[phjNewPostcodeVarName]],phjRealPostcodeArr)
     
-    # If there is an AssertionError, the function will return whatever was passed to phjTempDF parameter
-    return phjTempDF
+    # If there is an AssertionError, the function will return whatever was passed to phjDF parameter
+    return phjDF
 
 
 
-def phjUKPostcodeFormatCheck(phjTempDF,
+def phjUKPostcodeFormatCheck(phjDF,
                              phjNewPostcodeVarName = 'postcodeClean',
                              phjPostcodeCheckVarName = 'postcodeCheck',
                              phjMissingValueCode = 'missing',
@@ -643,7 +643,7 @@ def phjUKPostcodeFormatCheck(phjTempDF,
     
     try:
         # Check whether required parameters have been set to correct types
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
         assert isinstance(phjNewPostcodeVarName,str), "Parameter 'phjNewPostcodeVarName' needs to be a string."
         assert isinstance(phjPostcodeCheckVarName,str), "Parameter 'phjPostcodeCheckVarName' needs to be a string."
         
@@ -657,13 +657,13 @@ def phjUKPostcodeFormatCheck(phjTempDF,
         assert phjPrintResults in [True, False], "Parameter 'phjPrintResults' can only be True or False; it is incorrectly set."
         
         # Check that column names exist in the supplied dataframe
-        assert phjNewPostcodeVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjNewPostcodeVarName)
-        assert phjPostcodeCheckVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjPostcodeCheckVarName)
+        assert phjNewPostcodeVarName in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjNewPostcodeVarName)
+        assert phjPostcodeCheckVarName in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjPostcodeCheckVarName)
     
     except AssertionError as e:
         print("An AssertionError has occurred. ({0})".format(e))
         
-        phjTempDF = None
+        phjDF = None
         
     else:
         
@@ -685,21 +685,21 @@ def phjUKPostcodeFormatCheck(phjTempDF,
         # The updated version of the code uses on the required slice of the original
         # dataframe and converts to a Numpy array before copying back to the original.
         #if phjCompiledPostcodeRegex is not None:
-        #    phjTempDF.loc[((phjTempDF[phjPostcodeCheckVarName].isnull())|
-        #                   (phjTempDF[phjPostcodeCheckVarName]==False))&
-        #                  (phjTempDF[phjNewPostcodeVarName]!=phjMissingValueCode),[phjPostcodeCheckVarName]] = phjTempDF[phjNewPostcodeVarName].str.contains(phjCompiledPostcodeRegex,na = False)
+        #    phjDF.loc[((phjDF[phjPostcodeCheckVarName].isnull())|
+        #                   (phjDF[phjPostcodeCheckVarName]==False))&
+        #                  (phjDF[phjNewPostcodeVarName]!=phjMissingValueCode),[phjPostcodeCheckVarName]] = phjDF[phjNewPostcodeVarName].str.contains(phjCompiledPostcodeRegex,na = False)
         
-        phjTempDF.loc[((phjTempDF[phjPostcodeCheckVarName].isnull())|
-                       (phjTempDF[phjPostcodeCheckVarName]==False))&
-                      (phjTempDF[phjNewPostcodeVarName]!=phjMissingValueCode),[phjPostcodeCheckVarName]] = phjTempDF.loc[((phjTempDF[phjPostcodeCheckVarName].isnull())|
-                                                                                                                                   (phjTempDF[phjPostcodeCheckVarName]==False))&
-                                                                                                                                  (phjTempDF[phjNewPostcodeVarName]!=phjMissingValueCode),phjNewPostcodeVarName].str.contains(phjCompiledPostcodeRegex,na = False)
+        phjDF.loc[((phjDF[phjPostcodeCheckVarName].isnull())|
+                       (phjDF[phjPostcodeCheckVarName]==False))&
+                      (phjDF[phjNewPostcodeVarName]!=phjMissingValueCode),[phjPostcodeCheckVarName]] = phjDF.loc[((phjDF[phjPostcodeCheckVarName].isnull())|
+                                                                                                                                   (phjDF[phjPostcodeCheckVarName]==False))&
+                                                                                                                                  (phjDF[phjNewPostcodeVarName]!=phjMissingValueCode),phjNewPostcodeVarName].str.contains(phjCompiledPostcodeRegex,na = False)
     
-    return phjTempDF
+    return phjDF
 
 
 
-def phjExtractPostcodeComponents(phjTempDF,
+def phjExtractPostcodeComponents(phjDF,
                                  phjNewPostcodeVarName = 'postcodeClean',
                                  phjPostcodeCheckVarName = 'postcodeCheck',
                                  phjPostcodeComponent = 'all',
@@ -714,7 +714,7 @@ def phjExtractPostcodeComponents(phjTempDF,
                                                            phjPrintResults = False)
     
     # Create a temporary dataframe that contains extracted postcode components
-    phjPostcodeComponentsDF = phjTempDF.loc[phjTempDF[phjPostcodeCheckVarName] == True,phjNewPostcodeVarName].str.extract(phjCompiledPostcodeRegex,
+    phjPostcodeComponentsDF = phjDF.loc[phjDF[phjPostcodeCheckVarName] == True,phjNewPostcodeVarName].str.extract(phjCompiledPostcodeRegex,
                                                                                                                                 expand = True)
     # Add extracted postcode component(s) to original dataframe.
     # If the columns containing extracted data already exist in the database, then the
@@ -724,16 +724,16 @@ def phjExtractPostcodeComponents(phjTempDF,
     # New columns are added one column at a time to avoid theoretical issues where one column
     # exists and the other does not.
     for phjCol in phjPostcodeComponentsDF.columns:
-        if phjCol in phjTempDF.columns:
-            phjTempDF.update(phjPostcodeComponentsDF.loc[:,[phjCol]])
+        if phjCol in phjDF.columns:
+            phjDF.update(phjPostcodeComponentsDF.loc[:,[phjCol]])
         else:
-            phjTempDF = phjTempDF.join(phjPostcodeComponentsDF.loc[:,[phjCol]])
+            phjDF = phjDF.join(phjPostcodeComponentsDF.loc[:,[phjCol]])
     
-    return phjTempDF
+    return phjDF
 
 
 
-def phjUKPostcodeCorrectCommonErrors(phjTempDF,
+def phjUKPostcodeCorrectCommonErrors(phjDF,
                                      phjNewPostcodeVarName = 'postcodeClean',
                                      phjPostcodeCheckVarName = 'postcodeCheck',
                                      phjMissingValueCode = 'missing',
@@ -741,8 +741,8 @@ def phjUKPostcodeCorrectCommonErrors(phjTempDF,
     
     # Creates a temporary dataframe containing incorrectly formatted postcodes only.
     # Common errors will be corrected and merged back to the original dataframe.
-    phjTempUnformattedDF = phjTempDF.loc[(phjTempDF[phjPostcodeCheckVarName] == False) &
-                                         (phjTempDF[phjNewPostcodeVarName].notnull()),[phjNewPostcodeVarName,phjPostcodeCheckVarName]].copy(deep = True)
+    phjTempUnformattedDF = phjDF.loc[(phjDF[phjPostcodeCheckVarName] == False) &
+                                         (phjDF[phjNewPostcodeVarName].notnull()),[phjNewPostcodeVarName,phjPostcodeCheckVarName]].copy(deep = True)
     
     phjTempUnformattedDF[phjNewPostcodeVarName] = phjTempUnformattedDF[phjNewPostcodeVarName].map(lambda x: phjCorrectPostcodeErrors(x,
                                                                                                                                      phjMissingValueCode = phjMissingValueCode,
@@ -751,9 +751,9 @@ def phjUKPostcodeCorrectCommonErrors(phjTempDF,
     # Update dataframe with newly corrected postcode strings. However, DataFrame.update() does not
     # update values that have been returned as NaN and, therefore, the missing value code must not
     # be set to np.nan.
-    phjTempDF.update(phjTempUnformattedDF)
+    phjDF.update(phjTempUnformattedDF)
     
-    return phjTempDF
+    return phjDF
 
 
 
@@ -866,7 +866,7 @@ def phjCorrectPostcodeErrors(x,
 
 
 
-def phjPostcodeFormat7(phjTempDF,
+def phjPostcodeFormat7(phjDF,
                        phjPostcodeVarName = 'postcode',
                        phjPostcodeCheckVarName = None,
                        phjPostcode7VarName = 'postcode7',
@@ -878,7 +878,7 @@ def phjPostcodeFormat7(phjTempDF,
     
     try:
         # 1. Check whether entered parameters have been set to the correct type
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
         assert isinstance(phjPostcodeVarName,str), "Parameter 'phjPostcodeVarName' needs to be a string."
         
         if phjPostcodeCheckVarName is not None:
@@ -890,13 +890,13 @@ def phjPostcodeFormat7(phjTempDF,
         assert phjPrintResults in [True, False], "Parameter 'phjPrintResults' can only be True or False; it is incorrectly set."
         
         # 3. Check whether variable names exist in dataframe
-        assert phjPostcodeVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjPostcodeVarName)
+        assert phjPostcodeVarName in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjPostcodeVarName)
         
         if phjPostcodeCheckVarName is not None:
-            assert phjPostcodeCheckVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjPostcodeCheckVarName)
+            assert phjPostcodeCheckVarName in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjPostcodeCheckVarName)
         
         # 4. Check that new columns that will be created don't already exist
-        assert phjPostcode7VarName not in phjTempDF.columns, "The column name '{0}' already exists.".format(phjPostcode7VarName)
+        assert phjPostcode7VarName not in phjDF.columns, "The column name '{0}' already exists.".format(phjPostcode7VarName)
     
     except AssertionError as e:
         print('An AssertionError has occurred. ({0})'.format(e))
@@ -906,36 +906,36 @@ def phjPostcodeFormat7(phjTempDF,
             # Copy correctly formatted whole postcode strings to postcode7 variable.
             # Correctly formatted strings are based on the contents of variable
             # phjPostcodeCheckVarName to be either True or False.
-            phjTempDF[phjPostcode7VarName] = phjTempDF.loc[(phjTempDF[phjPostcodeCheckVarName] == True) &
-                                                           (phjTempDF[phjPostcodeVarName].str.len() >= 5) &
-                                                           (phjTempDF[phjPostcodeVarName].str.len() <= 7),phjPostcodeVarName]
+            phjDF[phjPostcode7VarName] = phjDF.loc[(phjDF[phjPostcodeCheckVarName] == True) &
+                                                           (phjDF[phjPostcodeVarName].str.len() >= 5) &
+                                                           (phjDF[phjPostcodeVarName].str.len() <= 7),phjPostcodeVarName]
             
             # Remove all whitespace and punctuation from the text strings and convert to upper case.
-            phjTempDF[phjPostcode7VarName] = phjTempDF[phjPostcode7VarName].str.replace('[\W_]','').str.upper()
+            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','').str.upper()
         
         else:
             # Copy potential postcode strings to postcode7 variable irrespective of content
-            phjTempDF[phjPostcode7VarName] = phjTempDF[phjPostcodeVarName]
+            phjDF[phjPostcode7VarName] = phjDF[phjPostcodeVarName]
             
             # Remove all whitespace and punctuation from the text strings, remove strings
             # that contain fewer than 5 characters or greater than 7 characters and 
             # convert to upper case.
-            phjTempDF[phjPostcode7VarName] = phjTempDF[phjPostcode7VarName].str.replace('[\W_]','')
-            phjTempDF[phjPostcode7VarName] = phjTempDF.loc[(phjTempDF[phjPostcode7VarName].str.len() >= 5) &
-                                                           (phjTempDF[phjPostcode7VarName].str.len() <= 7),phjPostcode7VarName]
-            phjTempDF[phjPostcode7VarName] = phjTempDF[phjPostcode7VarName].str.upper()
+            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','')
+            phjDF[phjPostcode7VarName] = phjDF.loc[(phjDF[phjPostcode7VarName].str.len() >= 5) &
+                                                           (phjDF[phjPostcode7VarName].str.len() <= 7),phjPostcode7VarName]
+            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.upper()
         
         # Reformat postcode7 variable to 7 characters.
         # Basically, the following function puts a space between the leading characters and the final 3 characters.
         # If the pattern now consists of 2 characters and a space at the start of the string, add an extra space.
         # If the pattern consists of 4 characters and a space at the start of the string, remove the space.
-        phjTempDF[phjPostcode7VarName] = phjTempDF[phjPostcode7VarName].str.replace('(\w{3})$',r' \1').str.replace('^(\w{2})\s',r'\1  ').str.replace('^(\w{4})\s',r'\1')
+        phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('(\w{3})$',r' \1').str.replace('^(\w{2})\s',r'\1  ').str.replace('^(\w{4})\s',r'\1')
     
-    return phjTempDF
+    return phjDF
 
 
 
-def phjSalvagePostcode(phjTempDF,
+def phjSalvagePostcode(phjDF,
                        phjNewPostcodeVarName = 'postcodeClean',
                        phjPostcodeCheckVarName = 'postcodeCheck',
                        phjMissingValueCode = 'missing',
@@ -946,8 +946,8 @@ def phjSalvagePostcode(phjTempDF,
     # Create a temporary dataframe containing hitherto incorrectly formatted postcodes only.
     # Common errors will be corrected and outward postcode component will be test to determine
     # whether format is correct.
-    phjTempUnformattedDF = phjTempDF.loc[(phjTempDF[phjPostcodeCheckVarName] == False) &
-                                         (phjTempDF[phjNewPostcodeVarName].notnull()),[phjNewPostcodeVarName,
+    phjTempUnformattedDF = phjDF.loc[(phjDF[phjPostcodeCheckVarName] == False) &
+                                         (phjDF[phjNewPostcodeVarName].notnull()),[phjNewPostcodeVarName,
                                                                                        phjPostcodeCheckVarName]].copy(deep = True)
     
     for i in range(1,phjNumberOfCorrectionRuns+1):
@@ -958,7 +958,7 @@ def phjSalvagePostcode(phjTempDF,
         
         # Check if the incorrectly formatted postcode contains a valid outward postcode component at the start.
         # If so, the phjPostcodeCheckVarName variable will be set to True.
-        phjTempScratchDF = phjUKPostcodeFormatCheck(phjTempDF = phjTempScratchDF,
+        phjTempScratchDF = phjUKPostcodeFormatCheck(phjDF = phjTempScratchDF,
                                                     phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                     phjPostcodeCheckVarName = phjPostcodeCheckVarName,
                                                     phjPostcodeComponent = 'outward',
@@ -976,7 +976,7 @@ def phjSalvagePostcode(phjTempDF,
         
     # Update postcodeOutward variable with extracted contents of phjNewPostcodeVarName if format
     # matches with outward regex
-    phjTempUnformattedDF = phjExtractPostcodeComponents(phjTempDF = phjTempUnformattedDF,
+    phjTempUnformattedDF = phjExtractPostcodeComponents(phjDF = phjTempUnformattedDF,
                                                         phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                         phjPostcodeCheckVarName = phjPostcodeCheckVarName,
                                                         phjPostcodeComponent = 'outward',
@@ -994,13 +994,13 @@ def phjSalvagePostcode(phjTempDF,
     
     
     # Update dataframe with newly corrected columns (phjNewPostcodeVarName and phjPostcodeCheckVarName)
-    phjTempDF.update(phjTempUnformattedDF)
+    phjDF.update(phjTempUnformattedDF)
     
-    return phjTempDF
+    return phjDF
 
 
 
-def phjExtractPostcodeArea(phjTempDF,
+def phjExtractPostcodeArea(phjDF,
                            phjPostcodeAreaVarName = 'postcodeArea',
                            phjPrintResults = False):
     
@@ -1008,14 +1008,14 @@ def phjExtractPostcodeArea(phjTempDF,
     phjRegexGroupNamesList = phjGetPostcodeRegexGroupNamesList(phjPrintResults = False)
     phjPostcodeOutwardVarName = phjRegexGroupNamesList[0]
     
-    phjTempDF[phjPostcodeAreaVarName] = phjTempDF[phjPostcodeOutwardVarName].str.extract(re.compile('''(^[A-Z]+)''',flags=re.I),
+    phjDF[phjPostcodeAreaVarName] = phjDF[phjPostcodeOutwardVarName].str.extract(re.compile('''(^[A-Z]+)''',flags=re.I),
                                                                                          expand = True)
     
-    return phjTempDF
+    return phjDF
 
 
 
-def phjGetBestAlternativePostcodes(phjTempDF,
+def phjGetBestAlternativePostcodes(phjDF,
                                    phjRealPostcodeArr,
                                    phjNewPostcodeVarName = 'postcodeClean',
                                    phjNewPostcodeStrLenVarName = 'postcodeCleanStrLen',
@@ -1026,19 +1026,19 @@ def phjGetBestAlternativePostcodes(phjTempDF,
     
     # Add empty columns to the dataframe. It has already been checked that the names
     # passed as parameters do not already exist.
-    phjTempDF[phjMinDamerauLevenshteinDistanceVarName] = np.nan
-    phjTempDF[phjBestAlternativesVarName] = np.nan
+    phjDF[phjMinDamerauLevenshteinDistanceVarName] = np.nan
+    phjDF[phjBestAlternativesVarName] = np.nan
     
     # Take slice dataframe and apply lambda function to calculate minimum Damerau-Levenshtein distance.
     # This may not be the best way to do this - perhaps define a slice of the dataframe under a different
     # name, apply the function and then update the original.
-#    phjTempDF.loc[(phjTempDF[phjPostcodeCheckVarName] == False) &
-#                  (phjTempDF[phjNewPostcodeVarName] != 'missing') &
-#                  ((phjTempDF[phjNewPostcodeStrLenVarName] >= 4) &
-#                   (phjTempDF[phjNewPostcodeStrLenVarName] <= 8)),[phjMinDamerauLevenshteinDistanceVarName]] = phjTempDF.loc[(phjTempDF[phjPostcodeCheckVarName] == False) &
-#                                                                                                                             (phjTempDF[phjNewPostcodeVarName] != 'missing') &
-#                                                                                                                             ((phjTempDF[phjNewPostcodeStrLenVarName] >= 4) &
-#                                                                                                                              (phjTempDF[phjNewPostcodeStrLenVarName] <= 8)),:].apply(lambda x: phjGetMinDLDist(x,
+#    phjDF.loc[(phjDF[phjPostcodeCheckVarName] == False) &
+#                  (phjDF[phjNewPostcodeVarName] != 'missing') &
+#                  ((phjDF[phjNewPostcodeStrLenVarName] >= 4) &
+#                   (phjDF[phjNewPostcodeStrLenVarName] <= 8)),[phjMinDamerauLevenshteinDistanceVarName]] = phjDF.loc[(phjDF[phjPostcodeCheckVarName] == False) &
+#                                                                                                                             (phjDF[phjNewPostcodeVarName] != 'missing') &
+#                                                                                                                             ((phjDF[phjNewPostcodeStrLenVarName] >= 4) &
+#                                                                                                                              (phjDF[phjNewPostcodeStrLenVarName] <= 8)),:].apply(lambda x: phjGetMinDLDist(x,
 #                                                                                                                                                                                                                phjNewPostcodeVarName = phjNewPostcodeVarName,
 #                                                                                                                                                                                                                phjRealPostcodeArr = phjRealPostcodeArr),axis = 1)
     
@@ -1050,10 +1050,10 @@ def phjGetBestAlternativePostcodes(phjTempDF,
     # any closest matches would have a DL difference greater than 1.)
     # A copy of the dataframe is made to avoid changing values of the original dataframe;
     # a warning message was given to highlight this issue.
-    phjScratchDF = phjTempDF.loc[(phjTempDF[phjPostcodeCheckVarName] == False) &
-                                 (phjTempDF[phjNewPostcodeVarName] != 'missing') &
-                                 ((phjTempDF[phjNewPostcodeStrLenVarName] >= 4) &
-                                  (phjTempDF[phjNewPostcodeStrLenVarName] <= 8)),:].copy(deep = True)
+    phjScratchDF = phjDF.loc[(phjDF[phjPostcodeCheckVarName] == False) &
+                                 (phjDF[phjNewPostcodeVarName] != 'missing') &
+                                 ((phjDF[phjNewPostcodeStrLenVarName] >= 4) &
+                                  (phjDF[phjNewPostcodeStrLenVarName] <= 8)),:].copy(deep = True)
     
     
     # Calculate the minimum DL distance for the postcode being checked (assessed against array of all postcodes)
@@ -1063,9 +1063,9 @@ def phjGetBestAlternativePostcodes(phjTempDF,
                                                                                                            phjNewPostcodeVarName = phjNewPostcodeVarName,
                                                                                                            phjAllowedEdits = 1),axis = 1)
     
-    phjTempDF.update(phjScratchDF)
+    phjDF.update(phjScratchDF)
     
-    return phjTempDF
+    return phjDF
 
 
 

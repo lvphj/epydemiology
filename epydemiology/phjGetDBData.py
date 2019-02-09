@@ -85,37 +85,37 @@ def phjGetDataFromDatabase(phjQueryStr = None,
         
         if phjTempDBType == 'mysql':
             # Retrieve data from MySQL database
-            phjTempDF = phjLoadQueryIntoDataframe(phjDBType = 'mysql',
+            phjDF = phjLoadQueryIntoDataframe(phjDBType = 'mysql',
                                                   phjQuery = phjTempQuery,
                                                   phjMaxAttempts = phjAllowedAttempts,
                                                   phjPrintResults = phjPrintResults)
         
         elif (phjTempDBType == 'mssql') or (phjTempDBType == 'sqlserver'):
             # Retrieve data from SQL SERVER database
-            phjTempDF = phjLoadQueryIntoDataframe(phjDBType = 'mssql',
+            phjDF = phjLoadQueryIntoDataframe(phjDBType = 'mssql',
                                                   phjQuery = phjTempQuery,
                                                   phjMaxAttempts = phjAllowedAttempts,
                                                   phjPrintResults = phjPrintResults)
         
         else:
             print('Database type was not recognised.')
-            phjTempDF = None
+            phjDF = None
     
     else:
-        phjTempDF = None
+        phjDF = None
     
     if phjPrintResults:
-        if phjTempDF is not None:
+        if phjDF is not None:
             print('\nQuery completed')
-            print('Number of rows returned = ',len(phjTempDF.index))
+            print('Number of rows returned = ',len(phjDF.index))
             print('\n')
-            print(phjTempDF.head(5))
-            print(phjTempDF.tail(5))
+            print(phjDF.head(5))
+            print(phjDF.tail(5))
         else:
             print('\nReturned dataframe is empty.')
             print('\n')
     
-    return phjTempDF
+    return phjDF
 
 
 
@@ -159,14 +159,14 @@ def phjLoadQueryIntoDataframe(phjDBType,
     
         if phjPandasPresent:
             try:
-                # phjTempDF = pd.io.sql.read_sql(phjQuery, con=phjTempConnection)
-                phjTempDF = pd.read_sql_query(phjQuery, con=phjTempConnection)
+                # phjDF = pd.io.sql.read_sql(phjQuery, con=phjTempConnection)
+                phjDF = pd.read_sql_query(phjQuery, con=phjTempConnection)
             
             except pd.io.sql.DatabaseError as e:
                 print('\nA DatabaseError occurred.')
                 print(e)
                 print('\nPlease edit the file containing the SQL query and re-run the function.\n')
-                phjTempDF = None
+                phjDF = None
             
             finally:
                 phjTempConnection.close()
@@ -175,9 +175,9 @@ def phjLoadQueryIntoDataframe(phjDBType,
             print('\nRequired package Pandas is not available.\n')
     
     else:
-        phjTempDF = None
+        phjDF = None
     
-    return phjTempDF
+    return phjDF
 
 
 

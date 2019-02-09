@@ -22,6 +22,7 @@ else:
 
 import re
 import collections
+import inspect
 
 
 def phjGetStrFromArgOrFile(phjStr = None,
@@ -106,7 +107,7 @@ def phjReadTextFromFile(phjPathAndFileName = None,
 
 
 
-def phjCreateNamedGroupRegex(phjTempDF,
+def phjCreateNamedGroupRegex(phjDF,
                              phjGroupVarName,
                              phjRegexVarName,
                              phjIDVarName = None,
@@ -117,7 +118,7 @@ def phjCreateNamedGroupRegex(phjTempDF,
     # =========================
     try:
         # Check whether required parameters have been set to correct type
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
         assert isinstance(phjGroupVarName,str), "Parameter 'phjGroupVarName' needs to be a string."
         assert isinstance(phjRegexVarName,str), "Parameter 'phjRegexVarName' needs to be a string."
         
@@ -125,27 +126,38 @@ def phjCreateNamedGroupRegex(phjTempDF,
             assert isinstance(phjIDVarName,str), "Parameter 'phjIDVarName' (if set) needs to be a string."
 
         # Check whether required columns exist
-        assert phjGroupVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjGroupVarName)
-        assert phjRegexVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjRegexVarName)
+        assert phjGroupVarName in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjGroupVarName)
+        assert phjRegexVarName in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjRegexVarName)
         
         if phjIDVarName is not None:
-            assert phjIDVarName in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjIDVarName)
+            assert phjIDVarName in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjIDVarName)
             
         # Check whether arguments are set to allowable values
         assert phjRegexPreCompile in [True, False], "Parameter 'phjRegexPreCompile' can only be True or False; it is incorrectly set."
         assert phjPrintResults in [True, False], "Parameter 'phjPrintResults' can only be True or False; it is incorrectly set."
         
     except AssertionError as e:
-        print(e)
-        
+        # Set return value to none
         phjCategoryGroupRegex = None
         
-    
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+        
     # Complete function if parameter checks are OK and AssertionError not raised
+    # ==========================================================================
     else:
         # Remove any rows where group name is empty (and reset the index)
-        phjEmptyCellMask = ~(phjTempDF[phjGroupVarName] == "")
-        phjTempDF = phjTempDF[phjEmptyCellMask].reset_index(drop = True)
+        phjEmptyCellMask = ~(phjDF[phjGroupVarName] == "")
+        phjDF = phjDF[phjEmptyCellMask].reset_index(drop = True)
         
         
         # Group dataframe based on phjGroupVarName and concatenate strings in phjRegexVarName, separated
@@ -153,10 +165,10 @@ def phjCreateNamedGroupRegex(phjTempDF,
         # And sort by ID number if appropriate.
         try:
             if phjIDVarName is None:
-                phjCategoryGroupRegexDF = phjTempDF.groupby(phjGroupVarName).agg({phjRegexVarName:'|'.join}).reset_index()
-
+                phjCategoryGroupRegexDF = phjDF.groupby(phjGroupVarName).agg({phjRegexVarName:'|'.join}).reset_index()
+            
             else:
-                phjCategoryGroupRegexDF = phjTempDF.groupby(phjGroupVarName).agg({phjRegexVarName:'|'.join,
+                phjCategoryGroupRegexDF = phjDF.groupby(phjGroupVarName).agg({phjRegexVarName:'|'.join,
                                                                                   phjIDVarName: 'mean'}).sort_values(phjIDVarName,
                                                                                                                      axis = 0,
                                                                                                                      ascending = True).reset_index()
@@ -172,7 +184,17 @@ def phjCreateNamedGroupRegex(phjTempDF,
                         print("\nWarning: there may be an error in the category ID values since {0} mean group values are not integers.".format(sum(~phjIntegerCheckMask)))
         
         except pd.core.groupby.DataError as e:
-            print("\nA DataError has occurred. This may occur if, for example, the '{0}' variable contains missing values. ({1}.)".format(phjIDVarName,e))
+            if inspect.stack()[1][3] == '<module>':
+                print("\nA DataError has occurred in {fname}() function. This may occur if, for example, the '{var}' variable contains missing values. ({msg})\n".format(msg = e,
+                                                                                                                                                                          fname = inspect.stack()[0][3],
+                                                                                                                                                                          var = phjIDVarName))
+            else:
+                # If function has been called by another function then modify message and re-raise exception
+                print("\nA DataError has occurred in {fname}() function when called by {callfname}() function. This may occur if, for example, the '{var}' variable contains missing values. ({msg})\n".format(msg = e,
+                                                                                                                                                                                                               fname = inspect.stack()[0][3],
+                                                                                                                                                                                                               var = phjIDVarName,
+                                                                                                                                                                                                               callfname = inspect.stack()[1][3]))
+                raise
             
             phjCategoryGroupRegex = None
         
@@ -202,20 +224,29 @@ def phjCreateNamedGroupRegex(phjTempDF,
                     phjCategoryGroupRegex = re.compile(phjCategoryGroupRegexStr,flags = re.X|re.I)
                 
                 except re.error as e:
-                    print("Regex failed to compile: {0}.".format(e))
+                    if inspect.stack()[1][3] == '<module>':
+                        print("Regex failed to compile in {fname}() function: {msg}.".format(msg = e,
+                                                                                             fname = inspect.stack()[0][3]))
+                    else:
+                        # If function has been called by another function then modify message and re-raise exception
+                        print("Regex failed to compile in {fname}() function when called by {callfname}() function: {msg}.".format(msg = e,
+                                                                                                                                   fname = inspect.stack()[0][3],
+                                                                                                                                   callfname = inspect.stack()[1][3]))
+                        raise
+                        
                     phjCategoryGroupRegex = None
+            
+            else:
+                # In the regex has not been compiled then return the string
+                return phjCategoryGroupRegexStr
     
-    
-    if phjRegexPreCompile == False:
-        return phjCategoryGroupRegexStr
-    else:
-        return phjCategoryGroupRegex
+    return phjCategoryGroupRegex
 
 
 
 # This function takes a column of text and uses a regex with named groups to
 # determine the group to which the text best fits.
-def phjFindRegexNamedGroups(phjTempDF,
+def phjFindRegexNamedGroups(phjDF,
                             phjDescriptorVarName,
                             phjNamedGroupRegexStr,
                             phjSeparateRegexGroups = False,
@@ -230,7 +261,7 @@ def phjFindRegexNamedGroups(phjTempDF,
     # Check function parameters are set correctly
     try:
         # Check whether required parameters have been set to correct type
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
         assert isinstance(phjDescriptorVarName,str), "Parameter 'phjDescriptorVarName' needs to be a string."
         assert isinstance(phjNamedGroupRegexStr,str), "Parameter 'phjNamedGroupRegexStr' needs to be a string. The function does not accept a pre-compiled regular expression."
         assert isinstance(phjNumberMatchesVarName,str), "Parameter 'phjNumberMatchesVarName' needs to be a string."
@@ -244,14 +275,24 @@ def phjFindRegexNamedGroups(phjTempDF,
         assert phjPrintResults in [True, False], "Parameter 'phjPrintResults' can only be True or False; it is incorrectly set."
         
         # Check that referenced columns exist in the dataframe
-        assert phjDescriptorVarName in phjTempDF.columns, "The column '{0}' does not exist in the dataframe.".format(phjDescriptorVarName)
+        assert phjDescriptorVarName in phjDF.columns, "The column '{0}' does not exist in the dataframe.".format(phjDescriptorVarName)
         
         # Check that new column names do not already exist
-        assert phjNumberMatchesVarName not in phjTempDF.columns, "The column name '{0}' already exists.".format(phjNumberMatchesVarName)
-        assert phjMatchedGroupVarName not in phjTempDF.columns, "The column name '{0}' already exists.".format(phjMatchedGroupVarName)
+        assert phjNumberMatchesVarName not in phjDF.columns, "The column name '{0}' already exists.".format(phjNumberMatchesVarName)
+        assert phjMatchedGroupVarName not in phjDF.columns, "The column name '{0}' already exists.".format(phjMatchedGroupVarName)
         
     except AssertionError as e:
-        print("An AssertionError occurred. ({0})".format(e))
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})".format(msg = e,
+                                                                                     fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})".format(msg = e,
+                                                                                                                           fname = inspect.stack()[0][3],
+                                                                                                                           callfname = inspect.stack()[1][3]))
+            raise
     
     else:
         try:
@@ -260,7 +301,15 @@ def phjFindRegexNamedGroups(phjTempDF,
             phjNamedGroupRegex = re.compile(phjNamedGroupRegexStr,flags = re.I|re.X)
         
         except re.error as e:
-            print("Regex failed to compile: {0}.".format(e))
+            if inspect.stack()[1][3] == '<module>':
+                print("Regex failed to compile in {fname}() function: {msg}\n.".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+            else:
+                # If function has been called by another function then modify message and re-raise exception
+                print("Regex failed to compile in {fname}() function when called by {callfname}() function: {msg}\n.".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+                raise
         
         # Continue with function if regex compiles
         else:
@@ -268,10 +317,10 @@ def phjFindRegexNamedGroups(phjTempDF,
             # if preceding mathces are found because grouped regexes cannot overlap.)
             if phjSeparateRegexGroups == False:
                 # Create a dataframe with a column for each named group in the regex
-                phjScratchDF = phjTempDF[phjDescriptorVarName].str.extract(phjNamedGroupRegex, expand = True)
+                phjScratchDF = phjDF[phjDescriptorVarName].str.extract(phjNamedGroupRegex, expand = True)
                 
                 # Add the descriptor column only from the original dataframe
-                phjScratchDF = phjScratchDF.join(phjTempDF[phjDescriptorVarName])
+                phjScratchDF = phjScratchDF.join(phjDF[phjDescriptorVarName])
                 
                 # Move descriptor column to the front
                 cols = phjScratchDF.columns.tolist()
@@ -289,7 +338,7 @@ def phjFindRegexNamedGroups(phjTempDF,
                 # The argument to re.split looks for a literal pipe [and white space] followed by [a non-capturing look-ahead for]
                 # the (?=< , the beginning of a named group. It compiles each subpattern and uses the groupindex attribute to
                 # extract the name.
-                phjScratchDF = phjTempDF.loc[:,[phjDescriptorVarName]]
+                phjScratchDF = phjDF.loc[:,[phjDescriptorVarName]]
                 
                 for subpattern in re.split('\|\s*(?=\(\?P<)', phjNamedGroupRegexStr):
                     phjGroupRegex = re.compile(subpattern,flags = re.I|re.X)
@@ -303,7 +352,7 @@ def phjFindRegexNamedGroups(phjTempDF,
                     else:
                         print('.',end = '')
                         
-                print("\n")
+                print('\n')
             
             # Create a new column that contains a count of the number of matches.
             # Obviously, it should only be 1 but it is possible that a small number of cases
@@ -314,9 +363,9 @@ def phjFindRegexNamedGroups(phjTempDF,
             
             if phjPrintResults == True:
                 # Frequency table showing number of group matches
-                print("\nTable of number of group matches identified per description term\n")
+                print('\nTable of number of group matches identified per description term\n')
                 print(pd.DataFrame(phjScratchDF[phjNumberMatchesVarName].value_counts(sort = False)).rename_axis('Number of matches').rename(columns = {phjNumberMatchesVarName:'Frequency'}))
-                print("\n")
+                print('\n')
             
             # Create a new column that contains the name of the matched group for rows where a regex match was identified
             phjScratchDF[phjMatchedGroupVarName] = np.nan
@@ -334,8 +383,8 @@ def phjFindRegexNamedGroups(phjTempDF,
                 # Check that none of the regex group names already exist as column headings in
                 # the original dataframe
                 for grp in phjGroupNamesList:
-                    if grp in phjTempDF.columns.values:
-                        print("One or more group names in the regular expression clash with column headings in the dataframe. In order to avoid confusion, the phjCleanup variable has been set to True.")
+                    if grp in phjDF.columns.values:
+                        print('One or more group names in the regular expression clash with column headings in the dataframe. In order to avoid confusion, the phjCleanup variable has been set to True.')
                         phjCleanup = True
             
             # Remove the temporary columns before joining with original dataframe.
@@ -344,19 +393,20 @@ def phjFindRegexNamedGroups(phjTempDF,
                                                  axis = 1)
             
             # Join phjScratchDF to original database
-            phjTempDF = phjTempDF.join(phjScratchDF.loc[:,phjScratchDF.columns != phjDescriptorVarName],
+            phjDF = phjDF.join(phjScratchDF.loc[:,phjScratchDF.columns != phjDescriptorVarName],
                                        how = 'left')
 
             if phjPrintResults == True:
                 # Print samples of rows of dataframe
                 with pd.option_context('display.max_rows', 20, 'display.max_columns', 20):
-                    print(phjTempDF)
+                    print(phjDF)
+                    print('\n')
     
-    return phjTempDF
+    return phjDF
 
 
 
-def phjMaxLevelOfTaxonomicDetail(phjTempDF,
+def phjMaxLevelOfTaxonomicDetail(phjDF,
                                  phjFirstCol,
                                  phjLastCol,
                                  phjNewColName = 'newColumn',
@@ -367,15 +417,15 @@ def phjMaxLevelOfTaxonomicDetail(phjTempDF,
     # Check function parameters have been set to reasonable values
     try:
         # Check whether required parameters have been set to correct type
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter 'phjTempDF' needs to be a Pandas dataframe."
+        assert isinstance(phjDF,pd.DataFrame), "Parameter 'phjDF' needs to be a Pandas dataframe."
         assert isinstance(phjFirstCol,str), "Argument 'phjFirstCol' needs to be a string."   # In Python 2, use isinstance(s,basestring)
         assert isinstance(phjLastCol,str), "Argument 'phjLastCol' needs to be a string."
         assert isinstance(phjNewColName,str), "Argument 'phjNewColName' needs to be a string."
         
         # Check whether required columns exist
-        assert phjFirstCol in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjFirstCol)
-        assert phjLastCol in phjTempDF.columns.values, "Column '{0}' is not in dataframe.".format(phjLastCol)
-        assert phjTempDF.columns.get_loc(phjLastCol) - phjTempDF.columns.get_loc(phjFirstCol) > 0, "Columns are given in the wrong order; '{0}' (phjFirstCol) needs to occur BEFORE '{1}' (phjLastCol) in the dataframe.".format(phjFirstCol,phjLastCol)
+        assert phjFirstCol in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjFirstCol)
+        assert phjLastCol in phjDF.columns.values, "Column '{0}' is not in dataframe.".format(phjLastCol)
+        assert phjDF.columns.get_loc(phjLastCol) - phjDF.columns.get_loc(phjFirstCol) > 0, "Columns are given in the wrong order; '{0}' (phjFirstCol) needs to occur BEFORE '{1}' (phjLastCol) in the dataframe.".format(phjFirstCol,phjLastCol)
         
         # Check whether arguments are set to allowable values
         assert phjDropPreExisting in [True,False], "Argument 'phjDropPreExisting' can only be True or False; it is incorrectly set."
@@ -384,9 +434,9 @@ def phjMaxLevelOfTaxonomicDetail(phjTempDF,
         
         # Check whether columns that will be created already exist
         if phjDropPreExisting == False:
-            assert 'bin' not in phjTempDF.columns.values, "A column named 'bin' will be temporarily created but already exists; please rename."
-            assert 'posFromR' not in phjTempDF.columns.values, "A column named 'posFromR' will be temporarily created but already exists; please rename."
-            assert phjNewColName not in phjTempDF.columns.values, "A column named '{0}' (phjNewColName) will be permanently created but already exists; please choose a different name.".format(phjNewColName)
+            assert 'bin' not in phjDF.columns.values, "A column named 'bin' will be temporarily created but already exists; please rename."
+            assert 'posFromR' not in phjDF.columns.values, "A column named 'posFromR' will be temporarily created but already exists; please rename."
+            assert phjNewColName not in phjDF.columns.values, "A column named '{0}' (phjNewColName) will be permanently created but already exists; please choose a different name.".format(phjNewColName)
         
     except AssertionError as e:
         print("An AssertionError occurred. ({0})".format(e))
@@ -395,24 +445,24 @@ def phjMaxLevelOfTaxonomicDetail(phjTempDF,
         
         # If columns already exist, drop from dataframe
         if phjDropPreExisting == True:
-            if 'bin' in phjTempDF.columns.values:
-                phjTempDF = phjTempDF.drop('bin',axis = 1)
+            if 'bin' in phjDF.columns.values:
+                phjDF = phjDF.drop('bin',axis = 1)
             
-            if 'posFromR' in phjTempDF.columns.values:
-                phjTempDF = phjTempDF.drop('posFromR',axis = 1)
+            if 'posFromR' in phjDF.columns.values:
+                phjDF = phjDF.drop('posFromR',axis = 1)
             
-            if phjNewColName in phjTempDF.columns.values:
-                phjTempDF = phjTempDF.drop(phjNewColName,axis = 1)
+            if phjNewColName in phjDF.columns.values:
+                phjDF = phjDF.drop(phjNewColName,axis = 1)
         
         
         # A discussion of solutions to convert a dataframe with strings and empty cells to binary is given at:
         # https://stackoverflow.com/questions/49003150/creating-a-binary-representation-of-whether-a-string-is-present-or-not-in-a-pand
         # Several options given.
         # Decided to use a Pandas-based option suggested by jezrael (although Numpy options may be quicker)
-        phjRangeOfCols = list(range(phjTempDF.columns.get_loc(phjFirstCol),
-                                    phjTempDF.columns.get_loc(phjLastCol) + 1))
+        phjRangeOfCols = list(range(phjDF.columns.get_loc(phjFirstCol),
+                                    phjDF.columns.get_loc(phjLastCol) + 1))
         
-        phjTempDF['bin'] = (phjTempDF.iloc[:,phjRangeOfCols] != '').astype(int).astype(str).values.sum(axis=1)
+        phjDF['bin'] = (phjDF.iloc[:,phjRangeOfCols] != '').astype(int).astype(str).values.sum(axis=1)
         
         # Number of digits from right
         # ---------------------------
@@ -458,7 +508,7 @@ def phjMaxLevelOfTaxonomicDetail(phjTempDF,
         # df['pos'] = (np.log2(df['bin']&-df['bin'])+1).astype(int)
         
         # Position of rightmost set bit
-        #phjTempDF['posFromR'] = (np.log2(phjTempDF['bin'].astype(int) & -phjTempDF['bin'].astype(int)) + 1).astype(int)
+        #phjDF['posFromR'] = (np.log2(phjDF['bin'].astype(int) & -phjDF['bin'].astype(int)) + 1).astype(int)
         
         
         # If all cells in a row were empty, the binary representation would be 000...000. This causes
@@ -466,117 +516,34 @@ def phjMaxLevelOfTaxonomicDetail(phjTempDF,
         # To overcome this problem, add a '1' to start of each string; this won't affect the calculation
         # of the rightmost set bit except in cases where all cells are empty, in which case the rightmost
         # set bit will lie outside the number of columns being considered.
-        phjTempDF['posFromR'] = (np.log2( ('1' + phjTempDF['bin']).astype(int) & -('1' + phjTempDF['bin']).astype(int)) + 1).astype(int)
+        phjDF['posFromR'] = (np.log2( ('1' + phjDF['bin']).astype(int) & -('1' + phjDF['bin']).astype(int)) + 1).astype(int)
         
         # Count back from the last column to find the column containing the last string entry
-        phjTempDF[phjNewColName] = phjTempDF.columns[phjTempDF.columns.get_loc(phjLastCol) - phjTempDF['posFromR'] + 1]
+        phjDF[phjNewColName] = phjDF.columns[phjDF.columns.get_loc(phjLastCol) - phjDF['posFromR'] + 1]
         
         # If the posFromR value is greater than the number of columns listed then the row of cells
         # must have consisted of all zeroes. Therefore, replace all such occurrences with some
         # indicator e.g. 'unclassified'.
-        nCols = phjTempDF.columns.get_loc(phjLastCol) - phjTempDF.columns.get_loc(phjFirstCol) + 1
-        phjMask = phjTempDF['posFromR'].astype(int) > nCols
-        phjTempDF.loc[phjMask,phjNewColName] = 'unclassified'
+        nCols = phjDF.columns.get_loc(phjLastCol) - phjDF.columns.get_loc(phjFirstCol) + 1
+        phjMask = phjDF['posFromR'].astype(int) > nCols
+        phjDF.loc[phjMask,phjNewColName] = 'unclassified'
         
         # Remove temporary columns
         if phjCleanup == True:
-            phjTempDF = phjTempDF.drop(['bin','posFromR'],
+            phjDF = phjDF.drop(['bin','posFromR'],
                                        axis = 1)
         
         # Print dataframe
         if phjPrintResults == True:
-            print(phjTempDF)
+            print(phjDF)
+            print('\n')
     
-    return phjTempDF
+    return phjDF
 
 
 
-def phjLongToWideBinary(phjTempDF,
-                        phjGroupbyVarName,
-                        phjVariablesVarName,
-                        phjValuesDict = {0:0,1:1},
-                        phjPrintResults = False):
-    # This function converts a dataframe containing a grouping variable and a variable
-    # containing a series of factors that may or may not be present and converts to a
-    # wide dataframe containing a series of binary variables indicating whether the factor
-    # is present or not.
-    # For example, it converts:
-    #
-    #       X  Y
-    #    0  1  a
-    #    1  1  b
-    #    2  1  d
-    #    3  2  b
-    #    4  2  c
-    #    5  3  d
-    #    6  3  e
-    #    7  3  a
-    #    8  3  f
-    #    9  4  b
-    # 
-    # to:
-    #       X  a  b  d  c  e  f
-    #    0  1  1  1  1  0  0  0
-    #    1  2  0  1  0  1  0  0
-    #    2  3  1  0  1  0  1  1
-    #    3  4  0  1  0  0  0  0
-    
-    
-    # Check function parameters are set correctly
-    try:
-        # Check whether required parameters have been set to correct type
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
-        assert isinstance(phjGroupbyVarName,str), "Parameter 'phjGroupbyVarName' needs to be a string."
-        assert isinstance(phjVariablesVarName,str), "Parameter 'phjVariablesVarName' needs to be a string."
-        assert isinstance(phjValuesDict,collections.Mapping), "Parameter 'phjValuesDict' needs to be a dict." # collections.Mapping will work for dict(), collections.OrderedDict() and collections.UserDict() (see comment by Alexander Ryzhov at https://stackoverflow.com/questions/25231989/how-to-check-if-a-variable-is-a-dictionary-in-python.
-                
-        # Check whether arguments are set to allowable values
-        for k,v in phjValuesDict.items():
-            assert k in [0,1], "The key values in phjValuesDict need to either 0 or 1."
-            
-        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
-        
-        # Check that referenced columns exist in the dataframe
-        assert phjGroupbyVarName in phjTempDF.columns, "The column name 'phjGroupbyVarName' does not exist in dataframe."
-        assert phjVariablesVarName in phjTempDF.columns, "The column name 'phjVariablesVarName' does not exist in dataframe."
-        
-    except AssertionError as e:
-        print("An AssertionError occurred. ({0})".format(e))
-        
-        phjScratchDF = None
-        
-    else:
-        # Create a scratch DF with appropriate rows and columns, filled with zero
-        phjScratchDF = pd.DataFrame(index = pd.Series(phjTempDF[phjGroupbyVarName].unique()),
-                                    columns = list(phjTempDF[phjVariablesVarName].unique())).fillna(0)
-
-        phjScratchDF.index.name = phjGroupbyVarName
-
-        # Within each group, create a list contain all variables
-        phjGroup = phjTempDF[[phjGroupbyVarName,phjVariablesVarName]].groupby(phjGroupbyVarName).agg(lambda phjRow: list(phjRow))
-
-        # Step through each group and change each variable contained in the list of present variables with a 1
-        for g in phjGroup.index.values.tolist():
-            phjScratchDF.loc[g,phjGroup.loc[g,phjVariablesVarName]] = 1
-        
-        # This step replaces the default 0 and 1 with user-defined values. It should only be
-        # run if phjValuesDict has been set to something other than default. Check whether
-        # a passed dict is the same as the default (even if the order of elements has changed).
-        # If simply comparing one dict with another then {0:0,1:1} will be seen to be the
-        # same as {0:False,1:True}. But for the purposes of this exercise, those 2 dicts should
-        # be seen to be different. Therefore, convert the values is both dicts to strings
-        # before comparing.
-        if {k:str(v) for k,v in phjValuesDict.items()} != {k:str(v) for k,v in {0:0,1:1}.items()}:
-            phjScratchDF = phjScratchDF.replace(phjValuesDict)
-        
-        phjScratchDF = phjScratchDF.reset_index(drop = False)
-        
-    return phjScratchDF
-
-
-
-def phjReverseMap(phjTempDF,
-                  phjDict,
+def phjReverseMap(phjDF,
+                  phjMappingDict,
                   phjCategoryVarName,
                   phjMappedVarName = 'mapped_cat',
                   phjUnmapped = np.nan,
@@ -587,8 +554,8 @@ def phjReverseMap(phjTempDF,
     # Check function parameters are set correctly
     try:
         # Check whether required parameters have been set to correct type
-        assert isinstance(phjTempDF,pd.DataFrame), "Parameter, 'phjTempDF' needs to be a Pandas dataframe."
-        assert isinstance(phjDict,collections.Mapping), "Parameter 'phjDict' needs to be a dict." # collections.Mapping will work for dict(), collections.OrderedDict() and collections.UserDict() (see comment by Alexander Ryzhov at https://stackoverflow.com/questions/25231989/how-to-check-if-a-variable-is-a-dictionary-in-python.
+        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
+        assert isinstance(phjMappingDict,collections.Mapping), "Parameter 'phjMappingDict' needs to be a dict." # collections.Mapping will work for dict(), collections.OrderedDict() and collections.UserDict() (see comment by Alexander Ryzhov at https://stackoverflow.com/questions/25231989/how-to-check-if-a-variable-is-a-dictionary-in-python.
         assert isinstance(phjMappedVarName,str), "Parameter 'phjMappedVarName' needs to be a string."
         assert isinstance(phjUnmapped,(str,int,float)), "Parameter 'phjUnmapped' needs to be a string, an integer, a float or numpy.nan."   # The np.nan seems to be picked up at a float.
         
@@ -598,23 +565,33 @@ def phjReverseMap(phjTempDF,
         assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
         
         # Check that referenced columns exist in the dataframe
-        assert phjCategoryVarName in phjTempDF.columns, "The column name 'phjCategoryVarName' does not exist in dataframe."
+        assert phjCategoryVarName in phjDF.columns, "The column name 'phjCategoryVarName' does not exist in dataframe."
         
         # Check whether columns that will be created already exist
         if phjDropPreExisting == False:
-            assert phjMappedVarName not in phjTempDF.columns.values, "A column named '{0}' (phjMappedVarName) will be permanently created but already exists; please choose a different name.".format(phjMappedVarName)
+            assert phjMappedVarName not in phjDF.columns.values, "A column named '{0}' (phjMappedVarName) will be permanently created but already exists; please choose a different name.".format(phjMappedVarName)
         
         # Check that all the items in the dictionary values are uniquely represented, otherwise
         # the dictionary entry will only reflect the last occurrence.
         # Make a flat list of items in the dict values using list comprehension and check there
         # are no duplicates. List comprehension taken from:
         # https://stackoverflow.com/questions/952914/how-to-make-a-flat-list-out-of-list-of-lists
-        phjItems = [item for sublist in list(phjDict.values()) for item in sublist]
+        phjItems = [item for sublist in list(phjMappingDict.values()) for item in sublist]
         assert len(set(phjItems)) == len(phjItems), 'Items in dictionary values are not unique.'
     
     except AssertionError as e:
-        print("An AssertionError occurred. ({0})".format(e))
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
         
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
     else:
         if phjTreatAsRegex == True:
             # The dict as entered is converted to a 'long' format with one regex
@@ -622,46 +599,91 @@ def phjReverseMap(phjTempDF,
             # and matches identified using phjFindRegexNamedGroups().
             # Converting the dictionary to a long dataframe is based on an answer
             # by aws_apprentice at https://stackoverflow.com/questions/54368318/reshaping-a-python-dict-to-a-pandas-dataframe.
-            phjRegexDF = pd.DataFrame.from_dict(phjDict, orient='index').stack().reset_index().drop('level_1', axis=1).rename(columns={'level_0': 'key', 0: 'value'})
+            phjRegexDF = pd.DataFrame.from_dict(phjMappingDict, orient='index').stack().reset_index().drop('level_1', axis=1).rename(columns={'level_0': 'key', 0: 'value'})
             
-            phjRegexStr = phjCreateNamedGroupRegex(phjTempDF = phjRegexDF,
+            try:
+                phjRegexStr = phjCreateNamedGroupRegex(phjDF = phjRegexDF,
                                                        phjGroupVarName = 'key',
                                                        phjRegexVarName = 'value',
                                                        phjIDVarName = None,
                                                        phjRegexPreCompile = False,
                                                        phjPrintResults = phjPrintResults)
             
-            phjTempDF = phjFindRegexNamedGroups(phjTempDF = phjTempDF,
+            # Catch exception passed from phjCreateNamedGroupRegex() function
+            except AssertionError as e:
+                # If function has been called directly, present message.
+                if inspect.stack()[1][3] == '<module>':
+                    print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                             fname = inspect.stack()[0][3]))
+                
+                # If function has been called by another function then modify message and re-raise exception
+                else:
+                    print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                   fname = inspect.stack()[0][3],
+                                                                                                                                   callfname = inspect.stack()[1][3]))
+                    raise
+            
+            else:
+                try:
+                    phjDF = phjFindRegexNamedGroups(phjDF = phjDF,
                                                     phjDescriptorVarName = phjCategoryVarName,
                                                     phjNamedGroupRegexStr = phjRegexStr,
                                                     phjSeparateRegexGroups = True,
                                                     phjNumberMatchesVarName = 'numberMatches',
-                                                    phjMatchedGroupVarName = 'matchedgroup',
+                                                    phjMatchedGroupVarName = phjMappedVarName,
                                                     phjUnclassifiedStr = phjUnmapped,
                                                     phjMultipleMatchStr = 'multiple',
                                                     phjCleanup = False,
                                                     phjPrintResults = phjPrintResults)
-            
+                
+                # Re-catch exceptions passed by phjFindRegexNamedGroups() function
+                except AssertionError as e:
+                    # If function has been called directly, present message.
+                    if inspect.stack()[1][3] == '<module>':
+                        print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                 fname = inspect.stack()[0][3]))
+                    
+                    # If function has been called by another function then modify message and re-raise exception
+                    else:
+                        print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                       fname = inspect.stack()[0][3],
+                                                                                                                                       callfname = inspect.stack()[1][3]))
+                        raise
+                        
+                except re.error as e:
+                    # If function has been called directly, present message.
+                    if inspect.stack()[1][3] == '<module>':
+                        print("Regex failed to compile in {fname}() function: {msg}\n.".format(msg = e,
+                                                                                             fname = inspect.stack()[0][3]))
+                    else:
+                        # If function has been called by another function then modify message and re-raise exception
+                        print("Regex failed to compile in {fname}() function when called by {callfname}() function: {msg}\n.".format(msg = e,
+                                                                                                                                   fname = inspect.stack()[0][3],
+                                                                                                                                   callfname = inspect.stack()[1][3]))
+                        raise
+                        
         else:
+            # Not treating search strings as regexes.
             # A function to reverse a dict was given in an answer by MSeifert at:
             # https://stackoverflow.com/questions/35491223/inverting-a-dictionary-with-list-values
             # Alternatively, use a dictionary comprehension but must be careful that no duplicates
             # are found in the items in the dictionary values.
             # Taken from: https://stackoverflow.com/questions/37082877/map-pandas-dataframe-columns-to-dictionary-values
-            phjRevDict = {v: k for k in phjDict for v in phjDict[k]}
+            phjRevDict = {v: k for k in phjMappingDict for v in phjMappingDict[k]}
             
             if phjPrintResults == True:
                 print("Reversed dictionary\n")
                 print(phjRevDict)
                 print('\n')
             
-            phjTempDF[phjMappedVarName] = phjTempDF[phjCategoryVarName].map(phjRevDict).fillna(phjUnmapped)
+            phjDF[phjMappedVarName] = phjDF[phjCategoryVarName].map(phjRevDict).fillna(phjUnmapped)
             
             if phjPrintResults == True:
-                print(phjTempDF)
+                print(phjDF)
                 print('\n')
     
-    return phjTempDF
+    finally:
+        return phjDF
 
 
 
