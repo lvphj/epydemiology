@@ -20,9 +20,10 @@ if pypandocPresent == True:
 	try:
 		long_description = pypandoc.convert('README.md', 'rst')
 	except (IOError, ImportError):
-		long_description = ''
+		print("README.md file could not be converted to produce a long description.")
+		long_description = 'Not available.'
 else:
-	long_description = ''
+	long_description = 'Not available.'
 	
 setup(name = 'epydemiology',
       packages = ['epydemiology'], # this must be the same as the name above
@@ -35,7 +36,7 @@ setup(name = 'epydemiology',
       url = 'https://github.com/lvphj/epydemiology', # use the URL to the github repo
       download_url = 'https://github.com/lvphj/epydemiology/archive/0.1.29.tar.gz',
       license = 'MIT',
-      keywords = ['database','mysql','epidemiology','case-control study','odds ratio','relative risk','risk ratio','proportions','confidence intervals'],
+      keywords = ['database','epidemiology','case-control study','odds ratio','relative risk','risk ratio','proportions','confidence intervals','UK postcodes','disease trends'],
       classifiers = [# How mature is this project? Common values are
                      #   3 - Alpha
                      #   4 - Beta

@@ -62,7 +62,9 @@ else:
 
 
 import collections
+import inspect
 
+from .phjTestFunctionParameters import phjAssert
 
 
 # ==============
@@ -454,53 +456,70 @@ def phjCalculateBinomialConfInts(phjDF,
  
     # Get a list of the terms used to head columns in summary tables
     phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
- 
+    
     try:
-        # Check whether required parameters have been set to correct type
-        assert isinstance(phjDF,pd.DataFrame), "Parameter 'phjDF' needs to be a Pandas dataframe."
- 
+        # Check whether function parameters have been set to correct type and are of
+        # correct values.
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        
         if phjSuccVarName is not None:
-            assert isinstance(phjSuccVarName,str), "Parameter 'phjSuccVarName' needs to be a string."
- 
+            #assert isinstance(phjSuccVarName,str), "Parameter 'phjSuccVarName' needs to be a string."
+            phjAssert('phjSuccVarName',phjSuccVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        
         if phjFailVarName is not None:
-            assert isinstance(phjFailVarName,str), "Parameter 'phjFailVarName' needs to be a string."
- 
+            #assert isinstance(phjFailVarName,str), "Parameter 'phjFailVarName' needs to be a string."
+            phjAssert('phjFailVarName',phjFailVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        
         if phjTotalVarName is not None:
-            assert isinstance(phjTotalVarName,str), "Parameter 'phjTotalVarName' needs to be a string."
- 
-        assert isinstance(phjBinomialConfIntMethod,str), "Parameter 'phjBinomialConfIntMethod' needs to be a string."
-        assert isinstance(phjAlpha,float), "Parameter 'phjAlpha' needs to be a float."
- 
-        # Check whether arguments are set to allowable values
-        assert phjBinomialConfIntMethod in ['normal','agresti_coull','beta','wilson','jeffreys','binom_test'], "Requested method for calculating binomial confidence interval ('{0}') is not recognised.".format(phjBinomialConfIntMethod)
-        assert ((phjAlpha > 0) & (phjAlpha < 1)), "Variable 'phjAlpha' needs to be set between zero and one."
-        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
- 
-        # Check that referenced columns exist in the dataframe
-        for colname in [phjSuccVarName,phjFailVarName,phjTotalVarName]:
-            if colname is not None:
-                assert colname in phjDF.columns, "The column name '{0}' does not exist in dataframe.".format(colname)
- 
-        # Check that new column names do not already exist
-        for newcolname in [phjSuffixDict['proportion'],
-                           phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']]),
-                           phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])]:
-            assert newcolname not in phjDF.columns, "The column name '{0}' will be created but already exists. Please rename column and try again.".format(newcolname)
- 
+            #assert isinstance(phjTotalVarName,str), "Parameter 'phjTotalVarName' needs to be a string."
+            phjAssert('phjTotalVarName',phjTotalVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        
+        phjAssert('phjBinomialConfIntMethod',phjBinomialConfIntMethod,str,phjAllowedOptions = ['normal','agresti_coull','beta','wilson','jeffreys','binom_test'])
+        phjAssert('phjAlpha',phjAlpha,float,phjAllowedOptions = {'min':0.0001,'max':0.9999})
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+        
+        # Bespoke asserts
+        # ---------------
         # The user can enter two of three parameters in list of successes, failures or total.
         # Check that at least 2 parameters are entered.
         nArgs = len([i for i in [phjSuccVarName,phjFailVarName,phjTotalVarName] if i is not None])
- 
-        assert nArgs >= 2, "At least 2 variables from phjSuccessColumnName, phjFailVarName and phjTotalVarName need to be entered but only {} has been entered.".format(nArgs)
- 
+        assert nArgs >= 2, "At least 2 variables from phjSuccVarName, phjFailVarName and phjTotalVarName need to be entered but only {} has been entered.".format(nArgs)
+        
         # If all three parameters have been entered, check that successes + failures = total
         if nArgs == 3:
             assert (phjDF[phjSuccVarName] + phjDF[phjFailVarName]).equals(phjDF[phjTotalVarName]), "The '{0}' and '{1}' columns do not add up to the values in the '{2}' column.".format(phjSuccVarName,phjFailVarName,phjTotalVarName)
- 
- 
+        
+        # New columns
+        # Some new column names will be created.
+        phjProbName = phjSuffixDict['proportion']
+        phjProbCILowLimName = phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])
+        phjProbCIUppLimName = phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])
+        phjProbCILowIntName = phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowint']])
+        phjProbCIUppIntName = phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciuppint']])
+        
+        # Check that new column names do not already exist
+        phjAssert('New column names',
+                  [phjProbName,phjProbCILowLimName,phjProbCIUppLimName,phjProbCILowIntName,phjProbCIUppIntName],
+                  list,
+                  phjMustBeAbsentColumnList = list(phjDF.columns))
+        
+    
     except AssertionError as e:
-        print("An AssertionError occurred. ({0})".format(e))
- 
+        
+        phjDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
     else:
         # Calculations are made using successes and totals.
         # If 2 column names entered and 1 is failures then calculate either the successes or the totals column.
@@ -518,7 +537,7 @@ def phjCalculateBinomialConfInts(phjDF,
         phjDF[phjTotalVarName] = phjDF[phjTotalVarName].astype(int)
  
         # Calculate proportions
-        phjDF[phjSuffixDict['proportion']] = phjDF[phjSuccVarName] / phjDF[phjTotalVarName]
+        phjDF[phjProbName] = phjDF[phjSuccVarName] / phjDF[phjTotalVarName]
  
         # Get binomial confidence intervals
         phjBinomConfIntArr = smprop.proportion_confint(count = phjDF[phjSuccVarName],
@@ -526,13 +545,14 @@ def phjCalculateBinomialConfInts(phjDF,
                                                        alpha = phjAlpha,
                                                        method = phjBinomialConfIntMethod)
  
-        phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])] = [i for i in phjBinomConfIntArr[0]]
-        phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] = [i for i in phjBinomConfIntArr[1]]
+        phjDF[phjProbCILowLimName] = [i for i in phjBinomConfIntArr[0]]
+        phjDF[phjProbCIUppLimName] = [i for i in phjBinomConfIntArr[1]]
         
-        phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowint']])] = phjDF[phjSuffixDict['proportion']] - phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])]
-        phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciuppint']])] = phjDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])] - phjDF[phjSuffixDict['proportion']]
+        phjDF[phjProbCILowIntName] = phjDF[phjProbName] - phjDF[phjProbCILowLimName]
+        phjDF[phjProbCIUppIntName] = phjDF[phjProbCIUppLimName] - phjDF[phjProbName]
         
-    return phjDF
+    finally:
+        return phjDF
  
  
  
@@ -549,61 +569,52 @@ def phjSummaryTableToBinaryOutcomes(phjDF,
     # (This is useful if the function used to do logistic regression does not
     # include a frequency weight option.)
     
-    # Check function parameters are set correctly
     try:
-        # Check whether required parameters have been set to correct type
-        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
-        assert isinstance(phjVarsToIncludeList,(str,list)), "Parameter 'phjVarsToIncludeList' needs to be a list (or a string)."
+        # Check whether function parameters have been set to correct type and are of
+        # correct values.
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        phjAssert('phjVarsToIncludeList',phjVarsToIncludeList,(str,list),phjMustBePresentColumnList = list(phjDF.columns))
         
         if phjSuccVarName is not None:
-            assert isinstance(phjSuccVarName,str), "Parameter 'phjSuccVarName' needs to be a string."
+            phjAssert('phjSuccVarName',phjSuccVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
         
         if phjFailVarName is not None:
-            assert isinstance(phjFailVarName,str), "Parameter 'phjFailVarName' needs to be a string."
+            phjAssert('phjFailVarName',phjFailVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
         
         if phjTotalVarName is not None:
-            assert isinstance(phjTotalVarName,str), "Parameter 'phjTotalVarName' needs to be a string."
+            phjAssert('phjTotalVarName',phjTotalVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
         
-        assert isinstance(phjOutcomeVarName,str), "Parameter 'phjOutcomeVarName' needs to be a string."
+        phjAssert('phjOutcomeVarName',phjOutcomeVarName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        phjAssert('phjPrintResults',phjPrintResults,bool)
         
-        
-        # Check whether arguments are set to allowable values
-        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
-        
-        
-        # Check that referenced columns exist in the dataframe
-        if isinstance(phjVarsToIncludeList,str):
-            assert phjVarsToIncludeList in phjDF.columns, "The column name '{0}' does not exist in dataframe.".format(phjVarsToIncludeList)
-        elif isinstance(phjVarsToIncludeList,list):
-            for col in phjVarsToIncludeList:
-                assert col in phjDF.columns, "The column name '{0}' does not exist in dataframe.".format(col)
-        
-        for col in [phjSuccVarName,phjFailVarName,phjTotalVarName]:
-            if col is not None:
-                assert col in phjDF.columns, "The column name '{0}' does not exist in dataframe.".format(col)
-        
-        
-        # Check that new column names do not already exist
-        assert phjOutcomeVarName not in phjDF.columns, "The column name '{0}' already exists.".format(phjOutcomeVarName)
-        
-        
+        # Bespoke asserts
+        # ---------------
         # The user can enter two of three parameters in list of successes, failures or total.
         # Check that at least 2 parameters are entered.
         nArgs = len([i for i in [phjSuccVarName,phjFailVarName,phjTotalVarName] if i is not None])
-        
         assert nArgs >= 2, "At least 2 variables from phjSuccVarName, phjFailVarName and phjTotalVarName need to be entered but only {} has been entered.".format(nArgs)
-        
         
         # If all three parameters have been entered, check that successes + failures = total
         if nArgs == 3:
             assert (phjDF[phjSuccVarName] + phjDF[phjFailVarName]).equals(phjDF[phjTotalVarName]), "The '{0}' and '{1}' columns do not add up to the values in the '{2}' column.".format(phjSuccVarName,phjFailVarName,phjTotalVarName)
             
             
-    
     except AssertionError as e:
-        print("An AssertionError occurred. ({0})".format(e))
         
         phjDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
     
     else:
         # Set default suffixes and join strings to create column names
@@ -646,17 +657,18 @@ def phjSummaryTableToBinaryOutcomes(phjDF,
         phjDF = phjDF.loc[phjDF.index.repeat(phjDF['count'])]
         
         phjDF[phjOutcomeVarName] = phjDF[phjOutcomeVarName].replace({phjSuccVarName: 1,
-                                                                             phjFailVarName: 0})
+                                                                     phjFailVarName: 0})
         
         phjDF = phjDF[[x for x in phjDF.columns if x != 'count']].reset_index(drop = True)
         
-    if phjPrintResults == True:
-        print('Final dataframe\n')
-        with pd.option_context('display.max_rows',6, 'display.max_columns',2):
-            print(phjDF)
-        print('\n')
-    
-    return phjDF
+    finally:
+        if phjPrintResults == True:
+            print('Final dataframe\n')
+            with pd.option_context('display.max_rows',6, 'display.max_columns',2):
+                print(phjDF)
+            print('\n')
+        
+        return phjDF
  
  
  
@@ -675,145 +687,239 @@ def phjAnnualDiseaseTrend(phjDF,
     # Get a list of the terms used to head columns in summary tables
     phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
     
-    phjPropDF = phjCalculateBinomialConfInts(phjDF = phjDF,
-                                             phjSuccVarName = phjPositivesVarName,
-                                             phjFailVarName = phjNegativesVarName,
-                                             phjTotalVarName = phjTotalVarName,
-                                             phjBinomialConfIntMethod = phjConfIntMethod,
-                                             phjAlpha = phjAlpha,
-                                             phjPrintResults = phjPrintResults)
-    
-    phjLongDF = phjSummaryTableToBinaryOutcomes(phjDF = phjPropDF,
-                                                phjVarsToIncludeList = [phjYearVarName],
-                                                phjSuccVarName = phjPositivesVarName,
-                                                phjFailVarName = phjNegativesVarName,
-                                                phjTotalVarName = phjTotalVarName,
-                                                phjOutcomeVarName = phjSuffixDict['outcome'],
-                                                phjPrintResults = False)
-    
-    #import pdb; pdb.set_trace()
-    
-    # Logistic regression model
-    phjFormulaStr = '{} ~ {}'.format(phjSuffixDict['outcome'],phjYearVarName)
-    
-    # Calculating post-estimation using matrices
-    y, X = patsy.dmatrices(formula_like = phjFormulaStr,
-                           data = phjLongDF,
-                           NA_action = 'drop',
-                           return_type = 'dataframe')
-    
-    model = sm.Logit(endog = y,
-                     exog = X,
-                     missing = 'drop').fit()
-    
-    if phjPrintResults == True:
-        print(model.summary2())
-        print('\n')
-    else:
-        model.summary2()    # It seems that the .summary2() method needs to be run even if not printed, otherwise an error occurs.
-    
-    # Calculate predicted probabilities
-    phjPredProbName = ''.join([phjSuffixDict['predicted'],phjSuffixDict['probability']])
-    X[phjPredProbName] = model.predict() # predicted probability
-    
-    # Estimate confidence interval for predicted probabilities using Delta method
-    # This method is taken from an answer by David Dale on StackOverflow (see https://stackoverflow.com/questions/47414842/confidence-interval-of-probability-prediction-from-logistic-regression-statsmode/47419474).
-    cov = model.cov_params()
-    gradient = (X[phjPredProbName] * (1 - X[phjPredProbName]) * X[[x for x in X if x != phjPredProbName]].T).T.values # matrix of gradients for each observation
-    
-    # Add column containing SE of predicted probabilities
-    X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])] = [np.sqrt(np.dot(np.dot(g, cov), g)) for g in gradient]
-    
-    # Add column containing CI lower and upper limits
-    # The format of ci_limit = np.maximum(0, np.minimum(1, prob + std_errors * c)) ensures limit lies between 0 and 1.
-    # Multiplier for standard error calculated as:
-    #     norm.ppf(.025) = -1.960063984540054
-    #     norm.ppf(.975) = 1.959963984540054
-    
-    # Calculate confidence intervals. The max(0,min(1,interval)) construct ensures that
-    # the interval does not extend beyond 1 or 0. Again this was taken from the answer
-    # by David Dale on StackOverflow (see https://stackoverflow.com/questions/47414842/confidence-interval-of-probability-prediction-from-logistic-regression-statsmode/47419474).
-    # Lower interval
-    X[phjSuffixDict['joinstr'].join([phjPredProbName,
-                                     phjSuffixDict['cisuffix'],
-                                     phjSuffixDict['cilowlim']])] = np.maximum(0,
-                                                                               np.minimum(1,
-                                                                                          X[phjPredProbName] + (norm.ppf(phjAlpha/2) * X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])])))   # N.B. The norm.pdf(0.025) is negative therefore equates to mean minus interval.
-    # Upper interval
-    X[phjSuffixDict['joinstr'].join([phjPredProbName,
-                                     phjSuffixDict['cisuffix'],
-                                     phjSuffixDict['ciupplim']])] = np.maximum(0,
-                                                                               np.minimum(1,
-                                                                                          X[phjPredProbName] + (norm.ppf(1 - (phjAlpha/2)) * X[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])])))
-    
-    # Keep only a single value for each group
-    X = X.drop_duplicates(keep = 'first')
-    
-    # Join predicted probabilities with original dataframe
-    phjPropDF = phjPropDF.merge(right = X,
-                                left_on = phjYearVarName,
-                                right_on = phjYearVarName)
-    
-    #if phjPrintResults == True:
-    #    print(phjPropDF)
-    #    print('\n')
-    
-    # Plot actual proportion as barchart and predicted probabilities as line
-    if (phjPlotProportions == True) | (phjPlotPrediction == True):
-    
-        fig = plt.figure(figsize = (10,6))
-        ax = fig.add_subplot(111)
-    
-        if phjPlotProportions == True:
-            rects = ax.bar(phjPropDF[phjYearVarName],
-                           phjPropDF[phjSuffixDict['proportion']],
-                           yerr = [phjPropDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowint']])],
-                                   phjPropDF[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciuppint']])]],
-                           capsize = 4)
-    
-        if phjPlotPrediction == True:
-            # Only plot trend line if logistic regression model converge. Otherwise, just plot bars.
-            if model.mle_retvals['converged']:
-                # Plot pred prob
-                pprobline = ax.plot(phjPropDF[phjYearVarName],
-                                    phjPropDF[phjPredProbName],
-                                    linestyle = 'solid',
-                                    color = 'green')
-                
-                # Plot lower limit of ci for pred prob
-                pprobllimline = ax.plot(phjPropDF[phjYearVarName],
-                                        phjPropDF[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])],
-                                        linestyle = 'dashed',
-                                        color = 'red')
-                
-                # Plot upper limit of ci for pred prob
-                pprobulimline = ax.plot(phjPropDF[phjYearVarName],
-                                        phjPropDF[phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])],
-                                        linestyle = 'dashed',
-                                        color = 'red')
-                
-                phjText = "Trend line p-value = {0:.4f}".format(model.pvalues[phjYearVarName])
-                
-            else:
-                phjText = "Logistic regression model failed to converge"
+    # Check function parameters are set correctly
+    try:
+        # Check whether required parameters have been set to correct type
+        # and check whether arguments are set to allowable values.
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        phjAssert('phjYearVarName',phjYearVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        
+        if phjPositivesVarName is not None:
+            phjAssert('phjPositivesVarName',phjPositivesVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
             
-            # Add p value for logistic regression model (or failure-to-converge notice)
-            ax.text(ax.get_xlim()[1],
-                    ax.get_ylim()[1],
-                    phjText,
-                    horizontalalignment = 'right',
-                    verticalalignment = 'bottom')
+        if phjNegativesVarName is not None:
+            phjAssert('phjNegativesVarName',phjNegativesVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+            
+        if phjTotalVarName is not None:
+            phjAssert('phjTotalVarName',phjTotalVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+            
+        phjAssert('phjConfIntMethod',phjConfIntMethod,str,phjAllowedOptions = ['normal','agresti_coull','beta','wilson','jeffreys','binom_test'])
+        phjAssert('phjAlpha',phjAlpha,float,phjAllowedOptions = {'min':0.0001,'max':0.9999})
+        phjAssert('phjPlotProportions',phjPlotProportions,bool)
+        phjAssert('phjPlotPrediction',phjPlotPrediction,bool)
         
-        ax.set_xlabel(phjYearVarName)
-        ax.set_ylabel('Proportion / probability')
-        ax.set_title(phjGraphTitleStr)
+        if phjGraphTitleStr is not None:
+            phjAssert('phjGraphTitleStr',phjGraphTitleStr,str)
         
-        major_xticks = phjPropDF[phjYearVarName].tolist()
-        ax.set_xticks(major_xticks, minor = False)
-         
-        plt.show()
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+        
+        # Bespoke asserts
+        # ---------------
+        # The user can enter two of three parameters in list of successes, failures or total.
+        # Check that at least 2 parameters are entered.
+        nArgs = len([i for i in [phjPositivesVarName,phjNegativesVarName,phjTotalVarName] if i is not None])
+        assert nArgs >= 2, "At least 2 variables from phjPositivesVarName, phjNegativesVarName and phjTotalVarName need to be entered but only {} has been entered.".format(nArgs)
+        
+        # If all three parameters have been entered, check that successes + failures = total
+        if nArgs == 3:
+            assert (phjDF[phjPositivesVarName] + phjDF[phjNegativesVarName]).equals(phjDF[phjTotalVarName]), "The '{0}' and '{1}' columns do not add up to the values in the '{2}' column.".format(phjPositivesVarName,phjNegativesVarName,phjTotalVarName)
+        
+        
+        # New columns
+        # Some new column names will be created. Some columns will contain information
+        # relating to binomial confidence intervals; any assert errors in the names of
+        # these columns will be handed by phjCalculateBinomialConfInts(). However, some
+        # columns will be created by this function relating to predicted probabilities
+        # and associated confidence intervals; assertion error in these names need to be
+        # addressed here.
+        
+        phjProbName = phjSuffixDict['proportion']
+        #phjProbCILowLimName is not used in this function but is created by phjCalculateBinomialConfInts
+        #phjProbCIUppLimName is not used in this function but is created by phjCalculateBinomialConfInts
+        phjProbCILowIntName = phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['cilowint']])   # Created by phjCalculateBinomialConfInts
+        phjProbCIUppIntName = phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],phjSuffixDict['ciuppint']])   # Created by phjCalculateBinomialConfInts
+        
+        # N.B. Also a column called 'Intercept' will be created by patsy
+        phjPredProbName = ''.join([phjSuffixDict['predicted'],phjSuffixDict['probability']])
+        phjPredProbSEName = phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['stderr']])
+        phjPredProbCILowLimName = phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['cisuffix'],phjSuffixDict['cilowlim']])
+        phjPredProbCIUppLimName = phjSuffixDict['joinstr'].join([phjPredProbName,phjSuffixDict['cisuffix'],phjSuffixDict['ciupplim']])
+        
+        phjAssert('New column names',
+                  [phjProbName,'Intercept',phjPredProbName,phjPredProbSEName,phjPredProbCILowLimName,phjPredProbCIUppLimName],
+                  list,
+                  phjMustBeAbsentColumnList = list(phjDF.columns))
+        
+        
+    except AssertionError as e:
+        
+        phjPropDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
     
-    return phjPropDF
+    else:
+        try:
+            # Try to calculate binomial confidence intervals
+            phjPropDF = phjCalculateBinomialConfInts(phjDF = phjDF,
+                                                     phjSuccVarName = phjPositivesVarName,
+                                                     phjFailVarName = phjNegativesVarName,
+                                                     phjTotalVarName = phjTotalVarName,
+                                                     phjBinomialConfIntMethod = phjConfIntMethod,
+                                                     phjAlpha = phjAlpha,
+                                                     phjPrintResults = phjPrintResults)
+            
+            # Try to convert to table of binary outcomes
+            phjLongDF = phjSummaryTableToBinaryOutcomes(phjDF = phjPropDF,
+                                                        phjVarsToIncludeList = [phjYearVarName],
+                                                        phjSuccVarName = phjPositivesVarName,
+                                                        phjFailVarName = phjNegativesVarName,
+                                                        phjTotalVarName = phjTotalVarName,
+                                                        phjOutcomeVarName = phjSuffixDict['outcome'],
+                                                        phjPrintResults = False)
+        
+        except AssertionError as e:
+            
+            phjPropDF = None
+            
+            # If function has been called directly, present message.
+            if inspect.stack()[1][3] == '<module>':
+                print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                           fname = inspect.stack()[0][3]))
+            
+            # If function has been called by another function then modify message and re-raise exception
+            else:
+                print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                 fname = inspect.stack()[0][3],
+                                                                                                                                 callfname = inspect.stack()[1][3]))
+                raise
+        
+        else:
+            #import pdb; pdb.set_trace()
+            
+            # Logistic regression model
+            phjFormulaStr = '{} ~ {}'.format(phjSuffixDict['outcome'],phjYearVarName)
+            
+            # Calculating post-estimation using matrices
+            y, X = patsy.dmatrices(formula_like = phjFormulaStr,
+                                   data = phjLongDF,
+                                   NA_action = 'drop',
+                                   return_type = 'dataframe')
+            
+            model = sm.Logit(endog = y,
+                             exog = X,
+                             missing = 'drop').fit()
+            
+            if phjPrintResults == True:
+                print(model.summary2())
+                print('\n')
+            else:
+                model.summary2()    # It seems that the .summary2() method needs to be run even if not printed, otherwise an error occurs.
+            
+            # Calculate predicted probabilities
+            X[phjPredProbName] = model.predict() # predicted probability
+            
+            # Estimate confidence interval for predicted probabilities using Delta method
+            # This method is taken from an answer by David Dale on StackOverflow (see https://stackoverflow.com/questions/47414842/confidence-interval-of-probability-prediction-from-logistic-regression-statsmode/47419474).
+            cov = model.cov_params()
+            gradient = (X[phjPredProbName] * (1 - X[phjPredProbName]) * X[[x for x in X if x != phjPredProbName]].T).T.values # matrix of gradients for each observation
+            
+            # Add column containing SE of predicted probabilities
+            X[phjPredProbSEName] = [np.sqrt(np.dot(np.dot(g, cov), g)) for g in gradient]
+            
+            # Add column containing CI lower and upper limits
+            # The format of ci_limit = np.maximum(0, np.minimum(1, prob + std_errors * c)) ensures limit lies between 0 and 1.
+            # Multiplier for standard error calculated as:
+            #     norm.ppf(.025) = -1.960063984540054
+            #     norm.ppf(.975) = 1.959963984540054
+            
+            # Calculate confidence intervals. The max(0,min(1,interval)) construct ensures that
+            # the interval does not extend beyond 1 or 0. Again this was taken from the answer
+            # by David Dale on StackOverflow (see https://stackoverflow.com/questions/47414842/confidence-interval-of-probability-prediction-from-logistic-regression-statsmode/47419474).
+            # Lower interval
+            X[phjPredProbCILowLimName] = np.maximum(0,np.minimum(1,X[phjPredProbName] + (norm.ppf(phjAlpha/2) * X[phjPredProbSEName])))   # N.B. The norm.pdf(0.025) is negative therefore equates to mean minus interval.
+            # Upper interval
+            X[phjPredProbCIUppLimName] = np.maximum(0,np.minimum(1,X[phjPredProbName] + (norm.ppf(1 - (phjAlpha/2)) * X[phjPredProbSEName])))
+            
+            # Keep only a single value for each group
+            X = X.drop_duplicates(keep = 'first')
+            
+            # Join predicted probabilities with original dataframe
+            phjPropDF = phjPropDF.merge(right = X,
+                                        left_on = phjYearVarName,
+                                        right_on = phjYearVarName)
+            
+            #if phjPrintResults == True:
+            #    print(phjPropDF)
+            #    print('\n')
+            
+            # Plot actual proportion as barchart and predicted probabilities as line
+            if (phjPlotProportions == True) | (phjPlotPrediction == True):
+                
+                fig = plt.figure(figsize = (10,6))
+                ax = fig.add_subplot(111)
+                
+                if phjPlotProportions == True:
+                    rects = ax.bar(phjPropDF[phjYearVarName],
+                                   phjPropDF[phjProbName],
+                                   yerr = [phjPropDF[phjProbCILowIntName],
+                                           phjPropDF[phjProbCIUppIntName]],
+                                   capsize = 4)
+                
+                if phjPlotPrediction == True:
+                    # Only plot trend line if logistic regression model converge. Otherwise, just plot bars.
+                    if model.mle_retvals['converged']:
+                        # Plot pred prob
+                        pprobline = ax.plot(phjPropDF[phjYearVarName],
+                                            phjPropDF[phjPredProbName],
+                                            linestyle = 'solid',
+                                            color = 'green')
+                        
+                        # Plot lower limit of ci for pred prob
+                        pprobllimline = ax.plot(phjPropDF[phjYearVarName],
+                                                phjPropDF[phjPredProbCILowLimName],
+                                                linestyle = 'dashed',
+                                                color = 'red')
+                        
+                        # Plot upper limit of ci for pred prob
+                        pprobulimline = ax.plot(phjPropDF[phjYearVarName],
+                                                phjPropDF[phjPredProbCIUppLimName],
+                                                linestyle = 'dashed',
+                                                color = 'red')
+                        
+                        phjText = "Trend line p-value = {0:.4f}".format(model.pvalues[phjYearVarName])
+                    
+                    else:
+                        phjText = "Logistic regression model failed to converge"
+                    
+                    # Add p value for logistic regression model (or failure-to-converge notice)
+                    ax.text(ax.get_xlim()[1],
+                            ax.get_ylim()[1],
+                            phjText,
+                            horizontalalignment = 'right',
+                            verticalalignment = 'bottom')
+                
+                ax.set_xlabel(phjYearVarName)
+                ax.set_ylabel('Proportion / probability')
+                ax.set_title(phjGraphTitleStr)
+                
+                major_xticks = phjPropDF[phjYearVarName].tolist()
+                ax.set_xticks(major_xticks, minor = False)
+                
+                plt.show()
+        
+    finally:
+        
+        return phjPropDF
  
  
  
