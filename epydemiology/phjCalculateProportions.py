@@ -73,7 +73,7 @@ from .phjTestFunctionParameters import phjAssert
 #
 # Calculate binomial proportions
 # ------------------------------
-# This function calculates the binomial proportions of a series of binomial variables
+# This function calculates the binomial proportions for a series of binomial variables
 # for each level of a given group variable. The dataframe has the following format:
 #
 #         group     A    B    C
@@ -453,13 +453,16 @@ def phjCalculateBinomialConfInts(phjDF,
                                  phjBinomialConfIntMethod = 'normal',
                                  phjAlpha = 0.05,
                                  phjPrintResults = False):
- 
+    
+    # Deep copy dataframe to ensure columns not added to passed dataframe
+    phjDF = phjDF.copy(deep = True)
+    
     # Get a list of the terms used to head columns in summary tables
     phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
     
+    # Check whether function parameters have been set to correct type and are of
+    # correct values.
     try:
-        # Check whether function parameters have been set to correct type and are of
-        # correct values.
         phjAssert('phjDF',phjDF,pd.DataFrame)
         
         if phjSuccVarName is not None:
@@ -502,7 +505,6 @@ def phjCalculateBinomialConfInts(phjDF,
                   [phjProbName,phjProbCILowLimName,phjProbCIUppLimName,phjProbCILowIntName,phjProbCIUppIntName],
                   list,
                   phjMustBeAbsentColumnList = list(phjDF.columns))
-        
     
     except AssertionError as e:
         
@@ -552,6 +554,12 @@ def phjCalculateBinomialConfInts(phjDF,
         phjDF[phjProbCIUppIntName] = phjDF[phjProbCIUppLimName] - phjDF[phjProbName]
         
     finally:
+        if phjPrintResults == True:
+            print('Final dataframe\n')
+            with pd.option_context('display.max_rows',6, 'display.max_columns',8):
+                print(phjDF)
+            print('\n')
+        
         return phjDF
  
  
@@ -569,9 +577,9 @@ def phjSummaryTableToBinaryOutcomes(phjDF,
     # (This is useful if the function used to do logistic regression does not
     # include a frequency weight option.)
     
+    # Check whether function parameters have been set to correct type and are of
+    # correct values.
     try:
-        # Check whether function parameters have been set to correct type and are of
-        # correct values.
         phjAssert('phjDF',phjDF,pd.DataFrame)
         phjAssert('phjVarsToIncludeList',phjVarsToIncludeList,(str,list),phjMustBePresentColumnList = list(phjDF.columns))
         
@@ -597,8 +605,7 @@ def phjSummaryTableToBinaryOutcomes(phjDF,
         # If all three parameters have been entered, check that successes + failures = total
         if nArgs == 3:
             assert (phjDF[phjSuccVarName] + phjDF[phjFailVarName]).equals(phjDF[phjTotalVarName]), "The '{0}' and '{1}' columns do not add up to the values in the '{2}' column.".format(phjSuccVarName,phjFailVarName,phjTotalVarName)
-            
-            
+    
     except AssertionError as e:
         
         phjDF = None
@@ -687,10 +694,9 @@ def phjAnnualDiseaseTrend(phjDF,
     # Get a list of the terms used to head columns in summary tables
     phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
     
-    # Check function parameters are set correctly
+    # Check whether required parameters have been set to correct type
+    # and check whether arguments are set to allowable values.
     try:
-        # Check whether required parameters have been set to correct type
-        # and check whether arguments are set to allowable values.
         phjAssert('phjDF',phjDF,pd.DataFrame)
         phjAssert('phjYearVarName',phjYearVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
         
@@ -749,8 +755,7 @@ def phjAnnualDiseaseTrend(phjDF,
                   [phjProbName,'Intercept',phjPredProbName,phjPredProbSEName,phjPredProbCILowLimName,phjPredProbCIUppLimName],
                   list,
                   phjMustBeAbsentColumnList = list(phjDF.columns))
-        
-        
+    
     except AssertionError as e:
         
         phjPropDF = None
