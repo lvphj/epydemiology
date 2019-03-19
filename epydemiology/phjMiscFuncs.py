@@ -24,6 +24,9 @@ import re
 import collections
 import inspect
 
+from .phjTestFunctionParameters import phjAssert
+
+
 
 def phjGetStrFromArgOrFile(phjStr = None,
                            phjPathAndFileName = None,
@@ -258,28 +261,24 @@ def phjFindRegexNamedGroups(phjDF,
                             phjPrintResults = False):
     
     
-    # Check function parameters are set correctly
+    # Check whether required parameters have been set to correct type and are
+    # set to allowable values
     try:
-        # Check whether required parameters have been set to correct type
-        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
-        assert isinstance(phjDescriptorVarName,str), "Parameter 'phjDescriptorVarName' needs to be a string."
-        assert isinstance(phjNamedGroupRegexStr,str), "Parameter 'phjNamedGroupRegexStr' needs to be a string. The function does not accept a pre-compiled regular expression."
-        assert isinstance(phjNumberMatchesVarName,str), "Parameter 'phjNumberMatchesVarName' needs to be a string."
-        assert isinstance(phjMatchedGroupVarName,str), "Parameter 'phjMatchedGroupVarName' needs to be a string."
-        assert isinstance(phjUnclassifiedStr,str), "Parameter 'phjUnclassifiedStr' needs to be a string."
-        assert isinstance(phjMultipleMatchStr,str), "Parameter 'phjMultipleMatchStr' needs to be a string."
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        phjAssert('phjDescriptorVarName',phjDescriptorVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        phjAssert('phjNamedGroupRegexStr',phjNamedGroupRegexStr,str)
+        phjAssert('phjSeparateRegexGroups',phjSeparateRegexGroups,bool)
+        phjAssert('phjNumberMatchesVarName',phjNumberMatchesVarName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        phjAssert('phjMatchedGroupVarName',phjMatchedGroupVarName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        phjAssert('phjUnclassifiedStr',phjUnclassifiedStr,str)
+        phjAssert('phjMultipleMatchStr',phjMultipleMatchStr,str)
+        phjAssert('phjCleanup',phjCleanup,bool)
+        phjAssert('phjPrintResults',phjPrintResults,bool)
         
-        # Check whether arguments are set to allowable values
-        assert phjSeparateRegexGroups in [True, False], "Parameter 'phjSeparateRegexGroups' can only be True or False; it is incorrectly set."
-        assert phjCleanup in [True, False], "Parameter 'phjCleanup' can only be True or False; it is incorrectly set."
-        assert phjPrintResults in [True, False], "Parameter 'phjPrintResults' can only be True or False; it is incorrectly set."
+        # Could also check that each named group does not already exist as a column name.
+        # Actually this is done when the phjScratchDF is joined back to the original
+        # dataframe (see below).
         
-        # Check that referenced columns exist in the dataframe
-        assert phjDescriptorVarName in phjDF.columns, "The column '{0}' does not exist in the dataframe.".format(phjDescriptorVarName)
-        
-        # Check that new column names do not already exist
-        assert phjNumberMatchesVarName not in phjDF.columns, "The column name '{0}' already exists.".format(phjNumberMatchesVarName)
-        assert phjMatchedGroupVarName not in phjDF.columns, "The column name '{0}' already exists.".format(phjMatchedGroupVarName)
         
     except AssertionError as e:
         # If function has been called directly, present message.
@@ -551,26 +550,28 @@ def phjReverseMap(phjDF,
                   phjTreatAsRegex = False,
                   phjPrintResults = False):
     
-    # Check function parameters are set correctly
+    # Check whether required parameters have been set to correct type
     try:
-        # Check whether required parameters have been set to correct type
-        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
-        assert isinstance(phjMappingDict,collections.Mapping), "Parameter 'phjMappingDict' needs to be a dict." # collections.Mapping will work for dict(), collections.OrderedDict() and collections.UserDict() (see comment by Alexander Ryzhov at https://stackoverflow.com/questions/25231989/how-to-check-if-a-variable-is-a-dictionary-in-python.
-        assert isinstance(phjMappedVarName,str), "Parameter 'phjMappedVarName' needs to be a string."
-        assert isinstance(phjUnmapped,(str,int,float)), "Parameter 'phjUnmapped' needs to be a string, an integer, a float or numpy.nan."   # The np.nan seems to be picked up at a float.
-        
-        # Check whether arguments are set to allowable values
-        assert isinstance(phjDropPreExisting,bool), "Parameter 'phjDropPreExisting' needs to be a boolean (True, False) value."
-        assert isinstance(phjTreatAsRegex,bool), "Parameter 'phjTreatAsRegex' needs to be a boolean (True, False) value."
-        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
-        
-        # Check that referenced columns exist in the dataframe
-        assert phjCategoryVarName in phjDF.columns, "The column name 'phjCategoryVarName' does not exist in dataframe."
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        phjAssert('phjMappingDict',phjMappingDict,collections.Mapping)
+        phjAssert('phjCategoryVarName',phjCategoryVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        #phjAssert('phjMappedVarName',phjMappedVarName,str)
+        phjAssert('phjUnmapped',phjUnmapped,(str,int,float))
+        phjAssert('phjDropPreExisting',phjDropPreExisting,bool)
         
         # Check whether columns that will be created already exist
         if phjDropPreExisting == False:
-            assert phjMappedVarName not in phjDF.columns.values, "A column named '{0}' (phjMappedVarName) will be permanently created but already exists; please choose a different name.".format(phjMappedVarName)
+            #assert phjMappedVarName not in phjDF.columns.values, "A column named '{0}' (phjMappedVarName) will be permanently created but already exists; please choose a different name.".format(phjMappedVarName)
+            phjAssert('phjMappedVarName',phjMappedVarName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        elif phjDropPreExisting == True:
+            phjAssert('phjMappedVarName',phjMappedVarName,str)
         
+        phjAssert('phjTreatAsRegex',phjTreatAsRegex,bool)
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+        
+        
+        # Bespoke asserts
+        # ---------------
         # Check that all the items in the dictionary values are uniquely represented, otherwise
         # the dictionary entry will only reflect the last occurrence.
         # Make a flat list of items in the dict values using list comprehension and check there

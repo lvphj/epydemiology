@@ -111,73 +111,79 @@ def phjCalculateBinomialProportions(phjDF,
                                     phjGraphTitle = None,
                                     phjPrintResults = False):
  
+    # Check whether required parameters have been set to correct type and are set to
+    # allowable values. N.B. isinstance() can take a tuple to test against multiple types.
     try:
-        # 1. Check whether entered parameters have been set to the correct type
-        assert isinstance(phjDF,pd.DataFrame), "Parameter, 'phjDF' needs to be a Pandas dataframe."
-        assert isinstance(phjColumnsList,list), "Parameter, 'phjColumnsList' needs to be a list."
- 
-        # N.B. isinstance() can take a tuple to test against multiple types.
-        assert isinstance(phjSuccess,(str,int,float)), "Parameter 'phjDescriptorVarName' needs to be a string or number value."
- 
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        
+        # If phjColumnsList is actually passed as a string (representing a single column)
+        # then convert to a list and check that all columns are included as columns in
+        # the dataframe.
+        if isinstance(phjColumnsList,str):
+            phjColumnsList = [phjColumnsList]
+            
+        phjAssert('phjColumnsList',phjColumnsList,list,phjMustBePresentColumnList = list(phjDF.columns))
+        
+        phjAssert('phjSuccess',phjSuccess,(str,int,float))
+        
         if phjGroupVarName is not None:
-            assert isinstance(phjGroupVarName,str), "Parameter 'phjGroupVarName' needs to be a string."
- 
-        # N.B. isinstance() can take a tuple to test against multiple types.
+            phjAssert('phjGroupVarName',phjGroupVarName,str,phjMustBePresentColumnList = list(phjDF.columns),phjMustBeAbsentColumnList = phjColumnsList)
+        
         # It seems that NaN is still a number and will be included in the assert
         # statement that tests for 'float'.
-        assert isinstance(phjMissingValue,(str,int,float)), "Parameter 'phjMissingValueCode' needs to be a string or a number (including np.nan)."
- 
-        assert isinstance(phjBinomialConfIntMethod,str), "Parameter 'phjBinomialCnfIntMethod' needs to be a string."
-        assert isinstance(phjAlpha,float), "Parameter 'phjAlpha' needs to be a float numerical value."
-        assert isinstance(phjPlotProportions,bool), "Parameter 'phjPlotProportions' needs to be a boolean (True, False) value."
- 
+        phjAssert('phjMissingValue',phjMissingValue,(str,int,float),phjBespokeMessage = "Parameter 'phjMissingValue' needs to be a string or a number (including np.nan).")
+        phjAssert('phjBinomialConfIntMethod',phjBinomialConfIntMethod,str,phjAllowedOptions = ['normal','agresti_coull','beta','wilson','jeffreys','binom_test'])
+        phjAssert('phjAlpha',phjAlpha,float,phjAllowedOptions = {'min':0.0001,'max':0.9999})
+        phjAssert('phjPlotProportions',phjPlotProportions,bool)
+         
         if phjGroupsToPlotList is not None:
-            assert (phjGroupsToPlotList == 'all') or (isinstance(phjGroupsToPlotList,list)), "Parameter 'phjGroupsToPlotList' needs to be a list or the string value 'all'."
- 
-        assert isinstance(phjSortProportions,(bool,str)), "Parameter 'phjSortProportions' needs to be a boolean (True, False) value or a string."
- 
+            if phjGroupsToPlotList != 'all':
+                if isinstance(phjGroupsToPlotList,str):
+                    phjGroupsToPlotList = [phjGroupsToPlotList]
+                
+                phjAssert('phjGroupsToPlotList',phjGroupsToPlotList,list,phjBespokeMessage = "Parameter 'phjGroupsToPlotList' needs to be a list or the string value 'all'.")
+        
+        phjAssert('phjSortProportions',phjSortProportions,(bool,str))
+        if isinstance(phjSortProportions,str):
+            phjAssert('phjSortProportions',phjSortProportions,str,phjAllowedOptions = ['ascending','ascend','asc','descending','descend','desc'],phjBespokeMessage = "The sorting option ('{0}') is not recognised.".format(phjSortProportions))
+            
         if phjGraphTitle is not None:
-            assert isinstance(phjGraphTitle,str), "Parameter 'phjGraphTitle' needs to be a string."
- 
-        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
- 
-        # 2. Check whether entered parameters have been set to an appropriate value
-        for col in phjColumnsList:
-            assert col in phjDF.columns.tolist(), "Variable '{0}' does not exist in dataframe.".format(col)
- 
-        if phjGroupVarName is not None:
-            assert phjGroupVarName in phjDF.columns.tolist(), "Variable '{0}' does not exist in dataframe.".format(phjGroupVarName)
-            assert phjGroupVarName not in phjColumnsList, "The group variable name ('{0}') cannot be included in the list of columns ({1}).".format(phjGroupVarName,phjColumnsList)
- 
+            phjAssert('phjGraphTitle',phjGraphTitle,str)
+        
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+        
+        # Bespoke asserts
+        # ---------------
         if (phjGroupVarName is not None) & (phjPlotProportions == True):
             assert phjGroupsToPlotList is not None, "The group variable is defined ('{0}') and a plot of proportions is requested but the groups to plot have not been defined.".format(phjGroupVarName)
- 
+        
         if phjGroupVarName is None:
             assert phjGroupsToPlotList is None, "The required groups to plot have been set but the group variable name is undefined."
- 
+        
         if (phjGroupVarName is not None) & (phjGroupsToPlotList is not None):
             assert ((phjGroupsToPlotList == 'all') or set(phjGroupsToPlotList).issubset(phjDF[phjGroupVarName].unique())), "Groups to plot do not exist in variable '{0}'.".format(phjGroupVarName)
- 
-        assert phjBinomialConfIntMethod in ['normal','agresti_coull','beta','wilson','jeffreys','binom_test'], "Requested method for calculating binomial confidence interval ('{0}') is not recognised.".format(phjBinomialConfIntMethod)
-        assert ((phjAlpha > 0) & (phjAlpha < 1)), "Variable 'phjAlpha' needs to be set between zero and one."
- 
-        if isinstance(phjSortProportions,str):
-            assert phjSortProportions in ['ascending','ascend','asc','descending','descend','desc'], "The sorting option ('{0}') is not recognised.".format(phjSortProportions)
- 
-        # 3. Check that new columns that will be created don't already exist
-        # Not applicable
- 
+    
     except AssertionError as e:
-        print ("An AssertionError has occurred. ({0})".format(e))
- 
+        
         phjPropDF = None
- 
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+     
     else:
         # Set default suffixes and join strings to create column names
         # to use in output dataframe.
         phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
- 
- 
+        
         # Create list of unique group levels. (In the bionomial proportions function,
         # unlike for the multinomial proportions function, the category levels are defined
         # as a list that is passed to the function.)
@@ -188,13 +194,31 @@ def phjCalculateBinomialProportions(phjDF,
         phjGroupLevelsList = phjGetGroupLevelsList(phjDF = phjDF,
                                                    phjGroupVarName = phjGroupVarName,
                                                    phjPrintResults = phjPrintResults)
- 
+        
         # If the groups to plot have been defined then only retain those groups that
         # have been selected and occur in the list of categories in the group variable.
         if isinstance(phjGroupsToPlotList,list):
             phjGroupLevelsList = [c for c in phjGroupsToPlotList if c in phjGroupLevelsList]
- 
-        # Create dataframe consisting of total numbers and number of successes
+        
+        
+        # Create dataframe consisting of total numbers and number of successes.
+        # If no group name is given, this will be of the format:
+        # 
+        #    category   success     total
+        #           A         x         y
+        #           B         m         n
+        #           C         a         b
+        #
+        # Otherwise, if the group name is given, then the format will be:
+        #
+        #    group   category   success     total
+        #       g1          A         x         y
+        #       g1          B         m         n
+        #       g1          C         a         b
+        #       g2          A         c         d
+        #       g2          B         v         w
+        #       g2          C         i         j
+        
         if phjGroupVarName is None:
             # If no group var name is supplied then calculate success for
             # whole columns and return summary dataframe.
@@ -202,18 +226,17 @@ def phjCalculateBinomialProportions(phjDF,
                                           phjColumnsList = phjColumnsList,
                                           phjSuccessValue = phjSuccess,
                                           phjMissingValue = phjMissingValue)
- 
+        
         else:
             # Copy required columns to new dataframe
             phjDF = phjDF[phjColumnsList + [phjGroupVarName]].copy()
- 
+            
             # Calculate number of successes for each level of group variable and return summary dataframe
             phjPropDF = phjDF.groupby(phjGroupVarName).apply(lambda x: phjCountSuccesses(x,
-                                                                                             phjColumnsList = phjColumnsList,
-                                                                                             phjSuccessValue = phjSuccess,
-                                                                                             phjMissingValue = phjMissingValue))
- 
- 
+                                                                                         phjColumnsList = phjColumnsList,
+                                                                                         phjSuccessValue = phjSuccess,
+                                                                                         phjMissingValue = phjMissingValue))
+        
         # Calculate confidence intervals
         phjPropDF = phjCalculateBinomialConfInts(phjDF = phjPropDF,
                                                  phjSuccVarName = phjSuffixDict['numbersuccesses'],
@@ -221,26 +244,26 @@ def phjCalculateBinomialProportions(phjDF,
                                                  phjBinomialConfIntMethod = phjBinomialConfIntMethod,
                                                  phjAlpha = phjAlpha,
                                                  phjPrintResults = phjPrintResults)
- 
- 
+        
+        
         # Convert long to wide format based on group membership.
         # This is only necessary if more than one group is present.
 #        if (phjGroupVarName is not None) & (len(phjPropDF[phjGroupVarName].unique()) > 1):
         if (phjGroupVarName is not None):
             phjPropDF = phjPropDF.unstack(level = 0)
             phjPropDF = phjPropDF.swaplevel(i = -1, j = 0, axis = 1)
- 
+            
             # Flatten dataframe multi-index columns to be the following format:
             #    groupName_columnHeading
-            # This only needs to be done if there are 2 more groups. If only one group,
+            # This only needs to be done if there are 2 or more groups. If only one group,
             # then column index is already a single dimension and doesn't need to be flattend.
             phjColIndexNames = pd.Index([phjSuffixDict['joinstr'].join([c[0],c[1]]) for c in phjPropDF.columns.tolist()])
             phjPropDF.columns = phjColIndexNames
- 
+            
             # Order columns so all those related to a single group occur together
             phjPropDF = phjPropDF.sort_index(axis = 1)
- 
- 
+            
+        
         # Sort proportions if requested.
         # (May move to separate function in future.)
         # Proportions can only be sorted if there are no groups to deal with or if only
@@ -254,16 +277,16 @@ def phjCalculateBinomialProportions(phjDF,
                     phjPropDF = phjPropDF.sort_values(by = phjSuffixDict['proportion'],
                                                       axis = 0,
                                                       ascending = True)
- 
+                
                 elif phjSortProportions in ['descending','descend','desc']:
                     phjPropDF = phjPropDF.sort_values(by = phjSuffixDict['proportion'],
                                                       axis = 0,
                                                       ascending = False)
- 
+                
                 else:
                     # This message should never be given.
                     print('Option for sorting does not exist. (This message should never be given.)')
- 
+            
             else:
                 # If group variable is named and the list of groups to plot is only one
                 # item long then sort on that single group.
@@ -273,25 +296,23 @@ def phjCalculateBinomialProportions(phjDF,
                             phjPropDF = phjPropDF.sort_values(by = phjSuffixDict['joinstr'].join([phjGroupsToPlotList[0],phjSuffixDict['proportion']]),
                                                               axis = 0,
                                                               ascending = True)
- 
+                        
                         elif phjSortProportions in ['descending','descend','desc']:
                             phjPropDF = phjPropDF.sort_values(by = phjSuffixDict['joinstr'].join([phjGroupsToPlotList[0],phjSuffixDict['proportion']]),
                                                               axis = 0,
                                                               ascending = False)
- 
+                        
                         else:
                             # This message should never be given.
                             print('Option for sorting does not exist. (This message should never be given.)')
- 
- 
+        
         if phjPrintResults == True:
             with pd.option_context('display.float_format','{:,.4f}'.format):
                 print(phjPropDF)
- 
- 
+        
         # Plot bar chart of relative frequencies
         if phjPlotProportions == True:
- 
+            
             # Plot chart
             phjPlotProportionsBarChart(phjDF = phjPropDF,
                                        phjCategoriesToPlotList = phjColumnsList,
@@ -302,9 +323,9 @@ def phjCalculateBinomialProportions(phjDF,
                                        phjXAxisTitle = 'Categories',
                                        phjYAxisTitle = 'Proportions',
                                        phjPrintResults = True)
- 
- 
-    return phjPropDF
+    
+    finally:
+        return phjPropDF
  
  
  
@@ -314,135 +335,176 @@ def phjCalculateBinomialProportions(phjDF,
 # variable and plots bar charts with asymmetrical error bars.
  
 def phjCalculateMultinomialProportions(phjDF,
-                                       phjCategoryVarName = None,
+                                       phjCategoryVarName,
                                        phjGroupVarName = None,
                                        phjMissingValue = 'missing',
                                        phjMultinomialConfIntMethod = 'goodman',
                                        phjAlpha = 0.05,
                                        phjPlotRelFreq = True,
                                        phjCategoriesToPlotList = 'all',
-                                       phjGroupsToPlotList = 'all',   # Currently not implemented
+                                       phjGroupsToPlotList = None,   # Currently not implemented
                                        phjGraphTitle = None,
                                        phjPrintResults = False):
- 
- 
-    # ERROR CHECKING
-    # 1. If phjGroupVarName is None then check that ...
- 
- 
-    # Set default suffixes and join strings to create column names
-    # to use in output dataframe.
-    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
- 
- 
-    # Copy required columns to dataframe
-    phjDF = phjKeepRequiredData(phjDF = phjDF,
+    
+    # Check whether required parameters have been set to correct type and are set to
+    # allowable values. N.B. isinstance() can take a tuple to test against multiple types.
+    try:
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        phjAssert('phjCategoryVarName',phjCategoryVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        
+        if phjGroupVarName is not None:
+            phjAssert('phjGroupVarName',phjGroupVarName,str,phjMustBePresentColumnList  = list(phjDF.columns))
+        
+        phjAssert('phjMissingValue',phjMissingValue,(str,int,float),phjBespokeMessage = "Parameter 'phjMissingValue' needs to be a string or a number (including np.nan).")
+        phjAssert('phjMultinomialConfIntMethod',phjMultinomialConfIntMethod,str,phjAllowedOptions = ['goodman','sison-glaz'])
+        phjAssert('phjAlpha',phjAlpha,float,phjAllowedOptions = {'min':0.0001,'max':0.9999})
+        phjAssert('phjPlotRelFreq',phjPlotRelFreq,bool)
+        
+        if phjCategoriesToPlotList != 'all':
+            if isinstance(phjCategoriesToPlotList,str):
+                phjCategoriesToPlotList = [phjCategoriesToPlotList]
+            
+            phjAssert('phjCategoriesToPlotList',phjCategoriesToPlotList,list,phjBespokeMessage = "Parameter 'phjCategoriesToPlotList' needs to be a list or the string value 'all'.")
+        
+        if phjGroupsToPlotList is not None:
+            if phjGroupsToPlotList != 'all':
+                if isinstance(phjGroupsToPlotList,str):
+                    phjGroupsToPlotList = [phjGroupsToPlotList]
+                
+                phjAssert('phjGroupsToPlotList',phjGroupsToPlotList,list,phjBespokeMessage = "Parameter 'phjGroupsToPlotList' needs to be a list or the string value 'all'.")
+        
+        phjAssert('phjGraphTitle',phjGraphTitle,str)
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+        
+    except AssertionError as e:
+        
+        phjRelFreqDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    else:
+        
+        # Set default suffixes and join strings to create column names
+        # to use in output dataframe.
+        phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+        
+        # Copy required columns to dataframe and delete rows with missing values
+        phjDF = phjKeepRequiredData(phjDF = phjDF,
                                     phjColumnsList = [phjCategoryVarName],
                                     phjGroupVarName = phjGroupVarName,
                                     phjMissingValue = phjMissingValue)
- 
- 
-    # Create lists of unique category and group levels
-    # (N.B. If no group name is given, a default value 'group' is used.)
-    # i. Categories
-    phjCategoryLevelsList = phjGetCategoryLevelsList(phjDF = phjDF,
-                                                     phjCategoryVarName = phjCategoryVarName,
-                                                     phjPrintResults = phjPrintResults)
- 
-    # ii. Groups
-    phjGroupLevelsList = phjGetGroupLevelsList(phjDF = phjDF,
-                                               phjGroupVarName = phjGroupVarName,
-                                               phjPrintResults = phjPrintResults)
- 
- 
- 
-    # Create empty dataframe (no columns) with index consisting of all category levels
-    phjRelFreqDF = pd.DataFrame(index = phjCategoryLevelsList)
- 
- 
-    # Define which suffix indicates normalization of value_counts() function
-    # (i.e. which is absolute counts and which is relative frequency):
-    phjSuffixNormOrderedDict = collections.OrderedDict()
-    phjSuffixNormOrderedDict[phjSuffixDict['absfreq']] = False
-    phjSuffixNormOrderedDict[phjSuffixDict['proportion']] = True
- 
- 
-    # Create temporary dataframes consisting of output from value_counts() function
-    # applied to slices of dataframe based on group levels
-    for phjSuffix, phjNormalize in phjSuffixNormOrderedDict.items():
- 
-        # Calculate frequencies and relative frequencies for each group
-        if phjGroupVarName is None:
-            phjTempRelFreqDF = pd.DataFrame(phjDF[phjCategoryVarName].value_counts(normalize = phjNormalize))
-            phjTempRelFreqDF = phjTempRelFreqDF.rename(columns = {phjCategoryVarName: phjSuffix})
- 
-            # Use non-normalized data to calculate simultaneous confidence intervals
-            if phjNormalize == False:
-                phjTempRelFreqDF = phjCalculateMultinomialConfInts(phjDF = phjTempRelFreqDF,
-                                                                   phjAbsFreqColumnName = phjSuffix,
-                                                                   phjSimultConfIntColumnName = phjSuffixDict['cisuffix'],
-                                                                   phjMultinomialConfIntMethod = phjMultinomialConfIntMethod,
-                                                                   phjAlpha = phjAlpha,
-                                                                   phjPrintResults = phjPrintResults)
- 
-            # Join temporary data frame to complete dataframe based on index value.
-            phjRelFreqDF = phjRelFreqDF.join(phjTempRelFreqDF)
- 
-            # Cells in summary dataframe with missing values are converted to zero
-            # (N.B. In this bit (when phjGroupVarName is None) the following may not be required
-            #  but I haven't confirmed that for certain so have included it anyway.)
-            phjRelFreqDF = phjRelFreqDF.fillna(0)
- 
- 
-        else:
-            for phjGroup in phjGroupLevelsList:
-                phjTempRelFreqDF = pd.DataFrame(phjDF.loc[phjDF[phjGroupVarName] == phjGroup,phjCategoryVarName].value_counts(normalize = phjNormalize))
-                phjTempRelFreqDF = phjTempRelFreqDF.rename(columns = {phjCategoryVarName: phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffix])})
- 
+        
+        # Create lists of unique category and group levels
+        # (N.B. If no group name is given, a default value 'group' is used.)
+        # i. Categories
+        phjCategoryLevelsList = phjGetCategoryLevelsList(phjDF = phjDF,
+                                                         phjCategoryVarName = phjCategoryVarName,
+                                                         phjPrintResults = phjPrintResults)
+        
+        # ii. Groups
+        phjGroupLevelsList = phjGetGroupLevelsList(phjDF = phjDF,
+                                                   phjGroupVarName = phjGroupVarName,
+                                                   phjPrintResults = phjPrintResults)
+        
+        
+        # Create empty dataframe (no columns) with index consisting of all category levels
+        phjRelFreqDF = pd.DataFrame(index = phjCategoryLevelsList)
+        
+        
+        # Define which suffix indicates normalization of value_counts() function
+        # (i.e. which is absolute counts and which is relative frequency):
+        phjSuffixNormOrderedDict = collections.OrderedDict()
+        phjSuffixNormOrderedDict[phjSuffixDict['absfreq']] = False
+        phjSuffixNormOrderedDict[phjSuffixDict['proportion']] = True
+        
+        
+        # Create temporary dataframes consisting of output from value_counts() function
+        # applied to slices of dataframe based on group levels
+        for phjSuffix, phjNormalize in phjSuffixNormOrderedDict.items():
+            
+            # Calculate frequencies and relative frequencies for each group
+            if phjGroupVarName is None:
+                phjTempRelFreqDF = pd.DataFrame(phjDF[phjCategoryVarName].value_counts(normalize = phjNormalize))
+                phjTempRelFreqDF = phjTempRelFreqDF.rename(columns = {phjCategoryVarName: phjSuffix})
+                
                 # Use non-normalized data to calculate simultaneous confidence intervals
                 if phjNormalize == False:
                     phjTempRelFreqDF = phjCalculateMultinomialConfInts(phjDF = phjTempRelFreqDF,
-                                                                       phjAbsFreqColumnName = phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffix]),
-                                                                       phjSimultConfIntColumnName = phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix']]),
+                                                                       phjAbsFreqColumnName = phjSuffix,
+                                                                       phjSimultConfIntColumnName = phjSuffixDict['cisuffix'],
                                                                        phjMultinomialConfIntMethod = phjMultinomialConfIntMethod,
                                                                        phjAlpha = phjAlpha,
                                                                        phjPrintResults = phjPrintResults)
- 
- 
+                
                 # Join temporary data frame to complete dataframe based on index value.
                 phjRelFreqDF = phjRelFreqDF.join(phjTempRelFreqDF)
- 
-            # Cells in summary dataframe with missing values are converted to zero
-            phjRelFreqDF = phjRelFreqDF.fillna(0)
- 
- 
- 
-    phjRelFreqDF = phjReorderCols(phjDF = phjRelFreqDF,
-                                  phjGroupVarName = phjGroupVarName,
-                                  phjGroupLevelsList = phjGroupLevelsList,
-                                  phjAlpha = phjAlpha,
-                                  phjPrintResults = False)
- 
-    if phjPrintResults == True:
-        print(phjRelFreqDF)
- 
- 
-    # Plot bar chart of relative frequencies
-    if phjPlotRelFreq == True:
- 
-        # Plot chart
-        phjPlotProportionsBarChart(phjDF = phjRelFreqDF,
-                                   phjCategoriesToPlotList = phjCategoriesToPlotList,
-                                   phjGroupVarName = phjGroupVarName,
-                                   phjGroupLevelsList = phjGroupLevelsList,
-                                   phjAlpha = phjAlpha,
-                                   phjGraphTitle = phjGraphTitle,
-                                   phjXAxisTitle = phjCategoryVarName,
-                                   phjYAxisTitle = 'Relative frequency',
-                                   phjPrintResults = False)
- 
- 
-    return phjRelFreqDF
+                
+                # Cells in summary dataframe with missing values are converted to zero
+                # (N.B. In this bit (when phjGroupVarName is None) the following may not be required
+                # but I haven't confirmed that for certain so have included it anyway.)
+                phjRelFreqDF = phjRelFreqDF.fillna(0)
+            
+            
+            else:
+                for phjGroup in phjGroupLevelsList:
+                    phjTempRelFreqDF = pd.DataFrame(phjDF.loc[phjDF[phjGroupVarName] == phjGroup,phjCategoryVarName].value_counts(normalize = phjNormalize))
+                    phjTempRelFreqDF = phjTempRelFreqDF.rename(columns = {phjCategoryVarName: phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffix])})
+                    
+                    # Use non-normalized data to calculate simultaneous confidence intervals
+                    if phjNormalize == False:
+                        phjTempRelFreqDF = phjCalculateMultinomialConfInts(phjDF = phjTempRelFreqDF,
+                                                                           phjAbsFreqColumnName = phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffix]),
+                                                                           phjSimultConfIntColumnName = phjSuffixDict['joinstr'].join([str(phjGroup),phjSuffixDict['cisuffix']]),
+                                                                           phjMultinomialConfIntMethod = phjMultinomialConfIntMethod,
+                                                                           phjAlpha = phjAlpha,
+                                                                           phjPrintResults = phjPrintResults)
+                    
+                    
+                    # Join temporary data frame to complete dataframe based on index value.
+                    phjRelFreqDF = phjRelFreqDF.join(phjTempRelFreqDF)
+                
+                # Cells in summary dataframe with missing values are converted to zero
+                phjRelFreqDF = phjRelFreqDF.fillna(0)
+        
+        
+        
+        phjRelFreqDF = phjReorderCols(phjDF = phjRelFreqDF,
+                                      phjGroupVarName = phjGroupVarName,
+                                      phjGroupLevelsList = phjGroupLevelsList,
+                                      phjAlpha = phjAlpha,
+                                      phjPrintResults = False)
+        
+        if phjPrintResults == True:
+            print(phjRelFreqDF)
+        
+        
+        # Plot bar chart of relative frequencies
+        if phjPlotRelFreq == True:
+            
+            # Plot chart
+            phjPlotProportionsBarChart(phjDF = phjRelFreqDF,
+                                       phjCategoriesToPlotList = phjCategoriesToPlotList,
+                                       phjGroupVarName = phjGroupVarName,
+                                       phjGroupLevelsList = phjGroupLevelsList,
+                                       phjAlpha = phjAlpha,
+                                       phjGraphTitle = phjGraphTitle,
+                                       phjXAxisTitle = phjCategoryVarName,
+                                       phjYAxisTitle = 'Relative frequency',
+                                       phjPrintResults = False)
+    
+    finally:
+        
+        return phjRelFreqDF
  
  
  
@@ -621,7 +683,6 @@ def phjSummaryTableToBinaryOutcomes(phjDF,
                                                                                                                              fname = inspect.stack()[0][3],
                                                                                                                              callfname = inspect.stack()[1][3]))
             raise
-    
     
     else:
         # Set default suffixes and join strings to create column names
@@ -1004,7 +1065,7 @@ def phjCountSuccesses(x,
  
  
 def phjKeepRequiredData(phjDF,
-                        phjColumnsList = None,
+                        phjColumnsList,
                         phjGroupVarName = None,
                         phjMissingValue = 'missing'):
  
