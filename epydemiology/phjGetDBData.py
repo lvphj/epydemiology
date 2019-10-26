@@ -298,6 +298,10 @@ def phjConnectToDatabase(phjDBType,
                 phjTempConnection = None
                 break
     
+        else:
+            print('\nDatabase type {} is not recognised.\n'.format(phjDBType))
+            phjTempConnection = None
+            
     return phjTempConnection
 
 
