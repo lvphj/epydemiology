@@ -3,7 +3,7 @@
 # directly by end-users.
 from .phjGetData import phjReadDataFromExcelNamedCellRange
 
-from .phjGetDBData import phjConnectToDatabase
+sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssscfrom .phjGetDBData import phjConnectToDatabase
 from .phjGetDBData import phjGetDataFromDatabase
 
 from .phjMiscFuncs import phjGetStrFromArgOrFile
