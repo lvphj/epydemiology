@@ -97,7 +97,7 @@ def phjAssert(phjVarName,
                 assert isinstance(phjVarValue,phjType),phjBespokeMessage
         
         
-        # Depending on the type of passed variable phjVarValue, check that value lie
+        # Depending on the type of passed variable phjVarValue, check that value lies
         # within correct limits.
         if isinstance(phjVarValue,str):
             
