@@ -139,6 +139,20 @@ def phjCreateNamedGroupRegex(phjDF,
         assert phjRegexPreCompile in [True, False], "Parameter 'phjRegexPreCompile' can only be True or False; it is incorrectly set."
         assert phjPrintResults in [True, False], "Parameter 'phjPrintResults' can only be True or False; it is incorrectly set."
         
+        # Check whether there are named groups contained in the regexes; the named group
+        # format is created based on the phjGroupVarName variable and, therefore, the
+        # individual regex components should not contain a named group. The regex looks
+        # for the pattern (?P<...>
+        assert phjDF[phjRegexVarName].str.match('\(\?P<\w+>').sum() == 0, "Regexes should not contain a named group."
+        
+        # Check whether there are capture groups contained in the regexes. The regexes
+        # are not intended to capture text but rather to determine whether regex matches
+        # are present. This regex checks for a round bracket that is NOT followed by a
+        # question mark plus some other characters followed by a closing round bracket.
+        # The regex looks for set of round brackets where the opening brackets is not
+        # followed by question mark.
+        assert phjDF[phjRegexVarName].str.match('\((?!\?).+?\)').sum() == 0, "Regexes should not contain capture groups."
+        
     except AssertionError as e:
         # Set return value to none
         phjCategoryGroupRegex = None
@@ -546,8 +560,8 @@ def phjReverseMap(phjDF,
                   phjCategoryVarName,
                   phjMappedVarName = 'mapped_cat',
                   phjUnmapped = np.nan,
-                  phjDropPreExisting = False,
                   phjTreatAsRegex = False,
+                  phjDropPreExisting = False,
                   phjPrintResults = False):
     
     # Check whether required parameters have been set to correct type
@@ -557,18 +571,32 @@ def phjReverseMap(phjDF,
         phjAssert('phjCategoryVarName',phjCategoryVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
         #phjAssert('phjMappedVarName',phjMappedVarName,str)
         phjAssert('phjUnmapped',phjUnmapped,(str,int,float))
+        phjAssert('phjTreatAsRegex',phjTreatAsRegex,bool)
         phjAssert('phjDropPreExisting',phjDropPreExisting,bool)
         
         # Check whether columns that will be created already exist
         if phjDropPreExisting == False:
-            #assert phjMappedVarName not in phjDF.columns.values, "A column named '{0}' (phjMappedVarName) will be permanently created but already exists; please choose a different name.".format(phjMappedVarName)
             phjAssert('phjMappedVarName',phjMappedVarName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+            
+            if phjTreatAsRegex == True:
+                # If regexes will be used then need to check that numerous other columns
+                # are not already in use
+                # The following asserts used the phjAssert() function to ensure consistent
+                # error messages would be produced even though some functionality was
+                # redundant (e.g. testing whether 'numberMatches' is a string is not
+                # strictly necessary).
+                for col in list(phjMappingDict.keys()):
+                    phjAssert('Dictionary key name',col,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+                    
+                phjAssert('Number of matches','numberMatches',str,phjMustBeAbsentColumnList = list(phjDF.columns))
+                
         elif phjDropPreExisting == True:
+            # If phjDropPreExisting is True then only need to check that name of the
+            # variable is a string value.
             phjAssert('phjMappedVarName',phjMappedVarName,str)
         
-        phjAssert('phjTreatAsRegex',phjTreatAsRegex,bool)
+        # And almost finally...
         phjAssert('phjPrintResults',phjPrintResults,bool)
-        
         
         # Bespoke asserts
         # ---------------
@@ -595,6 +623,28 @@ def phjReverseMap(phjDF,
     
     else:
         if phjTreatAsRegex == True:
+            if phjDropPreExisting == True:
+                # Drop pre-existing columns.
+                # New columns that will be created include:
+                #    i. Names of dictionary keys
+                #   ii. Column named numberMatches (which is created during function)
+                #  iii. Column passed as phjMappedVarName
+                
+                # Only retain those columns that are not included in the above list of
+                # columns that will be created during the function.
+                phjOrigCols = list(phjDF.columns)
+                phjDF = phjDF[[c for c in phjOrigCols if c not in list(phjMappingDict.keys()) + ['numberMatches',phjMappedVarName]]].copy()
+                
+                # Print a list of columns that existed in the original dataframe but are not
+                # found in dataframe.
+                # The following construction prints the list as a series of comma-separated
+                # items with the final 2 items separated by 'and'. Hint for achieving this
+                # found at: https://stackoverflow.com/questions/2556108/rreplace-how-to-replace-the-last-occurrence-of-an-expression-in-a-string
+                if phjPrintResults == True:
+                    if set(phjOrigCols) != set(list(phjDF.columns)):
+                        print("The following columns already existed in the dataframe and have been dropped: '{}'.".format(' and '.join("', '".join([c for c in phjOrigCols if c not in list(phjDF.columns)]).rsplit(', ',1))))
+                        print('\n')
+                    
             # The dict as entered is converted to a 'long' format with one regex
             # per row. A named group regex is then created using phjCreateNamedGroupRegex()
             # and matches identified using phjFindRegexNamedGroups().
@@ -663,7 +713,12 @@ def phjReverseMap(phjDF,
                                                                                                                                    callfname = inspect.stack()[1][3]))
                         raise
                         
-        else:
+        elif phjTreatAsRegex == False:
+            if phjDropPreExisting == True:
+                # Drop pre-existing column. In this scenario, only need to remove the
+                # column that has the same name as the phjMappedVarName variable
+                phjDF = phjDF[[c for c in list(phjDF.columns) if c not in [phjMappedVarName]]].copy()
+
             # Not treating search strings as regexes.
             # A function to reverse a dict was given in an answer by MSeifert at:
             # https://stackoverflow.com/questions/35491223/inverting-a-dictionary-with-list-values
