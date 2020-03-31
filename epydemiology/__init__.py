@@ -12,6 +12,8 @@ from .phjMiscFuncs import phjCreateNamedGroupRegex
 from .phjMiscFuncs import phjFindRegexNamedGroups
 from .phjMiscFuncs import phjMaxLevelOfTaxonomicDetail
 from .phjMiscFuncs import phjReverseMap
+from .phjMiscFuncs import phjRetrieveUniqueFromMultiDataFrames
+from .phjMiscFuncs import phjUpdateLUT
 
 from .phjMatrices import phjBinaryVarsToSquareMatrix
 from .phjMatrices import phjLongToWideBinary
