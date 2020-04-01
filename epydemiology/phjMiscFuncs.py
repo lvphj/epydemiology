@@ -806,7 +806,16 @@ def phjRetrieveUniqueFromMultiDataFrames(phjDFList,
         
         if phjSort == True:
             phjCombDF = phjCombDF.sort_values(by = phjVarNameList).reset_index(drop = True)
-    
+        
+        if phjPrintResults == True:
+            for index,df in enumerate(phjDFList):
+                print('Unique values in dataframe at position {}'.format(index))
+                print(df[phjVarNameList].drop_duplicates())
+                print('\n')
+                
+            print('Dataframe of unique values from all dataframes')
+            print(phjCombDF)
+        
         if phjCombDF.empty:
             return None
         else:
@@ -859,22 +868,58 @@ def phjCreateRowOfValuesForDtypes(phjDF,
  
  
  
+def phjDataFrameLowerCase(phjDF,
+                          phjVarNameList,
+                          phjPrintResults = False):
+    
+    try:
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        phjAssert('phjVarNameList',phjVarNameList,list,phjMustBePresentColumnList = list(phjDF.columns))
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+
+    except AssertionError as e:
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    else:
+        # Create a copy of the dataframe so the original is not edited
+        phjDF = phjDF.copy()
+        
+        # Step through each column of dataframe; if dtype is an object, convert to lowercase
+        for phjCol in phjVarNameList:
+            if phjDF[phjCol].dtype == 'object':
+                phjDF[phjCol] = phjDF[phjCol].str.lower()
+        
+        return phjDF
+
+
+
 # This function updates the lookup tables in the database by appending any new values
 # that are included in the data files
 def phjUpdateLUT(phjExistDF,
                  phjNewDF,
                  phjIDName,
-                 phjVarName,
+                 phjVarNameList,
                  phjMissStr,
                  phjMissCode,
+                 phjIgnoreCase = True,
                  phjPrintResults = False):
- 
+    
     ##########
     # Need to check that both DFs have the same structure
-    # Need to check that if phjVarName is a list of length 1 then item needs to be a string
+    # Need to check that if phjVarNameList is a list of length 1 then item needs to be a string
     # Need to check that missing value code doesn't clash with pre-existing id value for something that isn't 'missing'.
     ##########
- 
+    
     if phjPrintResults == True:
         print('Existing dataframe')
         print('------------------')
@@ -884,107 +929,123 @@ def phjUpdateLUT(phjExistDF,
         print('-------------')
         print(phjNewDF)
         print('\n')
- 
+    
     # Retain only those entries in phjNewDF that don't already exist in phjExistDF
     # and are not the missing value string (the missing value string and code will
     # be added later if necessary).
     #
     # If the phjVarName parameter is a string (or a list with a single value) then consider
     # the single column as a Series
-    if isinstance(phjVarName,str) | (isinstance(phjVarName,list) & (len(phjVarName) == 1)):
-        if isinstance(phjVarName,list):
-            phjVarName = phjVarName[0]
- 
+    if isinstance(phjVarNameList,str) | (isinstance(phjVarNameList,list) & (len(phjVarNameList) == 1)):
+        if isinstance(phjVarNameList,list):
+            phjVarNameList = phjVarNameList[0]
+        
         # This part of code creates a mask to indicate which values in new series already exist
         # in old series (with missing string added)
-        phjMask = pd.Series(phjNewDF[phjVarName]).isin(phjExistDF[phjVarName].append(pd.Series(phjMissStr)))
+        if phjIgnoreCase == False:
+            phjMask = pd.Series(phjNewDF[phjVarNameList]).isin(phjExistDF[phjVarNameList].append(pd.Series(phjMissStr)))
+        
+        else:
+            phjMask = pd.Series(phjNewDF[phjVarNameList].str.lower()).isin(phjExistDF[phjVarNameList].append(pd.Series(phjMissStr)).str.lower())
+        
         phjNewDF = phjNewDF[~phjMask].copy()
- 
+    
     # If the phjVarName parameter is a list with greater than one value then consider as a dataframe.
-    elif (isinstance(phjVarName,list) & (len(phjVarName) > 1)):
+    elif (isinstance(phjVarNameList,list) & (len(phjVarNameList) > 1)):
         # This part of the code creates a mask to determine which values in new dataframe already
         # exist in old dataframe (with missing value and missing string added).
         # Firstly, missing value is added to columns of type int64 and missing string is added to
         # columns of type 'object'
- 
+        
         # Define missing values to add to columns of specific dtypes
         phjDtypeDict = {'object':phjMissStr,
                         'int64':phjMissCode}
- 
-        # Create a dict containing column names as keys and appropriate missing string or value.
+        
+        # Create a row of data (as a dict) containing column names as keys and appropriate
+        # missing string or value (depending on dtype of column).
         phjDict0 = phjCreateRowOfValuesForDtypes(phjDF = phjExistDF,
                                                  phjDtypeDict = phjDtypeDict,
                                                  phjScalarBool = True,
                                                  phjPrintResults = phjPrintResults)
- 
+        
         # Create mask to determine which rows already exist. Hints to code this taken from:
         # https://stackoverflow.com/questions/60836441/identify-rows-in-pandas-dataframe-that-already-exist
-        phjMask = phjNewDF.merge(phjExistDF.append(phjDict0,ignore_index = True),on=phjVarName,how='left',indicator=True)['_merge'].eq('both')
+        if phjIgnoreCase == False:
+            phjMask = phjNewDF.merge(phjExistDF.append(phjDict0,ignore_index = True),on=phjVarNameList,how='left',indicator=True)['_merge'].eq('both')
+        
+        else:
+            phjMask = phjDataFrameLowerCase(phjDF = phjNewDF,
+                                            phjVarNameList = phjVarNameList).merge(phjDataFrameLowerCase(phjDF = phjExistDF.append(phjDict0,ignore_index = True),
+                                                                                                         phjVarNameList = phjVarNameList),
+                                                                                   on=  phjVarNameList,
+                                                                                   how='left',
+                                                                                   indicator=True)['_merge'].eq('both')
+        
         phjNewDF = phjNewDF[~phjMask].copy()
- 
+    
     if phjPrintResults == True:
         print('Dataframe of new values')
         print('-----------------------')
         print(phjNewDF)
         print('\n')
- 
+    
     # Create new values for 'id' column that continues on from pre-existing values but does not duplicate
     # missing value code (whatever that might be).
     # Create a list of existing ID values, not including missing value code, and identify the maximum value
     phjIDList = [i for i in phjExistDF[phjIDName] if i not in [phjMissCode]]
- 
+    
     # If the list is empty then max value is zero; otherwise the max value is the value returned by max()
     if not phjIDList:
         phjMax = 0
     else:
         phjMax = max(phjIDList)
- 
+    
     # Produce list of new ID values (with a couple spare to allow missing value code to be removed
     # if it occurs somewhere in the list)
     phjNewIDList = [n for n in range(phjMax + 1,
                                      phjMax + len(phjNewDF.index) + 2) if n not in [phjMissCode]]
- 
+    
     # Number of new items to add
     phjNewIDList = phjNewIDList[:len(phjNewDF.index)]
- 
+    
     if phjPrintResults == True:
         print('List of new ID values')
         print('---------------------')
         print(phjNewIDList)
         print('\n')
- 
+    
     # Add new ID values as new column to phjNewDF dataframe
     phjNewDF[phjIDName] = phjNewIDList
- 
+    
     if phjPrintResults == True:
         print('New dataframe with new ID')
         print('-------------------------')
         print(phjNewDF)
         print('\n')
- 
-    # If missing value code and string are not present in database then add as a row in phjNewDF dataframe
-    # so it can be added to the database along with new items
-    if isinstance(phjVarName,str) | (isinstance(phjVarName,list) & (len(phjVarName) == 1)):
+    
+    # If missing value code and string are not present in database then add as a row in
+    # phjNewDF dataframe so it can be added to the database along with new items
+    if isinstance(phjVarNameList,str) | (isinstance(phjVarNameList,list) & (len(phjVarNameList) == 1)):
         if phjExistDF.loc[(phjExistDF[phjIDName] == phjMissCode) &
-                          (phjExistDF[phjVarName] == phjMissStr),[phjIDName,phjVarName]].empty:
- 
+                          (phjExistDF[phjVarNameList] == phjMissStr),[phjIDName,phjVarNameList]].empty:
+            
             phjNewDF = phjNewDF.append({phjIDName:phjMissCode,
-                                        phjVarName:phjMissStr},ignore_index = True)
- 
-    elif (isinstance(phjVarName,list) & (len(phjVarName) > 1)):
+                                        phjVarNameList:phjMissStr},ignore_index = True)
+    
+    elif (isinstance(phjVarNameList,list) & (len(phjVarNameList) > 1)):
         # For the moment, just check whether the missing value code is found in the ID column
         if phjExistDF.loc[phjExistDF[phjIDName] == phjMissCode,:].empty:
             # Add the phjDict0 created previously as the new row
             phjNewDF = phjNewDF.append(phjDict0,ignore_index = True)
- 
+    
     phjNewDF = phjNewDF.sort_values(by = [phjIDName]).reset_index(drop = True)
- 
+    
     if phjPrintResults == True:
         print('Returned dataframe')
         print('------------------')
         print(phjNewDF)
         print('\n')
- 
+    
     return phjNewDF
 
 
