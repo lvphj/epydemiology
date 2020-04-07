@@ -1050,6 +1050,74 @@ def phjUpdateLUT(phjExistDF,
 
 
 
+# This function is designed to update LUT tables based on new values
+# but maintaining existing id numbers
+def phjUpdateLUTToLatestValues(phjDF,
+                               phjIDVarName,
+                               phjGroupbyVarName,
+                               phjAddCountCol = True,
+                               phjPrintResults = False):
+    
+    ######
+    # Check values are correctly entered
+    # Check 'n' column does not already exist
+    ######
+    
+    #####
+    # Could add different column on which to sort (e.g. date)
+    #####
+    
+    # Add count column to indicate how many rows in each groupby group
+    if phjAddCountCol == True:
+        phjDF['n'] = phjDF.groupby(phjGroupbyVarName)[phjGroupbyVarName].transform('count')
+    
+    # Keep record of column order
+    phjColOrder = [c for c in phjDF]
+    
+    # Make sure dataframe is ordered based on grouping variable and id variable
+    phjDF = phjDF.sort_values(by = [phjGroupbyVarName,phjIDVarName]).copy()
+    
+    if phjPrintResults == True:
+        if 'n' in phjDF:
+            print('Original sorted dataframe with count variable')
+            print('---------------------------------------------')
+        else:
+            print('Original sorted dataframe')
+            print('-------------------------')
+
+        print(phjDF)
+        print('\n')
+    
+
+    # The aim of this function is to retain the first row of data (i.e. pre-existing) for the id (and name) column and
+    # the final row of data for everything else. This could be done using agg() function and pass a dictionary to indicate
+    # which colunms to extract first rows and which columns to extract the final rows, for example:
+    #    df.groupby('name').agg({'id':'first','name':'last'})
+    # However, the 'first' and 'last' methods don't handle NaN values and will ignore them. Instead, use different methods,
+    # namely nth(0) and nth(-1). Not clear how to implement nth() methods because defining a dictionary did not work.
+    # Use work-around, namely divide dataframe into two sections (by column), select relevant information and rejoin.
+    
+    # For phjIDVarName and phjGroupbyVarName columns, select the first rows (i.e. the rows that already exist in the dataframe)
+    phjOutDF_pti =  phjDF[[c for c in phjDF if c in [phjIDVarName,phjGroupbyVarName]]].groupby(phjGroupbyVarName).nth(0).reset_index(drop = False)
+    
+    # For all other columns (including the grouping variable), select the final row (i.e. the most recent data to be added)
+    phjOutDF_ptii = phjDF[[c for c in phjDF if c not in [phjIDVarName]]].groupby(phjGroupbyVarName).nth(-1).reset_index(drop = False)
+    
+    # Rejoin dataframes based on grouping variable
+    phjOutDF = phjOutDF_pti.merge(phjOutDF_ptii, on = phjGroupbyVarName)
+    
+    # Rearrange order of columns to match original
+    phjOutDF = phjOutDF[[c for c in phjColOrder if c in phjOutDF]]
+    
+    if phjPrintResults == True:
+        print('Updated dataframe')
+        print('-----------------')
+        print(phjOutDF)
+        print('\n')
+        
+    return phjOutDF
+    
+    
 
 if __name__ == '__main__':
     main()

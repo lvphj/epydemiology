@@ -14,6 +14,7 @@ from .phjMiscFuncs import phjMaxLevelOfTaxonomicDetail
 from .phjMiscFuncs import phjReverseMap
 from .phjMiscFuncs import phjRetrieveUniqueFromMultiDataFrames
 from .phjMiscFuncs import phjUpdateLUT
+from .phjMiscFuncs import phjUpdateLUTToLatestValues
 
 from .phjMatrices import phjBinaryVarsToSquareMatrix
 from .phjMatrices import phjLongToWideBinary
