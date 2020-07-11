@@ -31,6 +31,7 @@ else:
 
 
 import math
+import inspect
 
 
 # Import minor epydemiology functions from other epydemiology files
@@ -44,6 +45,7 @@ import math
 
 from .phjCalculateProportions import phjDefineSuffixDict
 
+from .phjTestFunctionParameters import phjAssert
 
 
 def phjOddsRatio(phjDF,
@@ -54,17 +56,33 @@ def phjOddsRatio(phjDF,
                  phjMissingValue = np.nan,
                  phjAlpha = 0.05,
                  phjPrintResults = False):
+    print('ODDS RATIO')
+    try:
+        # Call the phjRatios() function to do the work
+        phjContTable = phjRatios(phjDF = phjDF,
+                                 phjRatioType = 'oddsratio',    # Should be one of the keys in phjSuffixDict
+                                 phjCaseVarName = phjCaseVarName,
+                                 phjCaseValue = phjCaseValue,
+                                 phjRiskFactorVarName = phjRiskFactorVarName,
+                                 phjRiskFactorBaseValue = phjRiskFactorBaseValue,
+                                 phjMissingValue = phjMissingValue,
+                                 phjAlpha = phjAlpha,
+                                 phjPrintResults = phjPrintResults)
     
-    # Call the phjRatios() function to do the work
-    phjContTable = phjRatios(phjDF = phjDF,
-                             phjRatioType = 'oddsratio',    # Should be one of the keys in phjSuffixDict
-                             phjCaseVarName = phjCaseVarName,
-                             phjCaseValue = phjCaseValue,
-                             phjRiskFactorVarName = phjRiskFactorVarName,
-                             phjRiskFactorBaseValue = phjRiskFactorBaseValue,
-                             phjMissingValue = phjMissingValue,
-                             phjAlpha = phjAlpha,
-                             phjPrintResults = phjPrintResults)
+    except AssertionError as e:
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+        
+        phjContTable = None
     
     return phjContTable
 
@@ -80,16 +98,32 @@ def phjRelativeRisk(phjDF,
                     phjAlpha = 0.05,
                     phjPrintResults = False):
     
-    # Call the phjRatios() function to do the work
-    phjContTable = phjRatios(phjDF = phjDF,
-                             phjRatioType = 'relrisk',    # Should be one of the keys in phjSuffixDict
-                             phjCaseVarName = phjCaseVarName,
-                             phjCaseValue = phjCaseValue,
-                             phjRiskFactorVarName = phjRiskFactorVarName,
-                             phjRiskFactorBaseValue = phjRiskFactorBaseValue,
-                             phjMissingValue = phjMissingValue,
-                             phjAlpha = phjAlpha,
-                             phjPrintResults = phjPrintResults)
+    try:
+        # Call the phjRatios() function to do the work
+        phjContTable = phjRatios(phjDF = phjDF,
+                                 phjRatioType = 'relrisk',    # Should be one of the keys in phjSuffixDict
+                                 phjCaseVarName = phjCaseVarName,
+                                 phjCaseValue = phjCaseValue,
+                                 phjRiskFactorVarName = phjRiskFactorVarName,
+                                 phjRiskFactorBaseValue = phjRiskFactorBaseValue,
+                                 phjMissingValue = phjMissingValue,
+                                 phjAlpha = phjAlpha,
+                                 phjPrintResults = phjPrintResults)
+    
+    except AssertionError as e:
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+        
+        phjContTable = None
     
     return phjContTable
 
@@ -106,36 +140,56 @@ def phjRatios(phjDF,
               phjAlpha = 0.05,
               phjPrintResults = False):
     
-    # Set default suffixes and join strings to create column names
-    # to use in output tables and dataframes.
-    phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+    # Check whether required parameters have been set to correct type
+    try:
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        phjAssert('phjRatioType',phjRatioType,str,phjMustBePresentColumnList = ['oddsratio','relrisk'])
+        phjAssert('phjCaseVarName',phjCaseVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        assert phjDF[phjCaseVarName].replace(phjMissingValue,np.nan).nunique(dropna = True) == 2, 'The selected variable must contain only 2 levels, one representing a case and one a control.'
+        phjAssert('phjCaseValue',phjCaseValue,(str,int),phjMustBePresentColumnList = list(phjDF[phjCaseVarName].unique()),phjBespokeMessage = "Case value not found in case variable ('{}')".format(phjCaseVarName))
+        phjAssert('phjRiskFactorVarName',phjRiskFactorVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        phjAssert('phjRiskFactorBaseValue',phjRiskFactorBaseValue,(str,int),phjMustBePresentColumnList = list(phjDF[phjRiskFactorVarName].unique()),phjBespokeMessage = "Risk factor value not found in risk factor variable ('{}')".format(phjRiskFactorVarName))
+        phjAssert('phjMissingValue',phjMissingValue,(str,int,float))
+        phjAssert('phjAlpha',phjAlpha,float,phjAllowedOptions = {'min':0.0001,'max':0.9999})
+        phjAssert('phjPrintResults',phjPrintResults,bool)
     
-    # Retain only those columns that will be analysed (otherwise, it is feasible that
-    # unrelated columns that contain np.nan values will cause removal of rows in
-    # unexpected ways.
-    phjDF = phjDF[[phjCaseVarName,phjRiskFactorVarName]]
     
-    # Check passed parameters are useable
-    phjCheckPassed = phjRRORCheckArgs(phjDF = phjDF,
-                                      phjCaseVarName = phjCaseVarName,
-                                      phjCaseValue = phjCaseValue,
-                                      phjRiskFactorVarName = phjRiskFactorVarName,
-                                      phjRiskFactorBaseValue = phjRiskFactorBaseValue)
+    except AssertionError as e:
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
     
-    if phjCheckPassed:
+    else:
+        # Set default suffixes and join strings to create column names
+        # to use in output tables and dataframes.
+        phjSuffixDict = phjDefineSuffixDict(phjAlpha = phjAlpha)
+    
+        # Retain only those columns that will be analysed (otherwise, it is feasible that
+        # unrelated columns that contain np.nan values will cause removal of rows in
+        # unexpected ways.
+        phjDF = phjDF[[phjCaseVarName,phjRiskFactorVarName]].copy()
+    
         # Data to use - remove rows that have a missing value
         phjDF = phjRemoveNaNRows(phjDF = phjDF,
-                                     phjCaseVarName = phjCaseVarName,
-                                     phjRiskFactorVarName = phjRiskFactorVarName,
-                                     phjMissingValue = phjMissingValue)
-        
+                                 phjCaseVarName = phjCaseVarName,
+                                 phjRiskFactorVarName = phjRiskFactorVarName,
+                                 phjMissingValue = phjMissingValue)
+    
         # Create a basic 2 x 2 (or n x 2) contingency table
         phjContTable = phjCreateContingencyTable(phjDF = phjDF,
                                                  phjCaseVarName = phjCaseVarName,
                                                  phjCaseValue = phjCaseValue,
                                                  phjRiskFactorVarName = phjRiskFactorVarName,
                                                  phjRiskFactorBaseValue = phjRiskFactorBaseValue)
-        
+    
         # Identify the code or string that represents a control value. (Take
         # all the column headings – there are only 2 of them – and convert
         # to list. Removing the case value will leave the control value.)
@@ -145,14 +199,14 @@ def phjRatios(phjDF,
         # ... and add both values to a list in the right order
         # **** TO ENSURE COLUMNS ARE CORRECTLY REFERENCED, MAY BE NECESSARY TO CONVERT INT VALUES TO STR --- CHECK!!!
         phjCaseControlValuesList = [phjCaseValue,phjControlValue]
-        
+    
         if phjRatioType == 'relrisk':
             # If relative risk then add an extra column containing total number (i.e. cases plus controls)
             phjContTable[phjSuffixDict['totalnumber']] = phjContTable[phjCaseValue] + phjContTable[phjControlValue]
-            
+        
             # Calculate risks for each row
             phjContTable[phjSuffixDict['risk']] = phjContTable[phjCaseValue] / phjContTable[phjSuffixDict['totalnumber']]
-            
+        
             # Calculate risk ratios and confidence intervals.
             # Values are added to new columns in the phjContTable.
             phjContTable = phjCalcRRORwithCI(phjTempContDF = phjContTable,
@@ -161,11 +215,11 @@ def phjRatios(phjDF,
                                              phjRiskFactorBaseValue = phjRiskFactorBaseValue,
                                              phjAlpha = 0.05,
                                              phjPrintResults = phjPrintResults)
-        
+    
         elif phjRatioType == 'oddsratio':
             # Calculate odds for each row
             phjContTable[phjSuffixDict['odds']] = phjContTable[phjCaseValue] / phjContTable[phjControlValue]
-            
+        
             # Calculate odds ratio and confidence intervals
             phjContTable = phjCalcRRORwithCI(phjTempContDF = phjContTable,
                                              phjRatioType = phjRatioType,    # Should be one of the keys in phjSuffixDict
@@ -173,95 +227,23 @@ def phjRatios(phjDF,
                                              phjRiskFactorBaseValue = phjRiskFactorBaseValue,
                                              phjAlpha = 0.05,
                                              phjPrintResults = phjPrintResults)
+    
         
+        
+            if phjPrintResults == True:
+                if phjRatioType == 'relrisk':
+                    print("\nTable showing relative risk for risk factor strata with '{0}' considered as the base value.".format(phjRiskFactorBaseValue))
+                elif phjRatioType == 'oddsratio':
+                    print("\nTable showing odds ratio for risk factor strata with '{0}' considered as the base value.".format(phjRiskFactorBaseValue))
+                print(phjContTable)
+                print('\n')
+    
+    
         else:
+            print("\nRatio type not recognised.")
             phjContTable = None
-        
-        
-        if phjPrintResults == True:
-            if phjRatioType == 'relrisk':
-                print("\nTable showing relative risk for risk factor strata with '{0}' considered as the base value.".format(phjRiskFactorBaseValue))
-            elif phjRatioType == 'oddsratio':
-                print("\nTable showing odds ratio for risk factor strata with '{0}' considered as the base value.".format(phjRiskFactorBaseValue))
-            print(phjContTable)
-            print('\n')
-    
-    
-    else:
-        print("\nArguments entered did not pass the test.")
-        phjContTable = None
     
     return phjContTable
-
-
-
-
-def phjRRORCheckArgs(phjDF,
-                    phjCaseVarName,
-                    phjCaseValue,
-                    phjRiskFactorVarName,
-                    phjRiskFactorBaseValue):
-    
-    # Check cases variable occurs and there are only 2 categories
-    phjCheckPassed = phjCaseVarCheck(phjDF = phjDF,
-                                     phjCaseVarName = phjCaseVarName)
-    
-    # Check values occur in variables.
-    # BUT only need to do this if phjCheckPassed is True. If if is False then do not
-    # change it back to True.
-    if phjCheckPassed == True:
-        for i,j in [[phjCaseValue,phjCaseVarName],[phjRiskFactorBaseValue,phjRiskFactorVarName]]:
-            if phjCheckPassed == True:
-                phjCheckPassed = phjValueCheck(phjDF = phjDF,
-                                               phjVarName = j,
-                                               phjValue = i)
-    
-    return phjCheckPassed
-
-
-
-def phjCaseVarCheck(phjDF,
-                    phjCaseVarName):
-    
-    # This function checks the following:
-    # i.  The name passed to the function giving the case variable actually exists in the dataframe
-    # ii. The case variable contains only 2 levels
-    try:
-        assert phjCaseVarName in phjDF.columns, 'The selected name for the case variable does not exist in the dataframe.'
-        phjCheckPassed = True
-        
-        # Check that case variable contains 2 and only 2 levels
-        try:
-            assert phjDF[phjCaseVarName].nunique() == 2, 'The selected variable must contain only 2 levels, one representing a case and one a control.'
-            phjCheckPassed = True
-            
-        except AssertionError as e:
-            print(e)
-            phjCheckPassed = False
-
-    except AssertionError as e:
-        print(e)
-        phjCheckPassed = False
-    
-    return phjCheckPassed
-
-
-
-def phjValueCheck(phjDF,
-                  phjVarName,
-                  phjValue):
-    
-    # This function check that values passed to the function actually exist in the variable where they are supposed to occur,
-    # e.g. if a case is identified with 'y', make sure that 'y' occurs in the case variable.
-    try:
-        assert phjValue in phjDF[phjVarName].unique(),'The value {0} does not exist in variable {1}.'.format(phjValue,phjVarName)
-        phjCheckPassed = True
-        
-    except AssertionError as e:
-        print(e)
-        phjCheckPassed = False
-        
-    return phjCheckPassed
 
 
 
@@ -285,8 +267,8 @@ def phjRemoveNaNRows(phjDF,
                      phjRiskFactorVarName,
                      phjMissingValue = np.nan):
     
-    # Replace empty cells with np.nan
-    phjDF = phjDF.replace('',np.nan)
+    # Replace empty cells (or cells with just one or more white-space) with np.nan
+    phjDF = phjDF.replace('^\s*$',np.nan,regex = True)
     
     # Replace missing values with np.nan
     if isinstance(phjMissingValue,str):
@@ -318,7 +300,7 @@ def phjCreateContingencyTable(phjDF,
     # or 95% CI. The bug was reported to Pandas GitHub on 28 Mar 2017.
     phjContTable = phjContTable[phjCaseFirst(phjDF = phjContTable,
                                              phjCaseValue = phjCaseValue)]
-    
+    print(phjContTable)
     return phjContTable
 
 
@@ -437,6 +419,8 @@ def phjCalcRRORwithCI(phjTempContDF,
             phjTempContDF = phjAddEmptyColumns(phjTempContDF = phjTempContDF,
                                                phjRiskFactorStrataList = phjRiskFactorStrataList,
                                                phjCIColsNamesList = phjCIColsNamesList)
+            
+            print(phjTempContDF)
             
             # Calculate relative risk or odds ratio and populate the table with values
             phjTempContDF = phjAddRatioAndCIValues(phjTempContDF = phjTempContDF,
