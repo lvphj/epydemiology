@@ -56,7 +56,7 @@ def phjOddsRatio(phjDF,
                  phjMissingValue = np.nan,
                  phjAlpha = 0.05,
                  phjPrintResults = False):
-    print('ODDS RATIO')
+    
     try:
         # Call the phjRatios() function to do the work
         phjContTable = phjRatios(phjDF = phjDF,
@@ -376,8 +376,10 @@ def phjCalcRRORwithCI(phjTempContDF,
         # create a list of column names for lower and upper CI limits, respectively.
         # If any of the cell values are zero, then calculation of Woolf's logit CIs will
         # fail due to division by zero. In small sample sizes, the Gart adjusted CI is
-        # preferable. This is a modification of the Woolf CI which simply involves adding
-        # 0.5 to each cell value.
+        # preferable. This is a modification of the Woolf CI and simply involves adding
+        # 0.5 to each cell value. One consequence of this method, however, is that the
+        # odds ratio calculated with this method does not appear to match the values
+        # present in the table.
         # What is a small sample size? No idea. But for the purposes of this exercise,
         # let's assume each cell contains at least 1 count. So, if any cell contains less
         # than 1 count, use the Gart-adjusted CI instead of Woolf.
@@ -408,6 +410,7 @@ def phjCalcRRORwithCI(phjTempContDF,
         
         else:
             # For small sample sizes, the Woolf CI is adjusted and is called the Gart CI
+            # (see above).
             phjCIMethod = 'gart'
             
             # Create a list containing names for new column headings
