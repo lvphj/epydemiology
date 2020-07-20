@@ -53,6 +53,7 @@ else:
 
 import re
 import collections
+import inspect
 
 
 
@@ -70,6 +71,7 @@ from .phjRROR import phjRemoveNaNRows
 from .phjCalculateProportions import phjDefineSuffixDict
 from .phjCalculateProportions import phjGetYErrors
 from .phjExtFuncs import getJenksBreaks
+from .phjTestFunctionParameters import phjAssert
 
 
 
@@ -78,7 +80,11 @@ from .phjExtFuncs import getJenksBreaks
 # ==============
 #
 def phjViewLogOdds(phjDF,
-                   phjBinaryDepVarName = None,
+                   phjBinaryDepVarName = None,   # This is a required variable therefore setting default to None
+                                                 # is not required but all parameters without default values need
+                                                 # to be defined first which would change the order in which
+                                                 # parameters are defined; and order is useful to ensure correct
+                                                 # values are defined.
                    phjCaseValue = 1,
                    phjContIndepVarName = None,
                    phjMissingValue = 'missing',
@@ -99,25 +105,63 @@ def phjViewLogOdds(phjDF,
         phjNewCategoryVarName = phjSuffixDict['joinstr'].join([phjContIndepVarName.replace(' ','_'),
                                                                phjSuffixDict['categorisedvar']])
     
-    ###
-    ### NEED TO CHECK THAT CATEGORICAL VAR NAME DOES NOT ALREADY EXIST
-    ###
+    try:
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        phjAssert('phjBinaryDepVarName',phjBinaryDepVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        phjAssert('phjCaseValue',phjCaseValue,(str,int,float),phjAllowedOptions = list(phjDF[phjBinaryDepVarName].replace(phjMissingValue,np.nan).dropna().unique()))
+        phjAssert('phjContIndepVarName',phjContIndepVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        phjAssert('phjMissingValue',phjMissingValue,(str,int,float))
+        phjAssert('phjNumberOfCategoriesInt',phjNumberOfCategoriesInt,int,phjAllowedOptions = {'min':2,'max':len(phjDF.index)})
+        phjAssert('phjNewCategoryVarName',phjNewCategoryVarName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        phjAssert('phjCategorisationMethod',phjCategorisationMethod,(str,collections.abc.Mapping))
+        
+        if phjGroupVarName is not None:
+            phjAssert('phjGroupVarName',phjGroupVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        
+        phjAssert('phjAlpha',phjAlpha,float,phjAllowedOptions = {'min':0.0001,'max':0.9999})
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+        
+    except AssertionError as e:
+        
+        phjOR = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
     
-    # Retain only those columns that will be analysed (otherwise, it is feasible that
-    # unrelated columns that contain np.nan values will cause removal of rows in
-    # unexpected ways.
-    phjDF = phjDF[[col for col in [phjBinaryDepVarName,phjContIndepVarName,phjGroupVarName] if col is not None]]
-    
-    # Data to use - remove rows that have a missing value
-    phjDF = phjRemoveNaNRows(phjDF = phjDF,
+    else:
+        # Retain only those columns that will be analysed (otherwise, it is feasible that
+        # unrelated columns that contain np.nan values will cause removal of rows in
+        # unexpected ways.
+        phjDF = phjDF[[col for col in [phjBinaryDepVarName,phjContIndepVarName,phjGroupVarName] if col is not None]]
+        
+        
+        print('First DF')
+        print(phjDF)
+        
+        # Data to use - remove rows that have a missing value
+        phjDF = phjRemoveNaNRows(phjDF = phjDF,
                                  phjCaseVarName = phjBinaryDepVarName,
                                  phjRiskFactorVarName = phjContIndepVarName,
                                  phjMissingValue = phjMissingValue)
-    
-    # Convert a continuous variable to a categorical variable using a variety of methods.
-    # If phjReturnBreaks = True then function also returns a list of the break points
-    # for the continuous variable.
-    phjDF, phjBreaks = phjCategoriseContinuousVariable(phjDF = phjDF,
+        
+        
+        print('Second DF')
+        print(phjDF)
+        
+        
+        # Convert a continuous variable to a categorical variable using a variety of methods.
+        # If phjReturnBreaks = True then function also returns a list of the break points
+        # for the continuous variable.
+        phjDF, phjBreaks = phjCategoriseContinuousVariable(phjDF = phjDF,
                                                            phjContinuousVarName = phjContIndepVarName,
                                                            phjMissingValue = phjMissingValue,
                                                            phjNumberOfCategoriesInt = phjNumberOfCategoriesInt,
@@ -125,92 +169,97 @@ def phjViewLogOdds(phjDF,
                                                            phjCategorisationMethod = phjCategorisationMethod,
                                                            phjReturnBreaks = True,
                                                            phjPrintResults = phjPrintResults)
-    
-    # If the breaks have been calculated (and the continuous variable categorised successfully)
-    # then plot the graph of logodds against mid-points
-    if phjBreaks is not None:
-        
-        # The following DF contains an index that may be numeric.
-        phjOR = phjOddsRatio(phjDF = phjDF,
-                             phjCaseVarName = phjBinaryDepVarName,
-                             phjCaseValue = phjCaseValue,
-                             phjRiskFactorVarName = phjNewCategoryVarName,
-                             phjRiskFactorBaseValue = 0,   # Use the minimum value as the base value (but it's not important in this context)
-                             phjMissingValue = phjMissingValue,
-                             phjAlpha = phjAlpha,
-                             phjPrintResults = phjPrintResults)
         
         
-        if phjOR is not None:
-            
-            phjOR[phjSuffixDict['logodds']] = np.log(phjOR[phjSuffixDict['odds']])
-            
-            # Calculate log odds using logistic regression and retrieve the se from the statistical model
-            phjSE = phjCalculateLogOddsSE(phjDF = phjDF,
-                                          phjCaseVarName = phjBinaryDepVarName,
-                                          phjCaseValue = phjCaseValue,
-                                          phjCategoricalVarName = phjNewCategoryVarName,
-                                          phjMissingValue = phjMissingValue,
-                                          phjAlpha = phjAlpha,
-                                          phjPrintResults = phjPrintResults)
-            
-            # Join to phjOR dataframe
-            phjOR = phjOR.join(phjSE)
-            
-            
-            # Calculate lower and upper limits assuming normal distribution
-            phjRelCoef = norm.ppf(1 - (phjAlpha/2))
-            
-            phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
-                                                 phjSuffixDict['cilowlim']])] = phjOR[phjSuffixDict['logodds']] - (phjRelCoef * phjOR[phjSuffixDict['stderr']])
-            
-            phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
-                                                 phjSuffixDict['ciupplim']])] = phjOR[phjSuffixDict['logodds']] + (phjRelCoef * phjOR[phjSuffixDict['stderr']])
+        print('Third DF')
+        print(phjBreaks)
+        print(phjDF)
+        
+        
+        
+        # If the breaks have been calculated (and the continuous variable categorised successfully)
+        # then plot the graph of logodds against mid-points
+        if phjBreaks is not None:
+        
+            # The following DF contains an index that may be numeric.
+            phjOR = phjOddsRatio(phjDF = phjDF,
+                                 phjCaseVarName = phjBinaryDepVarName,
+                                 phjCaseValue = phjCaseValue,
+                                 phjRiskFactorVarName = phjNewCategoryVarName,
+                                 phjRiskFactorBaseValue = 0,   # Use the minimum value as the base value (but it's not important in this context)
+                                 phjMissingValue = phjMissingValue,
+                                 phjAlpha = phjAlpha,
+                                 phjPrintResults = phjPrintResults)
             
             
-            # Calculae midpoints of categories
-            phjOR[phjSuffixDict['catmidpoints']] = [((phjBreaks[i] + phjBreaks[i+1]) / 2) for i in range(len(phjBreaks) - 1)]
+            print('Fourth DF')
+            print(phjOR)
             
             
-            # Plot log odds against midpoints of categories
-            phjYErrors = phjGetYErrors(phjDF = phjOR,
-                                       phjCategoriesToPlotList = phjOR.index.tolist(),
-                                       phjParameterValue = 'logodds',
-                                       phjGroupVarName = None,
-                                       phjGroupLevelsList = None,
-                                       phjAlpha = phjAlpha,
-                                       phjPrintResults = phjPrintResults)
-            
-            ax = phjOR.plot(x = phjSuffixDict['catmidpoints'],
-                            y = phjSuffixDict['logodds'],
-                            kind = 'line',
-                            yerr = phjYErrors,
-                            capsize = 4,
-                            title = 'Log-odds against mid-points of categories')
-            ax.set_ylabel("Log odds")
-            ax.set_xlabel(phjNewCategoryVarName)
-            ax.set_xlim([phjBreaks[0],phjBreaks[-1]])
-            
-            # Add vertical lines to indicate boundaries of categories
-            for xline in phjBreaks:
-                ax.axvline(x = xline,
-                           linestyle = 'dashed',
-                           color = 'gray')
+            if phjOR is not None:
+                
+                phjOR[phjSuffixDict['logodds']] = np.log(phjOR[phjSuffixDict['odds']])
+                
+                # Calculate log odds using logistic regression and retrieve the se from the statistical model
+                phjSE = phjCalculateLogOddsSE(phjDF = phjDF,
+                                              phjCaseVarName = phjBinaryDepVarName,
+                                              phjCaseValue = phjCaseValue,
+                                              phjCategoricalVarName = phjNewCategoryVarName,
+                                              phjMissingValue = phjMissingValue,
+                                              phjAlpha = phjAlpha,
+                                              phjPrintResults = phjPrintResults)
+                
+                # Join to phjOR dataframe
+                phjOR = phjOR.join(phjSE)
+                
+                
+                # Calculate lower and upper limits assuming normal distribution
+                phjRelCoef = norm.ppf(1 - (phjAlpha/2))
+                
+                phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
+                                                     phjSuffixDict['cilowlim']])] = phjOR[phjSuffixDict['logodds']] - (phjRelCoef * phjOR[phjSuffixDict['stderr']])
+                
+                phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
+                                                     phjSuffixDict['ciupplim']])] = phjOR[phjSuffixDict['logodds']] + (phjRelCoef * phjOR[phjSuffixDict['stderr']])
+                
+                
+                # Calculae midpoints of categories
+                phjOR[phjSuffixDict['catmidpoints']] = [((phjBreaks[i] + phjBreaks[i+1]) / 2) for i in range(len(phjBreaks) - 1)]
+                
+                
+                # Plot log odds against midpoints of categories
+                phjYErrors = phjGetYErrors(phjDF = phjOR,
+                                           phjCategoriesToPlotList = phjOR.index.tolist(),
+                                           phjParameterValue = 'logodds',
+                                           phjGroupVarName = None,
+                                           phjGroupLevelsList = None,
+                                           phjAlpha = phjAlpha,
+                                           phjPrintResults = phjPrintResults)
+                
+                ax = phjOR.plot(x = phjSuffixDict['catmidpoints'],
+                                y = phjSuffixDict['logodds'],
+                                kind = 'line',
+                                yerr = phjYErrors,
+                                capsize = 4,
+                                title = 'Log-odds against mid-points of categories')
+                ax.set_ylabel("Log odds")
+                ax.set_xlabel(phjNewCategoryVarName)
+                ax.set_xlim([phjBreaks[0],phjBreaks[-1]])
+                
+                # Add vertical lines to indicate boundaries of categories
+                for xline in phjBreaks:
+                    ax.axvline(x = xline,
+                               linestyle = 'dashed',
+                               color = 'gray')
         
         else:
-            # Otherwise, attempts to calculate the basic OR table failed and phjOR
-            # was returned as None. Strictly speaking, the following is not required
-            # but it makes it easier to follow the structure.
+            # Otherwise, attempts to categorise the data failed and phjBreaks returned as None
             phjOR = None
-    
-    else:
-        # Otherwise, attempts to categorise the data failed and phjBreaks returned as None
-        phjOR = None
     
     if phjPrintResults == True:
         print('\nOdds ratio dataframe')
         print(phjOR)
-
+    
     return phjOR
 
 
