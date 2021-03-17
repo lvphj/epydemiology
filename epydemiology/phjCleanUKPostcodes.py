@@ -1079,9 +1079,19 @@ def phjCalcMinDamLevDistAndEdits(x,
     # Convert the numpy array of postcodes to a Pandas dataframe
     phjPostcodeDF = pd.DataFrame(phjRealPostcodeArr,columns = ['pcdMin'])
     
-    # Calculate distance from string to each postcode in dataframe
-    phjPostcodeDF['tempDL'] = pyxdl.damerau_levenshtein_distance_ndarray(x[phjNewPostcodeVarName], phjRealPostcodeArr)
+    # Calculate distance from string to each postcode in dataframe.
+    # In versions of pyxdameraulevenshtein library before 1.7.0, the function used was
+    # damerau_levenshtein_distance_ndarray(). This used np.array.
+    # In version 1.7.0, the function was changed to damerau_levenshtein_distance_seqs()
+    # which uses built-in Python lists.
+    # The following addressess issue #44 on epydemiology GitHub Issues page.
+    if pkg_resources.get_distribution("pyxdameraulevenshtein").version < '1.7.0':
+        phjPostcodeDF['tempDL'] = pyxdl.damerau_levenshtein_distance_ndarray(x[phjNewPostcodeVarName], phjRealPostcodeArr)
     
+    else:
+        phjPostcodeDF['tempDL'] = pyxdl.damerau_levenshtein_distance_seqs(x[phjNewPostcodeVarName], phjRealPostcodeArr)
+        
+        
     # Calculate minimum DL distance
     phjMinDamLevDist = phjPostcodeDF['tempDL'].min(axis = 0)
     
