@@ -143,12 +143,12 @@ def phjRatios(phjDF,
     # Check whether required parameters have been set to correct type
     try:
         phjAssert('phjDF',phjDF,pd.DataFrame)
-        phjAssert('phjRatioType',phjRatioType,str,phjMustBePresentColumnList = ['oddsratio','relrisk'])
+        phjAssert('phjRatioType',phjRatioType,str,phjAllowedOptions = ['oddsratio','relrisk'])
         phjAssert('phjCaseVarName',phjCaseVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
         assert phjDF[phjCaseVarName].replace(phjMissingValue,np.nan).nunique(dropna = True) == 2, 'The selected variable must contain only 2 levels, one representing a case and one a control.'
-        phjAssert('phjCaseValue',phjCaseValue,(str,int),phjMustBePresentColumnList = list(phjDF[phjCaseVarName].unique()),phjBespokeMessage = "Case value not found in case variable ('{}')".format(phjCaseVarName))
+        phjAssert('phjCaseValue',phjCaseValue,(str,int),phjAllowedOptions = list(phjDF[phjCaseVarName].unique()),phjBespokeMessage = "Case value not found in case variable ('{}')".format(phjCaseVarName))
         phjAssert('phjRiskFactorVarName',phjRiskFactorVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
-        phjAssert('phjRiskFactorBaseValue',phjRiskFactorBaseValue,(str,int),phjMustBePresentColumnList = list(phjDF[phjRiskFactorVarName].unique()),phjBespokeMessage = "Risk factor value not found in risk factor variable ('{}')".format(phjRiskFactorVarName))
+        phjAssert('phjRiskFactorBaseValue',phjRiskFactorBaseValue,(str,int),phjAllowedOptions = list(phjDF[phjRiskFactorVarName].unique()),phjBespokeMessage = "Risk factor value not found in risk factor variable ('{}')".format(phjRiskFactorVarName))
         phjAssert('phjMissingValue',phjMissingValue,(str,int,float))
         phjAssert('phjAlpha',phjAlpha,float,phjAllowedOptions = {'min':0.0001,'max':0.9999})
         phjAssert('phjPrintResults',phjPrintResults,bool)
@@ -413,6 +413,9 @@ def phjCalcRRORwithCI(phjTempContDF,
             # (see above).
             phjCIMethod = 'gart'
             
+            print('In the case of small samples the Woolf CI is adjusted to produce the Gart CI.')
+            print('\n')
+            
             # Create a list containing names for new column headings
             phjCIColsNamesList = phjCreateCIColsNamesList(phjRatioType = phjRatioType,
                                                           phjCIMethod = phjCIMethod,
@@ -422,8 +425,6 @@ def phjCalcRRORwithCI(phjTempContDF,
             phjTempContDF = phjAddEmptyColumns(phjTempContDF = phjTempContDF,
                                                phjRiskFactorStrataList = phjRiskFactorStrataList,
                                                phjCIColsNamesList = phjCIColsNamesList)
-            
-            print(phjTempContDF)
             
             # Calculate relative risk or odds ratio and populate the table with values
             phjTempContDF = phjAddRatioAndCIValues(phjTempContDF = phjTempContDF,
