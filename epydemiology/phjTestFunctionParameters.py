@@ -25,15 +25,15 @@ import collections
 
 
 # This is an attempt to standardise the returns from assert() function.
-# phjVarName is a string giving the name of variable.
-# phjVarValue is the variable.
+# phjArgName is a string giving the name of variable.
+# phjArgValue is the variable.
 # phjType is the type that the variable must take. Can pass a tuple of types for multiple options.
 # phjBespokeMessage is a message displayed in the event of an AssertionException instead of the generic message.
-# phjMustBePresentColumnList is a string or a list of column names of which phjVarValue must be one.
-# phjMustBeAbsentColumnList is a string or a list of column names in which phjVarValue must not be included.
+# phjMustBePresentColumnList is a string or a list of column names of which phjArgValue must be one.
+# phjMustBeAbsentColumnList is a string or a list of column names in which phjArgValue must not be included.
 # phjAllowedOptions can be a list or a dict containing 'min' and 'max' keys.
-def phjAssert(phjVarName,
-              phjVarValue,
+def phjAssert(phjArgName,
+              phjArgValue,
               phjType,
               phjBespokeMessage = None,
               phjMustBePresentColumnList = None,
@@ -50,93 +50,93 @@ def phjAssert(phjVarName,
         # -----------------------------------------
         # If variable is a string, float, integer or boolean variable, check that
         # variable type is correct (as defined in phjType argument)
-        if isinstance(phjVarValue,(str,float,int,bool)):
-            assert isinstance(phjVarValue,phjType),"Argument '{0}' ('{1}') needs to be a {2}.".format(phjVarName,
-                                                                                                      phjVarValue,
+        if isinstance(phjArgValue,(str,float,int,bool)):
+            assert isinstance(phjArgValue,phjType),"Argument '{0}' ('{1}') needs to be a {2}.".format(phjArgName,
+                                                                                                      phjArgValue,
                                                                                                       phjMessageSuffix)
         
         # If variable is anything else (e.g. dataframe, list, dict, etc.) then check
         # variable type is correct (but message cannot refer to single value)
         else:
-            assert isinstance(phjVarValue,phjType),"Argument '{0}' needs to be a {1}.".format(phjVarName,
+            assert isinstance(phjArgValue,phjType),"Argument '{0}' needs to be a {1}.".format(phjArgName,
                                                                                               phjMessageSuffix)
         
         
         # Test that variable is a correct value
         # -------------------------------------
-        # Depending on the type of phjVarValue, check that value(s) are valid.
+        # Depending on the type of phjArgValue, check that value(s) are valid.
         #
-        # If phjMustBePresentColumnList is not None then check that phjVarValue is valid
+        # If phjMustBePresentColumnList is not None then check that phjArgValue is valid
         if phjMustBePresentColumnList is not None:
-            # If phjMustBePresentColumnList is a list, then check that phjVarValue is
+            # If phjMustBePresentColumnList is a list, then check that phjArgValue is
             # included
             if isinstance(phjMustBePresentColumnList,list):
-                # If phjVarValue is a string then check that it is listed
-                if isinstance(phjVarValue,str):
+                # If phjArgValue is a string then check that it is listed
+                if isinstance(phjArgValue,str):
                     if phjBespokeMessage is None:
-                        assert phjVarValue in phjMustBePresentColumnList,"Variable '{0}' ('{1}') is not present in list of columns.".format(phjVarName,phjVarValue)
+                        assert phjArgValue in phjMustBePresentColumnList,"Variable '{0}' ('{1}') is not present in list of columns.".format(phjArgName,phjArgValue)
                     else:
-                        assert phjVarValue in phjMustBePresentColumnList,phjBespokeMessage
+                        assert phjArgValue in phjMustBePresentColumnList,phjBespokeMessage
                 
-                # If phjVarValue is a list then check that all items in phjVarValue list
+                # If phjArgValue is a list then check that all items in phjArgValue list
                 # are contained in the phjMustBePresentColumnList.
-                elif isinstance(phjVarValue,list):
+                elif isinstance(phjArgValue,list):
                     if phjBespokeMessage is None:
-                        assert set(phjVarValue).issubset(phjMustBePresentColumnList), "The elements in '{0}' ('{1}') do not all exist in list of columns.".format(phjVarName,phjVarValue)
+                        assert set(phjArgValue).issubset(phjMustBePresentColumnList), "The elements in '{0}' ('{1}') do not all exist in list of columns.".format(phjArgName,phjArgValue)
                     else:
-                        assert set(phjVarValue).issubset(phjMustBePresentColumnList),phjBespokeMessage
+                        assert set(phjArgValue).issubset(phjMustBePresentColumnList),phjBespokeMessage
             
             # phjMustBePresentColumnList may be a single string (even though it is not
             # not supposed to be)
             elif isinstance(phjMustBePresentColumnList,str):
                 if phjBespokeMessage is None:
-                    assert phjVarValue == phjMustBePresentColumnList,"Variable '{0}' ('{1}') must be '{2}'.".format(phjVarName,phjVarValue,phjMustBePresentColumnList)
+                    assert phjArgValue == phjMustBePresentColumnList,"Variable '{0}' ('{1}') must be '{2}'.".format(phjArgName,phjArgValue,phjMustBePresentColumnList)
                 else:
-                    assert phjVarValue == phjMustBePresentColumnList,phjBespokeMessage
+                    assert phjArgValue == phjMustBePresentColumnList,phjBespokeMessage
         
         
         # If phjMustBeAbsentColumnList is not None than check that phjVarVaoue is valid
         if phjMustBeAbsentColumnList is not None:
-            # If phjMustBeAbsentColumnList is a list, then check that phjVarValue is NOT
+            # If phjMustBeAbsentColumnList is a list, then check that phjArgValue is NOT
             # included in the phjMustBeAbsentColumnList
             if isinstance(phjMustBeAbsentList,list):
-                # If phjVarValue is a string then check that it is NOT listed
-                if isinstance(phjVarValue,str):
+                # If phjArgValue is a string then check that it is NOT listed
+                if isinstance(phjArgValue,str):
                     if phjBespokeMessage is None:
-                        assert phjVarValue not in phjMustBeAbsentColumnList,"Variable '{}' already exists in the list of columns.".format(phjVarValue)
+                        assert phjArgValue not in phjMustBeAbsentColumnList,"Variable '{}' already exists in the list of columns.".format(phjArgValue)
                     else:
-                        assert phjVarValue not in phjMustBeAbsentColumnList,phjBespokeMessage
+                        assert phjArgValue not in phjMustBeAbsentColumnList,phjBespokeMessage
                 
-                # If phjVarValue is a list then check that ALL items in phjVarValue list
+                # If phjArgValue is a list then check that ALL items in phjArgValue list
                 # are absent from those contained in the phjMustBeAbsentColumnList.
                 # This is done by converting lists to sets and finding the intersection
                 # (i.e. set(a) & set(b)); the length of the resulting intersection should
                 # be zero.
-                elif isinstance(phjVarValue,list):
+                elif isinstance(phjArgValue,list):
                     if phjBespokeMessage is None:
-                        assert len(list(set(phjVarValue) & set(phjMustBeAbsentColumnList))) == 0, "The elements in '{0}' ('{1}') already exist in list of columns'.".format(phjVarName,phjVarValue)
+                        assert len(list(set(phjArgValue) & set(phjMustBeAbsentColumnList))) == 0, "The elements in '{0}' ('{1}') already exist in list of columns'.".format(phjArgName,phjArgValue)
                     else:
-                        assert len(list(set(phjVarValue) & set(phjMustBeAbsentColumnList))) == 0,phjBespokeMessage
+                        assert len(list(set(phjArgValue) & set(phjMustBeAbsentColumnList))) == 0,phjBespokeMessage
             
             # phjMustBeAbsentColumnList may be a single string
             elif isinstance(phjMustBeAbsentColumnList,str):
                 if phjBespokeMessage is None:
-                    assert phjVarValue == phjMustBeAbsentColumnList,"Variable '{}' must NOT be '{}'.".format(phjVarValue,phjMustBeAbsentColumnList1)
+                    assert phjArgValue == phjMustBeAbsentColumnList,"Variable '{}' must NOT be '{}'.".format(phjArgValue,phjMustBeAbsentColumnList1)
                 else:
-                    assert phjVarValue == phjMustBeAbsentColumnList,phjBespokeMessage
+                    assert phjArgValue == phjMustBeAbsentColumnList,phjBespokeMessage
         
         
-        # If phjAllowedOptions is set and phjVarValue is a string, int or float, then
+        # If phjAllowedOptions is set and phjArgValue is a string, int or float, then
         # check that variable value meets requirements.
-        if (phjAllowedOptions is not None) & (isinstance(phjVarValue,(str,int,float))):
+        if (phjAllowedOptions is not None) & (isinstance(phjArgValue,(str,int,float))):
             # The phjAllowedOptions can be a list or a dictionary.
-            # If phjAllowedOptions is a list then check that phjVarValue is in list
+            # If phjAllowedOptions is a list then check that phjArgValue is in list
             # of allowed options
             if isinstance(phjAllowedOptions,list):
                 if phjBespokeMessage is None:
-                    assert phjVarValue in phjAllowedOptions, "Parameter '{0}' ('{1}') is not an allowed value.".format(phjVarName,phjVarValue)
+                    assert phjArgValue in phjAllowedOptions, "Parameter '{0}' ('{1}') is not an allowed value.".format(phjArgName,phjArgValue)
                 else:
-                    assert phjVarValue in phjAllowedOptions,phjBespokeMessage
+                    assert phjArgValue in phjAllowedOptions,phjBespokeMessage
             
             
             # If the phjAllowedOptions argument is a dictionary that contains min
@@ -144,12 +144,12 @@ def phjAssert(phjVarName,
             elif isinstance(phjAllowedOptions,collections.Mapping): # collections.Mapping will work for dict(), collections.OrderedDict() and collections.UserDict() (see comment by Alexander Ryzhov at https://stackoverflow.com/questions/25231989/how-to-check-if-a-variable-is-a-dictionary-in-python.
                 if [k for k,v in phjAllowedOptions.items()] == ['min','max']:
                     if phjBespokeMessage is None:
-                        assert (phjVarValue >= phjAllowedOptions['min']) & (phjVarValue <= phjAllowedOptions['max']), "Parameter '{0}' ('{1}') is outside the allowed range ({2} to {3}).".format(phjVarName,
-                                                                                                                                                                                              phjVarValue,
+                        assert (phjArgValue >= phjAllowedOptions['min']) & (phjArgValue <= phjAllowedOptions['max']), "Parameter '{0}' ('{1}') is outside the allowed range ({2} to {3}).".format(phjArgName,
+                                                                                                                                                                                              phjArgValue,
                                                                                                                                                                                               phjAllowedOptions['min'],
                                                                                                                                                                                               phjAllowedOptions['max'])
                     else:
-                        assert (phjVarValue >= phjAllowedOptions['min']) & (phjVarValue <= phjAllowedOptions['max']),phjBespokeMessage
+                        assert (phjArgValue >= phjAllowedOptions['min']) & (phjArgValue <= phjAllowedOptions['max']),phjBespokeMessage
     
     except AssertionError as e:
         
