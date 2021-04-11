@@ -99,7 +99,7 @@ def phjAssert(phjArgName,
         if phjMustBeAbsentColumnList is not None:
             # If phjMustBeAbsentColumnList is a list, then check that phjArgValue is NOT
             # included in the phjMustBeAbsentColumnList
-            if isinstance(phjMustBeAbsentList,list):
+            if isinstance(phjMustBeAbsentColumnList,list):
                 # If phjArgValue is a string then check that it is NOT listed
                 if isinstance(phjArgValue,str):
                     if phjBespokeMessage is None:
