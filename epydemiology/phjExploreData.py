@@ -346,7 +346,7 @@ def phjCategoriseContinuousVariable(phjDF,
         phjAssert('phjDF',phjDF,pd.DataFrame)
         phjAssert('phjContinuousVarName',phjContinuousVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
         phjAssert('phjMissingValue',phjMissingValue,(str,int,float))
-        phjAssert('phjNumberOfCategoriesInt',phjNumberOfCategoriesInt,int,phjAllowedOptions = {'min':2,'max':len(phjDF.index)})
+        phjAssert('phjNumberOfCategoriesInt',phjNumberOfCategoriesInt,int,phjAllowedOptions = {'min':2,'max':min([100,len(pd.to_numeric(phjDF[phjContinuousVarName],errors = 'coerce').dropna(axis = 0))])})
         phjAssert('phjNewCategoryVarName',phjNewCategoryVarName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
         
         # Check phjCategorisationMethod is either a string indicating method to use to
