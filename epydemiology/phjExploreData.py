@@ -342,6 +342,8 @@ def phjCategoriseContinuousVariable(phjDF,
                                     phjReturnBreaks = False,
                                     phjPrintResults = False):
     
+    phjDF = phjDF.copy(deep = True)
+    
     try:
         phjAssert('phjDF',phjDF,pd.DataFrame)
         phjAssert('phjContinuousVarName',phjContinuousVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
