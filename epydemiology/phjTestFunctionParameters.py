@@ -21,12 +21,12 @@ else:
 
 
 import collections
-
+import inspect
 
 
 # This is an attempt to standardise the returns from assert() function.
-# phjArgName is a string giving the name of variable.
-# phjArgValue is the variable.
+# phjArgName is a string giving the name of function argument.
+# phjArgValue is the function argument.
 # phjType is the type that the variable must take. Can pass a tuple of types for multiple options.
 # phjBespokeMessage is a message displayed in the event of an AssertionException instead of the generic message.
 # phjMustBePresentColumnList is a string or a list of column names of which phjArgValue must be one.
@@ -99,7 +99,7 @@ def phjAssert(phjArgName,
         if phjMustBeAbsentColumnList is not None:
             # If phjMustBeAbsentColumnList is a list, then check that phjArgValue is NOT
             # included in the phjMustBeAbsentColumnList
-            if isinstance(phjMustBeAbsentList,list):
+            if isinstance(phjMustBeAbsentColumnList,list):
                 # If phjArgValue is a string then check that it is NOT listed
                 if isinstance(phjArgValue,str):
                     if phjBespokeMessage is None:
@@ -131,25 +131,55 @@ def phjAssert(phjArgName,
         if (phjAllowedOptions is not None) & (isinstance(phjArgValue,(str,int,float))):
             # The phjAllowedOptions can be a list or a dictionary.
             # If phjAllowedOptions is a list then check that phjArgValue is in list
-            # of allowed options
+            # of allowed options.
+            # Potentially, could use collections.abc.Sequence instead of list to allow any
+            # sequence type to be included
+            # (see: https://stackoverflow.com/questions/35690572/what-does-isinstance-with-a-dictionary-and-abc-mapping-from-collections-doing).
             if isinstance(phjAllowedOptions,list):
                 if phjBespokeMessage is None:
-                    assert phjArgValue in phjAllowedOptions, "Parameter '{0}' ('{1}') is not an allowed value.".format(phjArgName,phjArgValue)
+                    assert phjArgValue in phjAllowedOptions,"Parameter '{0}' ('{1}') is not an allowed value.".format(phjArgName,phjArgValue)
                 else:
                     assert phjArgValue in phjAllowedOptions,phjBespokeMessage
             
             
             # If the phjAllowedOptions argument is a dictionary that contains min
             # and max value which defines a range.
-            elif isinstance(phjAllowedOptions,collections.Mapping): # collections.Mapping will work for dict(), collections.OrderedDict() and collections.UserDict() (see comment by Alexander Ryzhov at https://stackoverflow.com/questions/25231989/how-to-check-if-a-variable-is-a-dictionary-in-python.
-                if [k for k,v in phjAllowedOptions.items()] == ['min','max']:
+            elif isinstance(phjAllowedOptions,collections.abc.Mapping): # collections.Mapping will work for dict(),
+                                                                            # collections.OrderedDict() and collections.UserDict()
+                                                                            # (see comment by Alexander Ryzhov at
+                                                                            # https://stackoverflow.com/questions/25231989/how-to-check-if-a-variable-is-a-dictionary-in-python).
+                                                                            # Also, another comment says that collections.Mapping and collections.abc.Mapping
+                                                                            # are the same but collections.abc is not available before Python 3.3. Also,
+                                                                            # collections.Mapping, whilst still available in Python 3.6, is not documented.
+                
+                # Compare keys in dictionary with allowed keys. Using collections.Counter() will allow a comparison
+                # where duplicates are NOT removed (as with set() ) but order is not important
+                # (see: https://stackoverflow.com/questions/9623114/check-if-two-unordered-lists-are-equal)
+                if collections.Counter([k for k,v in phjAllowedOptions.items()]) == collections.Counter(['min','max']):
                     if phjBespokeMessage is None:
                         assert (phjArgValue >= phjAllowedOptions['min']) & (phjArgValue <= phjAllowedOptions['max']), "Parameter '{0}' ('{1}') is outside the allowed range ({2} to {3}).".format(phjArgName,
-                                                                                                                                                                                              phjArgValue,
-                                                                                                                                                                                              phjAllowedOptions['min'],
-                                                                                                                                                                                              phjAllowedOptions['max'])
+                                                                                                                                                                                                  phjArgValue,
+                                                                                                                                                                                                  phjAllowedOptions['min'],
+                                                                                                                                                                                                  phjAllowedOptions['max'])
                     else:
                         assert (phjArgValue >= phjAllowedOptions['min']) & (phjArgValue <= phjAllowedOptions['max']),phjBespokeMessage
+                    
+                    
+                elif collections.Counter([k for k,v in phjAllowedOptions.items()]) == collections.Counter(['min']):
+                    if phjBespokeMessage is None:
+                        assert (phjArgValue >= phjAllowedOptions['min']), "Parameter '{0}' ('{1}') is less than the allowed minimum value ({2}).".format(phjArgName,
+                                                                                                                                                     phjArgValue,
+                                                                                                                                                     phjAllowedOptions['min'])
+                    else:
+                        assert (phjArgValue >= phjAllowedOptions['min']),phjBespokeMessage
+                    
+                elif collections.Counter([k for k,v in phjAllowedOptions.items()]) == collections.Counter(['max']):
+                    if phjBespokeMessage is None:
+                        assert (phjArgValue <= phjAllowedOptions['max']), "Parameter '{0}' ('{1}') is greater than the allowed maximum value ({2}).".format(phjArgName,
+                                                                                                                                                        phjArgValue,
+                                                                                                                                                        phjAllowedOptions['max'])
+                    else:
+                        assert (phjArgValue <= phjAllowedOptions['max']),phjBespokeMessage
     
     except AssertionError as e:
         
@@ -206,4 +236,3 @@ def phjConstructGenericMessageSuffix(phjType):
 
 if __name__ == '__main__':
     main()
-
