@@ -345,7 +345,17 @@ def phjCategoriseContinuousVariable(phjDF,
     try:
         phjAssert('phjDF',phjDF,pd.DataFrame)
         phjAssert('phjContinuousVarName',phjContinuousVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        
+        # Deal with missing values in continuous variable.
+        # The phjMissingValue argument can be str, float or int. If str then check that
+        # the only string in the column is equal to the phjMissingValue argument. This
+        # is done by creating a list of items that cannot be converted to a number and
+        # do not match the phjMissingValue argument. If the list is not empty then it
+        # indicates that there are strings in the variable.
         phjAssert('phjMissingValue',phjMissingValue,(str,int,float))
+        phjExtraStrs = list(set([s for s in phjDF[phjContinuousVarName] if ((phjCheckIsNumber(s) is False) & (s != phjMissingValue))]))
+        assert len(phjExtraStrs) == 0, 'The continuous variable contains strings that are not recognised as missing values (namely {}).'.format(phjExtraStrs)
+        
         phjAssert('phjNumberOfCategoriesInt',phjNumberOfCategoriesInt,int,phjAllowedOptions = {'min':2,'max':min([100,len(pd.to_numeric(phjDF[phjContinuousVarName],errors = 'coerce').dropna(axis = 0))])})
         phjAssert('phjNewCategoryVarName',phjNewCategoryVarName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
         
@@ -384,6 +394,15 @@ def phjCategoriseContinuousVariable(phjDF,
             raise
     
     else:
+        # Deal with missing values in continuous variable.
+        # If a variable contains a missing value string, the dtype is 'object'. If
+        # the missing value string is replaced by np.nan then the variable is changed
+        # to 'float' and number strings are converted to actual numbers. However, if
+        # there is another string in the variable, the dtype remains as 'object'; the
+        # latter situation should have been identified by the assert statement above.
+        phjContinuousSer = phjDF[phjContinuousVarName].replace(phjMissingValue,np.nan)
+        
+        
         # Check if phjCategorisationMethod is a list.
         # If so, the phjNumberOfCategoriesInt is ignored and the number of categories
         # is inferred from the break points.
@@ -391,12 +410,16 @@ def phjCategoriseContinuousVariable(phjDF,
             
             phjBreaks = phjCategorisationMethod
             
-            phjDF[phjNewCategoryVarName] = pd.cut(phjDF[phjContinuousVarName],
+            phjDF[phjNewCategoryVarName] = pd.cut(phjContinuousSer,
                                                   bins = phjBreaks,
                                                   right = True,
                                                   labels = False)
         
+        # If phjCategorisationMethod is a string, use the appropriate method to
+        # calculate breaks
+        # N.B. If add additional methods, remember to add to list in phjAssert() function.
         elif isinstance(phjCategorisationMethod,str):
+        
             if phjCategorisationMethod.lower() == 'jenks':
             
                 phjBreaks = phjImplementGetBreaks(phjDF = phjDF,
@@ -406,7 +429,7 @@ def phjCategoriseContinuousVariable(phjDF,
                                                   phjPrintResults = phjPrintResults)
                 
                 # Cut data series based on Jenks breaks
-                phjDF[phjNewCategoryVarName] = pd.cut(phjDF[phjContinuousVarName],
+                phjDF[phjNewCategoryVarName] = pd.cut(phjContinuousSer,
                                                           bins = phjBreaks,
                                                           right = True,
                                                           labels = False)
@@ -419,11 +442,11 @@ def phjCategoriseContinuousVariable(phjDF,
             elif phjCategorisationMethod.lower() == 'quantile':
             
                 # Cut data series based on quantiles / number of required bins
-                phjDF[phjNewCategoryVarName], phjBreaks = pd.cut(phjDF[phjContinuousVarName],
-                                                                     bins = phjNumberOfCategoriesInt,
-                                                                     right = True,
-                                                                     retbins = True,
-                                                                     labels = False)
+                phjDF[phjNewCategoryVarName], phjBreaks = pd.cut(phjContinuousSer,
+                                                                 bins = phjNumberOfCategoriesInt,
+                                                                 right = True,
+                                                                 retbins = True,
+                                                                 labels = False)
                 
                 if phjPrintResults == True:
                     print('Category quantile bins (quantile) = ',phjBreaks)
@@ -493,7 +516,7 @@ def phjImplementGetBreaks(phjDF,
                           phjCategorisationMethod = 'jenks',
                           phjPrintResults = False):
     
-    phjTempSer = phjDF[phjContinuousVarName].replace('missing',np.nan).dropna(axis = 0)
+    phjTempSer = phjDF[phjContinuousVarName].replace(phjMissingValue,np.nan).dropna(axis = 0)
     
     if phjCategorisationMethod == 'jenks':
         if len(phjTempSer.index) <= 1000:
