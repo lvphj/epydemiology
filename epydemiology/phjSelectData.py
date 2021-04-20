@@ -22,6 +22,7 @@ else:
 
 import collections
 import re
+import inspect
 
 
 from .phjMiscFuncs import phjGetStrFromArgOrFile
@@ -258,7 +259,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
             if isinstance(phjMatchingVariablesList,list):
                 assert None not in phjMatchingVariablesList, "List of matching variables cannot contain None values."
             
-            phjAssert('phjMatchingVariablesList',phjMatchigVariablesList,(list,str),phjMustBePresentColumnList = list(phjAllDataDF.columns))
+            phjAssert('phjMatchingVariablesList',phjMatchingVariablesList,(list,str),phjMustBePresentColumnList = list(phjAllDataDF.columns))
         
         
         phjAssert('phjControlsPerCaseInt',phjControlsPerCaseInt,int)
@@ -291,7 +292,15 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                 assert set(phjColumnsAbsentList).isdisjoint(list(phjAllDataDF.columns)), "Columns '{}' and '{}' will be created and cannot already exist in dataframe; please rename and try again".format('\', \''.join(phjColumnsAbsentList[:-1]),phjColumnsAbsentList[-1])
     
     
+    # N.B. The column 'case' may be created even in unmatched datasets - CHECK
+    #      May need to add phjMustBeAbsentColumnsList = ['case'] to phjAssert() for
+    #      unmatched as well as matched datasets.
+    
     except AssertionError as e:
+        
+        # Define phjCaseControlDF as None before returning
+        phjCaseControlDF = None
+        
         # If function has been called directly, present message.
         if inspect.stack()[1][3] == '<module>':
             print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
@@ -322,7 +331,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
             # STEP 1: Get dataframes of verified cases and potential controls
             # ===============================================================
             phjVerifiedCasesDF = phjGetVerifiedConsultationCases(phjAllDataDF = phjAllDataDF,
-                                                                 phjCasesDF = phjCasesDF,   # Can be a dataframe ideally but could also be a series, array or list but, based on initial checks, anything other than a dataframe will cause an AssertionError.
+                                                                 phjCasesDF = phjCasesDF,   # Can be a dataframe ideally but could also be a series, list, tuple or array.
                                                                  phjConsultationIDVarName = phjConsultationIDVarName,   # Either consultation ID or patient ID depending on control type
                                                                  phjPrintResults = phjPrintResults)
             
@@ -380,7 +389,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
             # STEP 1: Get dataframes of verified cases and potential controls
             # ===============================================================
             phjVerifiedCasesDF = phjGetVerifiedPatientCases(phjAllDataDF = phjAllDataDF,
-                                                            phjCasesDF = phjCasesDF,   # Can be a dataframe ideally but could also be a series, array or list.
+                                                            phjCasesDF = phjCasesDF,   # Can be a dataframe ideally but could also be a series, list, tuple or array.
                                                             phjConsultationIDVarName = phjConsultationIDVarName,
                                                             phjConsultationDateVarName = phjConsultationDateVarName,
                                                             phjPatientIDVarName = phjPatientIDVarName,
@@ -657,60 +666,134 @@ def phjSelectCaseControlDataset(phjCasesDF,
                                 phjControlsPerCaseInt = 1,
                                 phjPrintResults = False):
     
-    # Print summary of parameters passed to function
-    # ==============================================
-    if phjPrintResults == True:
-        print('\n*** WARNING: Setting phjPrintResults to True causes a lot of output   ***')
-        print('*** to be printed. With Jupyter-Notebook, this seems to be associated ***')
-        print('*** with losing connection with the kernel and, as such, may cause    ***')
-        print('*** the function to not complete correctly.                           ***')
+    try:
+        phjAssert('phjCasesDF',phjCasesDF,pd.DataFrame)
+        phjAssert('phjPotentialControlsDF',phjPotentialControlsDF,pd.DataFrame)
         
-        print('\nSummary of parameters passed to phjSelectCaseControlDataset() function')
-        print('======================================================================')
-        with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
-            print('\nCASES\n-----')
-            print(phjCasesDF)
-            print('\nPOTENTIAL CONTROLS\n------------------\n')
-            print(phjPotentialControlsDF)
-        print('Unique identifier variable = ', phjUniqueIdentifierVarName)
-        print('Number of controls to be selected per case = ',phjControlsPerCaseInt)
-        print('Variables to match = ',phjMatchingVariablesList)
-        
-        print('Number of potential controls = ',len(phjPotentialControlsDF.index))
-        
-        
-    # Check on parameters passed to functions and, if OK, select datasets
-    # ===================================================================
-    # Run function phjParameterCheck() to make sure parameters passed to function make
-    # sense. If the phjParameterCheck() function returns True then go ahead and create
-    # case-control dataset. If returns False then return None.
-    if phjParameterCheck(phjCasesDF = phjCasesDF,
-                         phjPotentialControlsDF = phjPotentialControlsDF,
-                         phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                         phjMatchingVariablesList = phjMatchingVariablesList,
-                         phjControlsPerCaseInt = phjControlsPerCaseInt):
+        # Check phjUniqueIdentifierVarName is in both dataframes
+        phjAssert('phjUniqueIdentifierVarName',phjUniqueIdentifierVarName,str,phjMustBePresentColumnList = list(phjCasesDF.columns))
+        phjAssert('phjUniqueIdentifierVarName',phjUniqueIdentifierVarName,str,phjMustBePresentColumnList = list(phjPotentialControlsDF.columns))
         
         if phjMatchingVariablesList is None:
-            # Select UNMATCHED controls
-            phjTempCaseControlDF = phjSelectUnmatchedCaseControlSubjects(phjCasesDF = phjCasesDF,
-                                                                         phjPotentialControlsDF = phjPotentialControlsDF,
-                                                                         phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                                                                         phjMatchingVariablesList = phjMatchingVariablesList,
-                                                                         phjControlsPerCaseInt = phjControlsPerCaseInt,
-                                                                         phjPrintResults = phjPrintResults)
-        
+            # If phjMatchingVariablesList is None then an unmatched dataset will be
+            # produced with will have a column called 'case'. Check column 'case' does
+            # not already exist in dataframes
+            assert 'case' not in list(phjCasesDF.columns), "Column 'case' cannot already exist in phjCasesDF dataframe"
+            assert 'case' not in list(phjPotentialControlsDF.columns), "Column 'case' cannot already exist in phjPotentialControlsDF dataframe"
+            
         else:
-            # Select MATCHED controls
-            phjTempCaseControlDF = phjSelectMatchedCaseControlSubjects( phjCasesDF = phjCasesDF,
-                                                                        phjPotentialControlsDF = phjPotentialControlsDF,
-                                                                        phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                                                                        phjMatchingVariablesList = phjMatchingVariablesList,
-                                                                        phjControlsPerCaseInt = phjControlsPerCaseInt,
-                                                                        phjPrintResults = phjPrintResults)
+            # Check that the variable names in the phjMatchingVariablesList are all contained
+            # within both phjCasesDF and phjPotentialControlDF.
+            phjAssert('phjMatchingVariablesList',phjMatchingVariablesList,(str,list),
+                      phjMustBePresentColumnList = list(phjCasesDF.columns))
+                      
+            phjAssert('phjMatchingVariablesList',phjMatchingVariablesList,(str,list),
+                      phjMustBePresentColumnList = list(phjPotentialControlsDF.columns))
+            
+            # If phjMatchingVariablesList is not None then check neither columns 'case'
+            # nor 'group' already exist in dataframes
+            assert set(['case','group']).isdisjoint(list(phjCasesDF.columns)), "Columns 'case' and 'group' cannot already exist in phjCasesDF dataframe"
+            assert set(['case','group']).isdisjoint(list(phjPotentialControlsDF.columns)), "Columns 'case' and 'group' cannot already exist in phjPotentialControlsDF dataframe"
+            
+            # If phjMatchingVariablesList is entered as a string, represent as a list
+            if isinstance(phjMatchingVariablesList,str):
+                phjMatchingVariablesList = [phjMatchingVariablesList]
+            
+        
+        phjAssert('phjControlsPerCaseInt',phjControlsPerCaseInt,int)
+    
+    
+        # Check that phjUniqueIdentifierVarName columns in both case and controls dataframe
+        # contains unique values (i.e. unique identifier should not be in both dataframes).
+        # Firstly, join unique identifier columns into a single series and then compare
+        # total length with length of unique series.
+        phjTempSeries = pd.concat([phjCasesDF[phjUniqueIdentifierVarName],phjPotentialControlsDF[phjUniqueIdentifierVarName]],axis = 0)
+        
+        assert phjTempSeries.size == phjTempSeries.unique().size, "The unique identifier variable does not contain unique values."
+        
+        
+    except AssertionError as e:
+        
+        # Define phjCaseControlDF as None before returning
+        phjTempCaseControlDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
     
     else:
-        # If phjParameterCheck() returns False then return None from this function
-        phjTempCaseControlDF = None
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        # Print summary of parameters passed to function
+        # ==============================================
+        if phjPrintResults == True:
+            print('\n*** WARNING: Setting phjPrintResults to True causes a lot of output   ***')
+            print('*** to be printed. With Jupyter-Notebook, this seems to be associated ***')
+            print('*** with losing connection with the kernel and, as such, may cause    ***')
+            print('*** the function to not complete correctly.                           ***')
+        
+            print('\nSummary of parameters passed to phjSelectCaseControlDataset() function')
+            print('======================================================================')
+            with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
+                print('\nCASES\n-----')
+                print(phjCasesDF)
+                print('\nPOTENTIAL CONTROLS\n------------------\n')
+                print(phjPotentialControlsDF)
+            print('Unique identifier variable = ', phjUniqueIdentifierVarName)
+            print('Number of controls to be selected per case = ',phjControlsPerCaseInt)
+            print('Variables to match = ',phjMatchingVariablesList)
+        
+            print('Number of potential controls = ',len(phjPotentialControlsDF.index))
+        
+        
+        # Check on parameters passed to functions and, if OK, select datasets
+        # ===================================================================
+        # Run function phjParameterCheck() to make sure parameters passed to function make
+        # sense. If the phjParameterCheck() function returns True then go ahead and create
+        # case-control dataset. If returns False then return None.
+        if phjParameterCheck(phjCasesDF = phjCasesDF,
+                             phjPotentialControlsDF = phjPotentialControlsDF,
+                             phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
+                             phjMatchingVariablesList = phjMatchingVariablesList,
+                             phjControlsPerCaseInt = phjControlsPerCaseInt):
+        
+            if phjMatchingVariablesList is None:
+                # Select UNMATCHED controls
+                phjTempCaseControlDF = phjSelectUnmatchedCaseControlSubjects(phjCasesDF = phjCasesDF,
+                                                                             phjPotentialControlsDF = phjPotentialControlsDF,
+                                                                             phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
+                                                                             phjMatchingVariablesList = phjMatchingVariablesList,
+                                                                             phjControlsPerCaseInt = phjControlsPerCaseInt,
+                                                                             phjPrintResults = phjPrintResults)
+        
+            else:
+                # Select MATCHED controls
+                phjTempCaseControlDF = phjSelectMatchedCaseControlSubjects( phjCasesDF = phjCasesDF,
+                                                                            phjPotentialControlsDF = phjPotentialControlsDF,
+                                                                            phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
+                                                                            phjMatchingVariablesList = phjMatchingVariablesList,
+                                                                            phjControlsPerCaseInt = phjControlsPerCaseInt,
+                                                                            phjPrintResults = phjPrintResults)
+    
+        else:
+            # If phjParameterCheck() returns False then return None from this function
+            phjTempCaseControlDF = None
     
     
     return phjTempCaseControlDF
@@ -1282,6 +1365,9 @@ def phjPrintIndexHeading(i):
 
 
 
+###############################
+# Function no longer required #
+###############################
 def phjParameterCheck(phjCasesDF,
                       phjPotentialControlsDF,
                       phjUniqueIdentifierVarName,
@@ -1298,54 +1384,54 @@ def phjParameterCheck(phjCasesDF,
     # to False.
     phjTempCheckVar = True
     
-    # Check that phjMatchingVariablesList is a list and not a string
-    if (not isinstance(phjMatchingVariablesList,list)) & (phjMatchingVariablesList is not None):
-    # if (phjMatchingVariablesList is None):
-        print('The phjMatchingVariablesList parameter passed to this function was not the default (None) value and was not a list.')
-        phjTempCheckVar = False
+#    # Check that phjMatchingVariablesList is a list and not a string
+#    if (not isinstance(phjMatchingVariablesList,list)) & (phjMatchingVariablesList is not None):
+#    # if (phjMatchingVariablesList is None):
+#        print('The phjMatchingVariablesList parameter passed to this function was not the default (None) value and was not a list.')
+#        phjTempCheckVar = False
         
-    # Check that phjControlsPerCase is an int
-    if not isinstance(phjControlsPerCaseInt,int):
-        print('The phjControlsPerCase parameter passed to this function was not an integer.')
-        phjTempCheckVar = False
+#    # Check that phjControlsPerCase is an int
+#    if not isinstance(phjControlsPerCaseInt,int):
+#        print('The phjControlsPerCase parameter passed to this function was not an integer.')
+#        phjTempCheckVar = False
     
-    # Check that 'group' and 'case' columns do not already exist in dataframe.
-    # This function will return a database that includes columns entitled 'group'
-    # and 'case'. Therefore, it is important to check that these names are
-    # not included in the original dataframe columns. In fact, it would only be
-    # necessary to check that 'group' and 'case' are not in the phjUniqueIdentifier
-    # or the phjMatchingVariablesList since these are the only columns that are included
-    # in the returned dataframe. However, columns named 'group' or 'case' in the original
-    # database would lead to confusion. Therefore, recommend that columns 'group' and
-    # 'case' should be renamed before running this function.
-    if (('group' in phjCasesDFColumnNamesList) | ('case' in phjCasesDFColumnNamesList) | 
-        ('group' in phjPotentialControlsDFColumnNamesList) | ('case' in phjPotentialControlsDFColumnNamesList)):
-        print("This function aims to return a dataframe with added columns called 'group' and 'case'. However, columns with these names already exist. Please rename these columns and re-run this function.")
-        phjTempCheckVar = False
+#    # Check that 'group' and 'case' columns do not already exist in dataframe.
+#    # This function will return a database that includes columns entitled 'group'
+#    # and 'case'. Therefore, it is important to check that these names are
+#    # not included in the original dataframe columns. In fact, it would only be
+#    # necessary to check that 'group' and 'case' are not in the phjUniqueIdentifier
+#    # or the phjMatchingVariablesList since these are the only columns that are included
+#    # in the returned dataframe. However, columns named 'group' or 'case' in the original
+#    # database would lead to confusion. Therefore, recommend that columns 'group' and
+#    # 'case' should be renamed before running this function.
+#    if (('group' in phjCasesDFColumnNamesList) | ('case' in phjCasesDFColumnNamesList) | 
+#        ('group' in phjPotentialControlsDFColumnNamesList) | ('case' in phjPotentialControlsDFColumnNamesList)):
+#        print("This function aims to return a dataframe with added columns called 'group' and 'case'. However, columns with these names already exist. Please rename these columns and re-run this function.")
+#        phjTempCheckVar = False
         
-    # Check that phjUniqueIdentifier is contained within both phjCasesDF and
-    # phjPotentialControlsDF. If not, then return None.
-    if ((phjUniqueIdentifierVarName not in phjCasesDFColumnNamesList) | (phjUniqueIdentifierVarName not in phjPotentialControlsDFColumnNamesList)):
-        print('The variable ', phjUniqueIdentifierVarName, ' is not contained in the cases and/or potential controls dataframes.')
-        phjTempCheckVar = False
+#    # Check that phjUniqueIdentifier is contained within both phjCasesDF and
+#    # phjPotentialControlsDF. If not, then return None.
+#    if ((phjUniqueIdentifierVarName not in phjCasesDFColumnNamesList) | (phjUniqueIdentifierVarName not in phjPotentialControlsDFColumnNamesList)):
+#        print('The variable ', phjUniqueIdentifierVarName, ' is not contained in the cases and/or potential controls dataframes.')
+#        phjTempCheckVar = False
         
-    # Check that phjUniqueIdentifierVarName columns in both case and controls dataframe
-    # contains unique values.
-    # Firstly, join unique identifier columns into a single series and then compare
-    # total length with length of unique series.
-    phjTempSeries = pd.concat([phjCasesDF[phjUniqueIdentifierVarName],phjPotentialControlsDF[phjUniqueIdentifierVarName]],axis = 0)
+#    # Check that phjUniqueIdentifierVarName columns in both case and controls dataframe
+#    # contains unique values.
+#    # Firstly, join unique identifier columns into a single series and then compare
+#    # total length with length of unique series.
+#    phjTempSeries = pd.concat([phjCasesDF[phjUniqueIdentifierVarName],phjPotentialControlsDF[phjUniqueIdentifierVarName]],axis = 0)
+#    
+#    if (phjTempSeries.size > phjTempSeries.unique().size):
+#        print("The unique identifier variable does not contain unique values.")
+#        phjTempCheckVar = False
     
-    if (phjTempSeries.size > phjTempSeries.unique().size):
-        print("The unique identifier variable does not contain unique values.")
-        phjTempCheckVar = False
-    
-    # Check that the variable names in the phjMatchingVariablesList are all contained
-    # within both phjCasesDF and phjPotentialControlDF.
-    if isinstance(phjMatchingVariablesList,list):
-        for phjTempListItem in phjMatchingVariablesList:
-            if ((phjTempListItem not in phjCasesDFColumnNamesList) | (phjTempListItem not in phjPotentialControlsDFColumnNamesList)):
-                print('The variable ', phjTempListItem, 'is not in the cases and/or potential controls dataframes.')
-                phjTempCheckVar = False
+#    # Check that the variable names in the phjMatchingVariablesList are all contained
+#    # within both phjCasesDF and phjPotentialControlDF.
+#    if isinstance(phjMatchingVariablesList,list):
+#        for phjTempListItem in phjMatchingVariablesList:
+#            if ((phjTempListItem not in phjCasesDFColumnNamesList) | (phjTempListItem not in phjPotentialControlsDFColumnNamesList)):
+#                print('The variable ', phjTempListItem, 'is not in the cases and/or potential controls dataframes.')
+#                phjTempCheckVar = False
             
     return phjTempCheckVar
 
