@@ -28,6 +28,7 @@ from .phjMiscFuncs import phjGetStrFromArgOrFile
 from .phjMiscFuncs import phjReadTextFromFile
 from .phjCleanData import phjParseDateVar
 
+from .phjTestFunctionParameters import phjAssert
 
 
 # Primary functions
@@ -93,25 +94,25 @@ from .phjCleanData import phjParseDateVar
 #      cases.
 #    
 #    • Remove all consultations from confirmed and potential case patients (regardless of
-#      whether the individual consultation was positive or negative. If a patient has one
+#      whether the individual consultation was positive or negative). If a patient has one
 #      consultation where the regex identifies a match, all consultations from that animal
 #      should be excluded from the list of potential controls. The remaining consultations
 #      are, therefore, potential cases.
 # 
 # 3. SELECT CONTROL DATASET
 #    • Select suitable controls from the dataframe of potential controls, either
-#      unmatched or matched on give variables. The controls can be either consultation
+#      unmatched or matched on given variables. The controls can be either consultation
 #      controls (where individual consultations are selected from the dataframe) or
 #      patient controls (where patients are selected).
 # 
 #    • When selecting patient controls, it is necessary to collapse the consultation-based
-#      dataframe down to a patient-based on patient ID. A default, a collapsed dataframe
+#      dataframe down to a patient-based on patient ID. As default, a collapsed dataframe
 #      will contain a 'count' variable to indicate how many consultations were recorded
 #      for each patient, the dates of the first and last consultations, and the last
 #      recorded entry for all other variables. This can, however, be altered as necessary.
 # 
 # 4. MERGE CASE-CONTROL DATASET WITH ORIGINAL DATAFRAMES
-#    The initial selection of case control dataset returns and minimalist dataframe that
+#    The initial selection of case-control dataset returns a minimalist dataframe that
 #    contains the bare minimum variables to be able to make the selection. After the
 #    case-control dataframe has been selected, it is necessary to merge with the original
 #    dataframe to return a complete dataset that contains all the original variables.
@@ -124,7 +125,7 @@ from .phjCleanData import phjParseDateVar
 #   of computer processing is required to collapse the dataset.
 # 
 # • The list of confirmed cases can be passed to the function either as a list (or series)
-#   with not other variables, or as a dataframe which contains several variables, one of
+#   with no other variables, or as a dataframe which contains several variables, one of
 #   which is the consultation ID or patient ID (depending on whether the required control
 #   dataset consists of consultations or patients).
 # 
@@ -151,7 +152,7 @@ from .phjCleanData import phjParseDateVar
 #    the necessary variables required for further analysis.
 # 
 # 2. phjGenerateCaseControlDataset()
-#    This function ultimates calls the phjSelectCaseControlDataset() function but it
+#    This function ultimately calls the phjSelectCaseControlDataset() function but it
 #    also attempts to automate a large proportion of the required pre- and post-
 #    production faffing around. For example, the function will determine whether a
 #    consultation-based or patient-based dataset is required, it will generate the
@@ -163,7 +164,7 @@ from .phjCleanData import phjParseDateVar
 # Passing suitable case data
 # --------------------------
 # The function should be passed a full dataframe containing 'ALL' the data. In fact, some
-# of the confirmed cases need not be included in the dataframe of 'ALL' data (but there
+# of the confirmed cases need not be included in the dataframe of 'ALL' data (but there are
 # some limitations if this is the case). The requested case-control dataset can be either
 # 'consultation-based' or 'patient-based'. In each of these cases, the confirmed cases
 # can be passed in one of several formats (but, in some situations, returning a valid
@@ -245,99 +246,63 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
     
     try:
         # 1. Check whether entered parameters have been set to the correct type
-        assert isinstance(phjAllDataDF,pd.DataFrame), "Parameter 'phjAllDataDF' needs to be a Pandas dataframe."
-        assert isinstance(phjPatientIDVarName,str), "Parameter 'phjPatientIDVarName' needs to be a string."
-        assert isinstance(phjConsultationIDVarName,str), "Parameter 'phjConsultationIDVarName' needs to be a string."
-        assert isinstance(phjConsultationDateVarName,str), "Parameter 'phjConsultationDateVarName' needs to be a string."
-        assert isinstance(phjFreeTextVarName,str), "Parameter 'phjFreeTextVarName' needs to be a string."
-        assert isinstance(phjCasesDF,pd.DataFrame), "Parameter 'phjCasesDF' needs to be a Pandas dataframe."
+        phjAssert('phjAllDataDF',phjAllDataDF,pd.DataFrame)
+        phjAssert('phjPatientIDVarName',phjPatientIDVarName,str,phjMustBePresentColumnList = list(phjAllDataDF.columns))
+        phjAssert('phjConsultationIDVarName',phjConsultationIDVarName,str,phjMustBePresentColumnList = list(phjAllDataDF.columns))
+        phjAssert('phjConsultationDateVarName',phjConsultationDateVarName,str,phjMustBePresentColumnList = list(phjAllDataDF.columns))
+        phjAssert('phjFreeTextVarName',phjFreeTextVarName,str,phjMustBePresentColumnList = list(phjAllDataDF.columns))
+        phjAssert('phjCasesDF',phjCasesDF,(pd.DataFrame,pd.Series,list,tuple,np.ndarray))
         
         if phjMatchingVariablesList is not None:
-            assert isinstance(phjMatchingVariablesList,(list,str)), "Parameter 'phjMatchingVariablesList' needs to be a string of a single column heading or a list of column headings."
+            # If phjMatchingVariablesList is a list, check none of the elements is None.
+            if isinstance(phjMatchingVariablesList,list):
+                assert None not in phjMatchingVariablesList, "List of matching variables cannot contain None values."
+            
+            phjAssert('phjMatchingVariablesList',phjMatchigVariablesList,(list,str),phjMustBePresentColumnList = list(phjAllDataDF.columns))
         
-        assert isinstance(phjControlsPerCaseInt,int), "Parameter 'phjControlsPerCaseInt' needs to be an integer."
+        
+        phjAssert('phjControlsPerCaseInt',phjControlsPerCaseInt,int)
         
         if phjScreeningRegexStr is not None:
-            assert isinstance(phjScreeningRegexStr,str), "Parameter 'phjScreeningRegexStr' needs to be a string."
+            phjAssert('phjScreeningRegexStr',phjScreeningRegexStr,str)
         
         if phjScreeningRegexPathAndFileName is not None:
-            assert isinstance(phjScreeningRegexPathAndFileName,str), "Parameter 'phjScreeningRegexPathAndFileName' needs to be a string."
+            phjAssert('phjScreeningRegexPathAndFileName',phjScreeningRegexPathAndFileName,str)
         
-        assert phjControlType in ['consultation','patient'], "Parameter 'phjControlType' can only take the value 'consultation' or 'patient'. The value '{0}' is not recognised.".format(phjControlType)
+        phjAssert('phjControlType',phjControlType,str,phjAllowedOptions = ['consultation','patient'])
         
         if phjAggDict is not None:
-            assert isinstance(phjAggDict,dict), "Parameter phjAggDict needs to be a dictionary."
+            phjAssert('phjAggDict',phjAggDict,dict)
             # N.B. Other checks on the contents of phjAggDict are done in the phjCollapseOnPatientID() function
         
-        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
+        phjAssert('phjPrintResults',phjPrintResults,bool)
         
         
-        # 2. Check whether entered parameters have been set to an appropriate value
-        assert phjControlType in ['consultation','patient'], "Parameter 'phjControlType' can only take the value 'consultation' or 'patient'. The value '{0}' is not recognised.".format(phjControlType)
-        
-        # If phjMatchingVariablesList is not None then it must be a str or a list (as checked
-        # previously). If it is a list, check that none of the elements is None.
+        # 2. Check that new columns that will be created don't already exist.
+        #    If control type is 'consultation' then matched case-control dataframes will create
+        #    columns called 'case' and 'group'; if control type is 'patient' then will also
+        #    need to create a column called 'count'.
         if phjMatchingVariablesList is not None:
-            if isinstance(phjMatchingVariablesList,list):
-                # Check if any items in matching variables list is None
-                assert None not in phjMatchingVariablesList, "List of matching variables cannot contain None values."
-        
-        
-        # 3. Check that columns that are referenced by parameters do exist and that new
-        #    columns that will be created don't already exist
-        
-        # Create lists of all columns that need to be present and need to be absent in
-        # different scenarios.
-        
-        # If the control type is 'consultation' or 'patient' then the required columns in the
-        # dataframe containing ALL the data are:
-        #   i. consultation ID variable name
-        #  ii. patient ID variable name
-        # iii. freetext field
-        #  iv. consultation date
-        #   v. matching variables (if required)
-        
-        # Dictionary of required variables (excluding matching variables) when
-        # desired control type is 'consultation'.
-        phjBaselineVarsDict = {'phjConsultationIDVarName':phjConsultationIDVarName,
-                               'phjPatientIDVarName':phjPatientIDVarName,
-                               'phjFreeTextVarName':phjFreeTextVarName,
-                               'phjConsultationDateVarName':phjConsultationDateVarName}
-        
-        if phjMatchingVariablesList is not None:
-            if isinstance(phjMatchingVariablesList,list):
-                phjColumnsPresentList = list(phjBaselineVarsDict.values()) + phjMatchingVariablesList
-                
-            elif isinstance(phjMatchingVariablesList,str):
-                phjColumnsPresentList = list(phjBaselineVarsDict.values()) + [phjMatchingVariablesList]
-            
-            # If control type is 'consultation' then matched case-control dataframes will create
-            # columns called 'case' and 'group'; if control type is 'patient' then will also
-            # need to create a column called 'count'.
             if phjControlType == 'consultation':
                 phjColumnsAbsentList = ['case','group']
-            
+                assert set(phjColumnsAbsentList).isdisjoint(list(phjAllDataDF.columns)), "Columns '{}' and '{}' will be created and cannot already exist in dataframe; please rename and try again".format('\', \''.join(phjColumnsAbsentList[:-1]),phjColumnsAbsentList[-1])
             elif phjControlType == 'patient':
                 phjColumnsAbsentList = ['case','group','count']
-        
-        else:
-            # i.e. list of matching variables is None
-            phjColumnsPresentList = list(phjBaselineVarsDict.values())
-            phjColumnsAbsentList = None
-        
-        # Check that all the required columns are present or absent from the
-        # complete dataframe containing ALL the data.
-        assert phjCheckColumns(phjDF = phjAllDataDF,
-                               phjDFDescriptorStr = 'all_data',
-                               phjColumnsPresentList = phjColumnsPresentList,
-                               phjColumnsAbsentList = phjColumnsAbsentList,
-                               phjPrintResults = phjPrintResults), "Parameter check for column headings has failed. Not all required variables are appropriately contained in the dataframe."
+                assert set(phjColumnsAbsentList).isdisjoint(list(phjAllDataDF.columns)), "Columns '{}' and '{}' will be created and cannot already exist in dataframe; please rename and try again".format('\', \''.join(phjColumnsAbsentList[:-1]),phjColumnsAbsentList[-1])
     
     
     except AssertionError as e:
-        print ("An AssertionError has occurred. ({0})".format(e))
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
         
-        phjCaseControlDF = None
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
         
     else:
         
@@ -923,6 +888,10 @@ def phjCollapseOnPatientID(phjAllDataDF,       # Dataframe containing all column
 
 # Secondary functions
 # ===================
+
+########################################################################################
+# N.B. This function is no longer required; it has been replaced by using phjAssert(). #
+########################################################################################
 def phjCheckColumns(phjDF,
                     phjDFDescriptorStr = None,      # An optional parameter used to describe the dataframe being checked in feedback
                     phjColumnsPresentList = None,
