@@ -714,7 +714,7 @@ def phjSelectCaseControlDataset(phjCasesDF,
         
     except AssertionError as e:
         
-        # Define phjCaseControlDF as None before returning
+        # Define phjCaseControlDF so can return None from function if fails
         phjTempCaseControlDF = None
         
         # If function has been called directly, present message.
@@ -730,71 +730,51 @@ def phjSelectCaseControlDataset(phjCasesDF,
             raise
     
     else:
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
         # Print summary of parameters passed to function
         # ==============================================
         if phjPrintResults == True:
-            print('\n*** WARNING: Setting phjPrintResults to True causes a lot of output   ***')
+            print('\n')
+            print('*** WARNING: Setting phjPrintResults to True causes a lot of output   ***')
             print('*** to be printed. With Jupyter-Notebook, this seems to be associated ***')
             print('*** with losing connection with the kernel and, as such, may cause    ***')
             print('*** the function to not complete correctly.                           ***')
-        
-            print('\nSummary of parameters passed to phjSelectCaseControlDataset() function')
+            print('\n')
+            print('Summary of parameters passed to phjSelectCaseControlDataset() function')
             print('======================================================================')
             with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
-                print('\nCASES\n-----')
+                print('\n')
+                print('CASES')
+                print('-----')
                 print(phjCasesDF)
-                print('\nPOTENTIAL CONTROLS\n------------------\n')
+                print('\n')
+                print('POTENTIAL CONTROLS')
+                print('------------------')
                 print(phjPotentialControlsDF)
-            print('Unique identifier variable = ', phjUniqueIdentifierVarName)
-            print('Number of controls to be selected per case = ',phjControlsPerCaseInt)
-            print('Variables to match = ',phjMatchingVariablesList)
+                print('\n')
+            print('Unique identifier variable = {}'.format(phjUniqueIdentifierVarName))
+            print('Number of controls to be selected per case = {}'.format(phjControlsPerCaseInt))
+            print('Variables to match = {}'.format(phjMatchingVariablesList))
+            print('\n')
+            print('Number of potential controls = {}'.format(len(phjPotentialControlsDF.index)))
         
-            print('Number of potential controls = ',len(phjPotentialControlsDF.index))
         
+        if phjMatchingVariablesList is None:
+            # Select UNMATCHED controls
+            phjTempCaseControlDF = phjSelectUnmatchedCaseControlSubjects(phjCasesDF = phjCasesDF,
+                                                                         phjPotentialControlsDF = phjPotentialControlsDF,
+                                                                         phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
+                                                                         phjMatchingVariablesList = None,
+                                                                         phjControlsPerCaseInt = phjControlsPerCaseInt,
+                                                                         phjPrintResults = phjPrintResults)
         
-        # Check on parameters passed to functions and, if OK, select datasets
-        # ===================================================================
-        # Run function phjParameterCheck() to make sure parameters passed to function make
-        # sense. If the phjParameterCheck() function returns True then go ahead and create
-        # case-control dataset. If returns False then return None.
-        if phjParameterCheck(phjCasesDF = phjCasesDF,
-                             phjPotentialControlsDF = phjPotentialControlsDF,
-                             phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                             phjMatchingVariablesList = phjMatchingVariablesList,
-                             phjControlsPerCaseInt = phjControlsPerCaseInt):
-        
-            if phjMatchingVariablesList is None:
-                # Select UNMATCHED controls
-                phjTempCaseControlDF = phjSelectUnmatchedCaseControlSubjects(phjCasesDF = phjCasesDF,
-                                                                             phjPotentialControlsDF = phjPotentialControlsDF,
-                                                                             phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                                                                             phjMatchingVariablesList = phjMatchingVariablesList,
-                                                                             phjControlsPerCaseInt = phjControlsPerCaseInt,
-                                                                             phjPrintResults = phjPrintResults)
-        
-            else:
-                # Select MATCHED controls
-                phjTempCaseControlDF = phjSelectMatchedCaseControlSubjects( phjCasesDF = phjCasesDF,
-                                                                            phjPotentialControlsDF = phjPotentialControlsDF,
-                                                                            phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                                                                            phjMatchingVariablesList = phjMatchingVariablesList,
-                                                                            phjControlsPerCaseInt = phjControlsPerCaseInt,
-                                                                            phjPrintResults = phjPrintResults)
-    
         else:
-            # If phjParameterCheck() returns False then return None from this function
-            phjTempCaseControlDF = None
-    
+            # Select MATCHED controls
+            phjTempCaseControlDF = phjSelectMatchedCaseControlSubjects(phjCasesDF = phjCasesDF,
+                                                                       phjPotentialControlsDF = phjPotentialControlsDF,
+                                                                       phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
+                                                                       phjMatchingVariablesList = phjMatchingVariablesList,
+                                                                       phjControlsPerCaseInt = phjControlsPerCaseInt,
+                                                                       phjPrintResults = phjPrintResults)
     
     return phjTempCaseControlDF
 
@@ -1461,13 +1441,17 @@ def phjAddRecords(phjTempCaseControlDF,
         print('phjCaseValue',phjCaseValue)
         print('phjGroupVarName',phjGroupVarName)
         print('phjGroupValue',phjGroupValue)
-    
-    phjTempCaseControlDF.ix[phjTempRowCounter,phjUniqueIdentifierVarName] = phjUniqueIdentifierValue
-    phjTempCaseControlDF.ix[phjTempRowCounter,phjGroupVarName] = phjGroupValue
-    phjTempCaseControlDF.ix[phjTempRowCounter,phjCaseVarName] = phjCaseValue
+        print('\n')
+        print('phjTempCaseControlDF')
+        print(phjTempCaseControlDF)
+        print('\n')
+        
+    phjTempCaseControlDF.iloc[phjTempRowCounter,phjTempCaseControlDF.columns.get_loc(phjUniqueIdentifierVarName)] = phjUniqueIdentifierValue
+    phjTempCaseControlDF.iloc[phjTempRowCounter,phjTempCaseControlDF.columns.get_loc(phjGroupVarName)] = phjGroupValue
+    phjTempCaseControlDF.iloc[phjTempRowCounter,phjTempCaseControlDF.columns.get_loc(phjCaseVarName)] = phjCaseValue
     
     for phjTempVar in phjMatchingVariablesList:
-        phjTempCaseControlDF.ix[phjTempRowCounter,phjTempVar] = phjMatchingVariablesValues[phjTempVar].tolist()
+        phjTempCaseControlDF.iloc[phjTempRowCounter,phjTempCaseControlDF.columns.get_loc(phjTempVar)] = phjMatchingVariablesValues[phjTempVar].tolist()
     
     return phjTempCaseControlDF
 
@@ -1476,7 +1460,7 @@ def phjAddRecords(phjTempCaseControlDF,
 def phjSelectUnmatchedCaseControlSubjects(phjCasesDF,
                                           phjPotentialControlsDF,
                                           phjUniqueIdentifierVarName,
-                                          phjMatchingVariablesList = None,
+                                          phjMatchingVariablesList = None, # Actually, this is not used in this function but is included so list of arguments is same as for matched controls.
                                           phjControlsPerCaseInt = 1,
                                           phjPrintResults = False):
     
@@ -1505,6 +1489,15 @@ def phjSelectUnmatchedCaseControlSubjects(phjCasesDF,
 
 
 
+##########
+### N.B. df.columns.values.tolist() is MUCH faster.
+###      See: https://stackoverflow.com/questions/19482970/get-list-from-pandas-dataframe-column-headers
+###      Change throughout!
+##########
+
+########################################################################
+### Need to edit following function to remove need to use .ix method ###
+########################################################################
 def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                         phjPotentialControlsDF,
                                         phjUniqueIdentifierVarName,
@@ -1531,24 +1524,26 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
     # (i.e. cases x number of matched controls). The variable list is the list
     # of matched variables plus a column to signify group and a column to signify
     # whether a case or a control and the unique identifier variable.
-    phjTempCaseControlDFLength        = len(phjCasesDF.index) + (len(phjCasesDF.index) * phjControlsPerCaseInt)
-    phjTempCaseControlDFColumnsList    = [phjUniqueIdentifierVarName] + ['group','case'] + phjMatchingVariablesList
-    phjTempCaseControlDF            = pd.DataFrame( index = range(0,phjTempCaseControlDFLength),
-                                                    columns = phjTempCaseControlDFColumnsList)
+    phjTempCaseControlDFLength      = len(phjCasesDF.index) + (len(phjCasesDF.index) * phjControlsPerCaseInt)
+    phjTempCaseControlDFColumnsList = [phjUniqueIdentifierVarName] + ['group','case'] + phjMatchingVariablesList
+    phjTempCaseControlDF            = pd.DataFrame(index = range(0,phjTempCaseControlDFLength),
+                                                   columns = phjTempCaseControlDFColumnsList)
     
     if phjPrintResults == True:
-        print('Temp case-control dataframe column list = ', phjTempCaseControlDFColumnsList)
+        print('Temp case-control dataframe column list = {}'.format(phjTempCaseControlDFColumnsList))
+        print('\n')
         
-    # Set counter to keep track of which row to add data to.
+    # Set counter to keep track of which row to add data to:
     phjTempRowCounter = 0
     
     # 2. Step through each case in the phjCasesDF dataframe, one at a time
     # --------------------------------------------------------------------
     for i in phjCasesDF.index:
+        # Print a heading for the ith case and number of potential controls
         if phjPrintResults == True:
-            # Print a heading for the ith case and number of potential controls
-            phjPrintIndexHeading(i)
-            print('\nLength of phjPotentialControls = ',phjPotentialControlsDF.index.size)
+            phjPrintIndexHeading(i)   # Prints a formatted heading to indicate case ID
+            print('Length of phjPotentialControls = {}'.format(phjPotentialControlsDF.index.size))
+            print('\n')
         
         # Reset some variables
         # --------------------
@@ -1571,8 +1566,11 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         
         # 3. Get data from matched variables for the case
         # -----------------------------------------------
-        # Create a dict for the data held in the matching variables in each case
-        phjTempDict = phjCasesDF.ix[i,phjMatchingVariablesList].to_dict()
+        # Create a dict for the data held in the matching variables in each case.
+        # Use list comprehension and .get_loc() to pass list of column indices
+        # to .iloc. This is faster than using df.columns.get_indexer() and converting
+        # resulting index to a list.
+        phjTempDict = phjCasesDF.iloc[i,[phjCasesDF.columns.get_loc(c) for c in phjMatchingVariablesList]].to_dict()
         
         # The above dict is of the form: {'var1': 'a', 'var2': 3}. However, this needs
         # to be passed to a df.isin() function and, as such, needs to be of the form:
@@ -1582,15 +1580,16 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         phjTempDict = {key: [value] for key, value in phjTempDict.items()}
         
         if phjPrintResults == True:
-            print('\nphjTempDict =')
+            print('phjTempDict =')
             print(phjTempDict)
+            print('\n')
         
         
         # 4. Create a mask for the controls dataframe
         # -------------------------------------------
         # Create a mask for the controls dataframe to select all controls that match the cases on the matched variables
         # phjTempMask = pd.DataFrame([phjPotentialControlsDF[key] == val for key, val in phjTempDict.items()]).T.all(axis=1)
-        phjTempMask = phjPotentialControlsDF[phjMatchingVariablesList].isin(phjTempDict).all(axis=1)
+        phjTempMask = phjPotentialControlsDF[phjMatchingVariablesList].isin(phjTempDict).all(axis = 1)
         
         
         # 5. Apply mask to controls DF and count length
@@ -1600,10 +1599,12 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         phjTempNumberAvailableControls = len(phjTempMatchingControlsDF.index)
         
         if phjPrintResults == True:
-            print('\nNumber of available controls = ',phjTempNumberAvailableControls)
+            print('Number of available controls = {}'.format(phjTempNumberAvailableControls))
+            print('\n')
             with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
-                print('\nMatching controls')
+                print('Matching controls')
                 print(phjTempMatchingControlsDF)
+                print('\n')
         
         
         # 6. Add cases and controls to dataframe
@@ -1619,6 +1620,7 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
             if phjPrintResults == True:
                 # Presumably don't include case in the final dataframe
                 print('Available controls = 0. Case not included in final dataframe.')
+                print('\n')
             else:
                 pass
         
@@ -1626,15 +1628,16 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         elif (phjTempNumberAvailableControls > 0) & (phjTempNumberAvailableControls <= phjControlsPerCaseInt):
             if phjPrintResults == True:
-                print('\nAvailable controls = ', phjTempNumberAvailableControls, '. Requested number of controls = ',phjControlsPerCaseInt, '.')
+                print('Available controls = {0}. Requested number of controls = {1}.'.format([phjTempNumberAvailableControls,phjControlsPerCaseInt]))
+                print('\n')
                 
             # Add case to dataframe
             # - - - - - - - - - - -
             phjTempCaseControlDF = phjAddRecords(phjTempCaseControlDF,
                                                  phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                                                 phjUniqueIdentifierValue = phjCasesDF.ix[i,phjUniqueIdentifierVarName],
+                                                 phjUniqueIdentifierValue = phjCasesDF.iat[i,phjCasesDF.columns.get_loc(phjUniqueIdentifierVarName)],   # originally used .ix but .ix deprecated in v1.0.0 and .iat is faster
                                                  phjMatchingVariablesList = phjMatchingVariablesList,
-                                                 phjMatchingVariablesValues = phjCasesDF.ix[[i],phjMatchingVariablesList],
+                                                 phjMatchingVariablesValues = phjCasesDF.iloc[[i],[phjCasesDF.columns.get_loc(c) for c in phjMatchingVariablesList]],
                                                  phjTempRowCounter = [phjTempRowCounter],
                                                  phjCaseVarName = 'case',
                                                  phjCaseValue = [1],
@@ -1643,8 +1646,10 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                                  phjPrintResults = phjPrintResults)
             
             if phjPrintResults == True:
-                print('\nCase\n----')
-                print(phjTempCaseControlDF.ix[phjTempRowCounter,:])
+                print('Case')
+                print('----')
+                print(phjTempCaseControlDF.iloc[phjTempRowCounter,:])
+                print('\n')
             
             # Increment row counter by 1
             phjTempRowCounter = phjTempRowCounter + 1
@@ -1661,7 +1666,7 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                                  phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
                                                  phjUniqueIdentifierValue = phjTempMatchingControlsDF[phjUniqueIdentifierVarName].tolist(),
                                                  phjMatchingVariablesList = phjMatchingVariablesList,
-                                                 phjMatchingVariablesValues = phjCasesDF.ix[[i],phjMatchingVariablesList],
+                                                 phjMatchingVariablesValues = phjCasesDF.iloc[[i],[phjCasesDF.columns.get_loc(c) for c in phjMatchingVariablesList]],
                                                  phjTempRowCounter = range(phjTempRowCounter, (phjTempRowCounter + phjTempNumberAvailableControls)),
                                                  phjCaseVarName = 'case',
                                                  phjCaseValue = [0]*phjTempNumberAvailableControls,
@@ -1691,9 +1696,9 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
             # - - - - - - - - - - -
             phjTempCaseControlDF = phjAddRecords(phjTempCaseControlDF,
                                                  phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                                                 phjUniqueIdentifierValue = phjCasesDF.ix[i,phjUniqueIdentifierVarName],
+                                                 phjUniqueIdentifierValue = phjCasesDF.iat[i,phjCasesDF.columns.get_loc(phjUniqueIdentifierVarName)],
                                                  phjMatchingVariablesList = phjMatchingVariablesList,
-                                                 phjMatchingVariablesValues = phjCasesDF.ix[[i],phjMatchingVariablesList],
+                                                 phjMatchingVariablesValues = phjCasesDF.iloc[[i],[phjCasesDF.columns.get_loc(c) for c in phjMatchingVariablesList]],
                                                  phjTempRowCounter = [phjTempRowCounter],
                                                  phjCaseVarName = 'case',
                                                  phjCaseValue = [1],
@@ -1703,7 +1708,7 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
             
             if phjPrintResults == True:
                 print('\nCase\n----')
-                print(phjTempCaseControlDF.ix[phjTempRowCounter,:])
+                print(phjTempCaseControlDF.iloc[phjTempRowCounter,:])
             
             # Increment row counter by 1
             phjTempRowCounter = phjTempRowCounter + 1
@@ -1726,7 +1731,7 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                                  phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
                                                  phjUniqueIdentifierValue = phjTempSampleMatchingControlsDF[phjUniqueIdentifierVarName].tolist(),
                                                  phjMatchingVariablesList = phjMatchingVariablesList,
-                                                 phjMatchingVariablesValues = phjCasesDF.ix[[i],phjMatchingVariablesList],
+                                                 phjMatchingVariablesValues = phjCasesDF.iloc[[i],[phjCasesDF.columns.get_loc(c) for c in phjMatchingVariablesList]],
                                                  phjTempRowCounter = range(phjTempRowCounter, (phjTempRowCounter + phjControlsPerCaseInt)),
                                                  phjCaseVarName = 'case',
                                                  phjCaseValue = [0]*phjControlsPerCaseInt,
