@@ -247,11 +247,14 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
     
     try:
         # 1. Check whether entered parameters have been set to the correct type
+        # N.B. Converting column headings to list using df.columns.values.tolist() is
+        #      MUCH faster than list(df.columns).
+        #      See: https://stackoverflow.com/questions/19482970/get-list-from-pandas-dataframe-column-headers
         phjAssert('phjAllDataDF',phjAllDataDF,pd.DataFrame)
-        phjAssert('phjPatientIDVarName',phjPatientIDVarName,str,phjMustBePresentColumnList = list(phjAllDataDF.columns))
-        phjAssert('phjConsultationIDVarName',phjConsultationIDVarName,str,phjMustBePresentColumnList = list(phjAllDataDF.columns))
-        phjAssert('phjConsultationDateVarName',phjConsultationDateVarName,str,phjMustBePresentColumnList = list(phjAllDataDF.columns))
-        phjAssert('phjFreeTextVarName',phjFreeTextVarName,str,phjMustBePresentColumnList = list(phjAllDataDF.columns))
+        phjAssert('phjPatientIDVarName',phjPatientIDVarName,str,phjMustBePresentColumnList = phjAllDataDF.columns.values.tolist())
+        phjAssert('phjConsultationIDVarName',phjConsultationIDVarName,str,phjMustBePresentColumnList = phjAllDataDF.columns.values.tolist())
+        phjAssert('phjConsultationDateVarName',phjConsultationDateVarName,str,phjMustBePresentColumnList = phjAllDataDF.columns.values.tolist())
+        phjAssert('phjFreeTextVarName',phjFreeTextVarName,str,phjMustBePresentColumnList = phjAllDataDF.columns.values.tolist())
         phjAssert('phjCasesDF',phjCasesDF,(pd.DataFrame,pd.Series,list,tuple,np.ndarray))
         
         if phjMatchingVariablesList is not None:
@@ -259,7 +262,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
             if isinstance(phjMatchingVariablesList,list):
                 assert None not in phjMatchingVariablesList, "List of matching variables cannot contain None values."
             
-            phjAssert('phjMatchingVariablesList',phjMatchingVariablesList,(list,str),phjMustBePresentColumnList = list(phjAllDataDF.columns))
+            phjAssert('phjMatchingVariablesList',phjMatchingVariablesList,(list,str),phjMustBePresentColumnList = phjAllDataDF.columns.values.tolist())
         
         
         phjAssert('phjControlsPerCaseInt',phjControlsPerCaseInt,int)
@@ -286,10 +289,10 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
         if phjMatchingVariablesList is not None:
             if phjControlType == 'consultation':
                 phjColumnsAbsentList = ['case','group']
-                assert set(phjColumnsAbsentList).isdisjoint(list(phjAllDataDF.columns)), "Columns '{}' and '{}' will be created and cannot already exist in dataframe; please rename and try again".format('\', \''.join(phjColumnsAbsentList[:-1]),phjColumnsAbsentList[-1])
+                assert set(phjColumnsAbsentList).isdisjoint(phjAllDataDF.columns.values.tolist()), "Columns '{}' and '{}' will be created and cannot already exist in dataframe; please rename and try again".format('\', \''.join(phjColumnsAbsentList[:-1]),phjColumnsAbsentList[-1])
             elif phjControlType == 'patient':
                 phjColumnsAbsentList = ['case','group','count']
-                assert set(phjColumnsAbsentList).isdisjoint(list(phjAllDataDF.columns)), "Columns '{}' and '{}' will be created and cannot already exist in dataframe; please rename and try again".format('\', \''.join(phjColumnsAbsentList[:-1]),phjColumnsAbsentList[-1])
+                assert set(phjColumnsAbsentList).isdisjoint(phjAllDataDF.columns.values.tolist()), "Columns '{}' and '{}' will be created and cannot already exist in dataframe; please rename and try again".format('\', \''.join(phjColumnsAbsentList[:-1]),phjColumnsAbsentList[-1])
     
     
     # N.B. The column 'case' may be created even in unmatched datasets - CHECK
@@ -671,29 +674,29 @@ def phjSelectCaseControlDataset(phjCasesDF,
         phjAssert('phjPotentialControlsDF',phjPotentialControlsDF,pd.DataFrame)
         
         # Check phjUniqueIdentifierVarName is in both dataframes
-        phjAssert('phjUniqueIdentifierVarName',phjUniqueIdentifierVarName,str,phjMustBePresentColumnList = list(phjCasesDF.columns))
-        phjAssert('phjUniqueIdentifierVarName',phjUniqueIdentifierVarName,str,phjMustBePresentColumnList = list(phjPotentialControlsDF.columns))
+        phjAssert('phjUniqueIdentifierVarName',phjUniqueIdentifierVarName,str,phjMustBePresentColumnList = phjCasesDF.columns.values.tolist())
+        phjAssert('phjUniqueIdentifierVarName',phjUniqueIdentifierVarName,str,phjMustBePresentColumnList = phjPotentialControlsDF.columns.values.tolist())
         
         if phjMatchingVariablesList is None:
             # If phjMatchingVariablesList is None then an unmatched dataset will be
             # produced with will have a column called 'case'. Check column 'case' does
             # not already exist in dataframes
-            assert 'case' not in list(phjCasesDF.columns), "Column 'case' cannot already exist in phjCasesDF dataframe"
-            assert 'case' not in list(phjPotentialControlsDF.columns), "Column 'case' cannot already exist in phjPotentialControlsDF dataframe"
+            assert 'case' not in phjCasesDF.columns.values.tolist(), "Column 'case' cannot already exist in phjCasesDF dataframe"
+            assert 'case' not in phjPotentialControlsDF.columns.values.tolist(), "Column 'case' cannot already exist in phjPotentialControlsDF dataframe"
             
         else:
             # Check that the variable names in the phjMatchingVariablesList are all contained
             # within both phjCasesDF and phjPotentialControlDF.
             phjAssert('phjMatchingVariablesList',phjMatchingVariablesList,(str,list),
-                      phjMustBePresentColumnList = list(phjCasesDF.columns))
+                      phjMustBePresentColumnList = phjCasesDF.columns.values.tolist())
                       
             phjAssert('phjMatchingVariablesList',phjMatchingVariablesList,(str,list),
-                      phjMustBePresentColumnList = list(phjPotentialControlsDF.columns))
+                      phjMustBePresentColumnList = phjPotentialControlsDF.columns.values.tolist())
             
             # If phjMatchingVariablesList is not None then check neither columns 'case'
             # nor 'group' already exist in dataframes
-            assert set(['case','group']).isdisjoint(list(phjCasesDF.columns)), "Columns 'case' and 'group' cannot already exist in phjCasesDF dataframe"
-            assert set(['case','group']).isdisjoint(list(phjPotentialControlsDF.columns)), "Columns 'case' and 'group' cannot already exist in phjPotentialControlsDF dataframe"
+            assert set(['case','group']).isdisjoint(phjCasesDF.columns.values.tolist()), "Columns 'case' and 'group' cannot already exist in phjCasesDF dataframe"
+            assert set(['case','group']).isdisjoint(phjPotentialControlsDF.columns.values.tolist()), "Columns 'case' and 'group' cannot already exist in phjPotentialControlsDF dataframe"
             
             # If phjMatchingVariablesList is entered as a string, represent as a list
             if isinstance(phjMatchingVariablesList,str):
@@ -1488,12 +1491,6 @@ def phjSelectUnmatchedCaseControlSubjects(phjCasesDF,
     return phjTempCaseControlDF
 
 
-
-##########
-### N.B. df.columns.values.tolist() is MUCH faster.
-###      See: https://stackoverflow.com/questions/19482970/get-list-from-pandas-dataframe-column-headers
-###      Change throughout!
-##########
 
 ########################################################################
 ### Need to edit following function to remove need to use .ix method ###
