@@ -759,6 +759,7 @@ def phjSelectCaseControlDataset(phjCasesDF,
             print('Variables to match = {}'.format(phjMatchingVariablesList))
             print('\n')
             print('Number of potential controls = {}'.format(len(phjPotentialControlsDF.index)))
+            print('\n')
         
         
         if phjMatchingVariablesList is None:
@@ -1445,9 +1446,6 @@ def phjAddRecords(phjTempCaseControlDF,
         print('phjGroupVarName',phjGroupVarName)
         print('phjGroupValue',phjGroupValue)
         print('\n')
-        print('phjTempCaseControlDF')
-        print(phjTempCaseControlDF)
-        print('\n')
         
     phjTempCaseControlDF.iloc[phjTempRowCounter,phjTempCaseControlDF.columns.get_loc(phjUniqueIdentifierVarName)] = phjUniqueIdentifierValue
     phjTempCaseControlDF.iloc[phjTempRowCounter,phjTempCaseControlDF.columns.get_loc(phjGroupVarName)] = phjGroupValue
@@ -1492,9 +1490,6 @@ def phjSelectUnmatchedCaseControlSubjects(phjCasesDF,
 
 
 
-########################################################################
-### Need to edit following function to remove need to use .ix method ###
-########################################################################
 def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                         phjPotentialControlsDF,
                                         phjUniqueIdentifierVarName,
@@ -1529,12 +1524,19 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
     if phjPrintResults == True:
         print('Temp case-control dataframe column list = {}'.format(phjTempCaseControlDFColumnsList))
         print('\n')
+        print('Empty dataframe')
+        print(phjTempCaseControlDF)
+        print('\n')
         
     # Set counter to keep track of which row to add data to:
     phjTempRowCounter = 0
     
     # 2. Step through each case in the phjCasesDF dataframe, one at a time
     # --------------------------------------------------------------------
+    ###
+    ### Consider randomising the order in which cases are processed to avoid bias
+    ###
+    
     for i in phjCasesDF.index:
         # Print a heading for the ith case and number of potential controls
         if phjPrintResults == True:
@@ -1544,8 +1546,8 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         
         # Reset some variables
         # --------------------
-        # Reset number of available controls to np.nan
-        phjTempNumberAvailableControls = np.nan
+        # Reset number of available matching controls to np.nan
+        phjTempNumberMatchingControls = np.nan
         
         # Clear phjTempDict (which will hold dict of case data.
         # N.B. using myDict = {} will create a new instance of myDict but other
@@ -1585,7 +1587,6 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         # 4. Create a mask for the controls dataframe
         # -------------------------------------------
         # Create a mask for the controls dataframe to select all controls that match the cases on the matched variables
-        # phjTempMask = pd.DataFrame([phjPotentialControlsDF[key] == val for key, val in phjTempDict.items()]).T.all(axis=1)
         phjTempMask = phjPotentialControlsDF[phjMatchingVariablesList].isin(phjTempDict).all(axis = 1)
         
         
@@ -1593,10 +1594,10 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         # ---------------------------------------------
         phjTempMatchingControlsDF = phjPotentialControlsDF[phjTempMask]
         
-        phjTempNumberAvailableControls = len(phjTempMatchingControlsDF.index)
+        phjTempNumberMatchingControls = len(phjTempMatchingControlsDF.index)
         
         if phjPrintResults == True:
-            print('Number of available controls = {}'.format(phjTempNumberAvailableControls))
+            print('Number of matching controls = {}'.format(phjTempNumberMatchingControls))
             print('\n')
             with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
                 print('Matching controls')
@@ -1613,7 +1614,7 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         
         # i. If no controls then dump case (i.e. don't add it to the dataframe)
         # - - - - - - - - - - - - - - - - 
-        if phjTempNumberAvailableControls == 0:
+        if phjTempNumberMatchingControls == 0:
             if phjPrintResults == True:
                 # Presumably don't include case in the final dataframe
                 print('Available controls = 0. Case not included in final dataframe.')
@@ -1623,9 +1624,9 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         
         # ii. If less than (or equal to) requested number of controls then add all controls to dataframe
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        elif (phjTempNumberAvailableControls > 0) & (phjTempNumberAvailableControls <= phjControlsPerCaseInt):
+        elif (phjTempNumberMatchingControls > 0) & (phjTempNumberMatchingControls <= phjControlsPerCaseInt):
             if phjPrintResults == True:
-                print('Available controls = {0}. Requested number of controls = {1}.'.format([phjTempNumberAvailableControls,phjControlsPerCaseInt]))
+                print('Available controls = {0}. Requested number of controls = {1}.'.format(phjTempNumberMatchingControls,phjControlsPerCaseInt))
                 print('\n')
                 
             # Add case to dataframe
@@ -1654,41 +1655,45 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
             # Add all available controls to the final dataframe
             # - - - - - - - - - - - - - - - - - - - - - - - - -
             if phjPrintResults == True:
-                print('\nControls\n--------')
-                print('All matching controls')
+                print('Controls')
+                print('--------')
+                print('All available matching controls')
                 with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
                     print(phjTempMatchingControlsDF)
+                    print('\n')
             
             phjTempCaseControlDF = phjAddRecords(phjTempCaseControlDF,
                                                  phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
                                                  phjUniqueIdentifierValue = phjTempMatchingControlsDF[phjUniqueIdentifierVarName].tolist(),
                                                  phjMatchingVariablesList = phjMatchingVariablesList,
                                                  phjMatchingVariablesValues = phjCasesDF.iloc[[i],[phjCasesDF.columns.get_loc(c) for c in phjMatchingVariablesList]],
-                                                 phjTempRowCounter = range(phjTempRowCounter, (phjTempRowCounter + phjTempNumberAvailableControls)),
+                                                 phjTempRowCounter = range(phjTempRowCounter, (phjTempRowCounter + phjTempNumberMatchingControls)),
                                                  phjCaseVarName = 'case',
-                                                 phjCaseValue = [0]*phjTempNumberAvailableControls,
+                                                 phjCaseValue = [0]*phjTempNumberMatchingControls,
                                                  phjGroupVarName = 'group',
-                                                 phjGroupValue = [i]*phjTempNumberAvailableControls,
+                                                 phjGroupValue = [i]*phjTempNumberMatchingControls,
                                                  phjPrintResults = phjPrintResults)
             
             if phjPrintResults == True:
-                print('\nControls in dataframe')
+                print('Controls in dataframe')
                 print(phjTempCaseControlDF.loc[phjTempRowRange])
+                print('\n')
             
             # 7. Delete selected controls from dataframe!!!
             # ------------------------------------------
             phjPotentialControlsDF = phjPotentialControlsDF[~phjPotentialControlsDF[phjUniqueIdentifierVarName].isin(phjTempMatchingControlsDF[phjUniqueIdentifierVarName].tolist())]
             
             # Increment row counter by number of available controls
-            phjTempRowCounter = phjTempRowCounter + phjTempNumberAvailableControls
+            phjTempRowCounter = phjTempRowCounter + phjTempNumberMatchingControls
             
         
         # iii. If more than requested number of controls then add selection of controls to dataframe
         # ------------------------------------------------------------------------------------------
-        elif (phjTempNumberAvailableControls > phjControlsPerCaseInt):
+        elif (phjTempNumberMatchingControls > phjControlsPerCaseInt):
             if phjPrintResults == True:
-                print('\nAvailable controls = ', phjTempNumberAvailableControls, '. Requested number of controls = ',phjControlsPerCaseInt, '.')
-            
+                print('Available controls = ', phjTempNumberMatchingControls, '. Requested number of controls = ',phjControlsPerCaseInt, '.')
+                print('\n')
+                
             # Add case to dataframe
             # - - - - - - - - - - -
             phjTempCaseControlDF = phjAddRecords(phjTempCaseControlDF,
@@ -1704,8 +1709,10 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                                  phjPrintResults = phjPrintResults)
             
             if phjPrintResults == True:
-                print('\nCase\n----')
+                print('Case')
+                print('----')
                 print(phjTempCaseControlDF.iloc[phjTempRowCounter,:])
+                print('\n')
             
             # Increment row counter by 1
             phjTempRowCounter = phjTempRowCounter + 1
@@ -1717,10 +1724,12 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                                                                 axis = 0)
             
             if phjPrintResults == True:
-                print('\nControls\n--------')
-                print('All matching controls')
+                print('Controls')
+                print('--------')
+                print('Selected matching controls')
                 with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
                     print(phjTempSampleMatchingControlsDF)
+                    print('\n')
             
             phjTempRowRange = range(phjTempRowCounter, (phjTempRowCounter + phjControlsPerCaseInt))
             
@@ -1737,8 +1746,9 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                                  phjPrintResults = phjPrintResults)
             
             if phjPrintResults == True:
-                print('\nControls in dataframe')
+                print('Controls in dataframe')
                 print(phjTempCaseControlDF.loc[phjTempRowRange])
+                print('\n')
             
             # 7. Delete selected controls from dataframe!!!
             # ------------------------------------------
@@ -1753,10 +1763,27 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         else:
             if phjPrintResults == True:
                 # Report that something went wrong
-                print('Something went wrong')
+                print('Something went wrong. Sorry.')
+                print('\n')
             else:
                 phjTempCaseControlDF = None
+                pass
+        
+        if phjPrintResults == True:
+            print('phjTempCaseControlDF (in progress)')
+            print(phjTempCaseControlDF)
+            print('\n')
     
+    # Remove any rows that contain all NaN values (i.e. because there were not
+    # enough control available)
+    if phjTempCaseControlDF is not None:
+        phjTempCaseControlDF = phjTempCaseControlDF.dropna(how = 'all', axis = 0)
+    
+    if phjPrintResults == True:
+        print('Final returned data')
+        print(phjTempCaseControlDF)
+        print('\n')
+        
     return phjTempCaseControlDF
 
 
