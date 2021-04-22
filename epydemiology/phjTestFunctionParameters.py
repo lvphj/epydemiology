@@ -213,7 +213,8 @@ def phjConstructGenericMessageSuffix(phjType):
                      "<class 'collections.UserDict'>": 'dictionary',
                      "<class 'collections.abc.Mapping'>": 'dictionary',
                      "<class 'pandas.core.frame.DataFrame'>": 'Pandas dataframe',
-                     "<class 'pandas.core.series.Series'>": 'Pandas series'}
+                     "<class 'pandas.core.series.Series'>": 'Pandas series',
+                     "<class 'numpy.ndarray'>": 'Numpy array'}
     
     
     if isinstance(phjType,tuple):
