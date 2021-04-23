@@ -264,7 +264,6 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
             
             phjAssert('phjMatchingVariablesList',phjMatchingVariablesList,(list,str),phjMustBePresentColumnList = phjAllDataDF.columns.values.tolist())
         
-        
         phjAssert('phjControlsPerCaseInt',phjControlsPerCaseInt,int)
         
         if phjScreeningRegexStr is not None:
@@ -276,7 +275,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
         phjAssert('phjControlType',phjControlType,str,phjAllowedOptions = ['consultation','patient'])
         
         if phjAggDict is not None:
-            phjAssert('phjAggDict',phjAggDict,dict)
+            phjAssert('phjAggDict',phjAggDict,collections.abc.Mapping)   # collections mapping works for Dict, OrderedDict and UserDict
             # N.B. Other checks on the contents of phjAggDict are done in the phjCollapseOnPatientID() function
         
         phjAssert('phjPrintResults',phjPrintResults,bool)
@@ -293,7 +292,6 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
             elif phjControlType == 'patient':
                 phjColumnsAbsentList = ['case','group','count']
                 assert set(phjColumnsAbsentList).isdisjoint(phjAllDataDF.columns.values.tolist()), "Columns '{}' and '{}' will be created and cannot already exist in dataframe; please rename and try again".format('\', \''.join(phjColumnsAbsentList[:-1]),phjColumnsAbsentList[-1])
-    
     
     # N.B. The column 'case' may be created even in unmatched datasets - CHECK
     #      May need to add phjMustBeAbsentColumnsList = ['case'] to phjAssert() for
@@ -326,6 +324,26 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
         ### and produce a case-control dataframe containing only minimal variables. ###
         ###############################################################################
         
+        # Define a list of columns to keep in the dataframe for preliminary analysis,
+        # which is a list of the variables named in function arguments (except freetext
+        # column) plus any matched variables that are listed.
+        if phjMatchingVariablesList is not None:
+            if isinstance(phjMatchingVariablesList,list):
+                phjRequiredColumnsList = [phjPatientIDVarName,
+                                          phjConsultationIDVarName,
+                                          phjConsultationDateVarName] + phjMatchingVariablesList
+            
+            elif isinstance(phjMatchingVariablesList,str):
+                phjRequiredColumnsList = [phjPatientIDVarName,
+                                          phjConsultationIDVarName,
+                                          phjConsultationDateVarName] + [phjMatchingVariablesList]
+        
+        else:
+            phjRequiredColumnsList = [phjPatientIDVarName,
+                                      phjConsultationIDVarName,
+                                      phjConsultationDateVarName]
+        
+        
         #############################################
         ### CONSULTATION-BASED CASE-CONTROL STUDY ###
         #############################################
@@ -339,10 +357,6 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                                                                  phjPrintResults = phjPrintResults)
             
             if phjVerifiedCasesDF is not None:
-                
-                # Define which columns to keep in the dataframe for preliminary analysis
-                phjRequiredColumnsList = phjColumnsPresentList
-                phjRequiredColumnsList.remove(phjFreeTextVarName)
                 
                 phjPotentialControlsDF = phjGetPotentialControls(phjDF = phjAllDataDF,   # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
                                                                  phjCasesPatientIDSer = phjVerifiedCasesDF[phjPatientIDVarName],   # A pandas series containing patient ID for all confirmed cases
@@ -1059,10 +1073,9 @@ def phjGetVerifiedConsultationCases(phjAllDataDF,
     # If the phjCasesDF is actually any other iterable (e.g.list, array, Series) then
     # must check if cases are a subset of the rows in the full dataframe. If so, recreate
     # a verified dataframe; if not, return None. 
-    elif not isinstance(phjCasesDF,str):
+    elif isinstance(phjCasesDF,(pd.Series,list,tuple,np.ndarray)):
         
         if set(phjCasesDF).issubset(phjAllDataDF[phjConsultationIDVarName]):
-            
             phjCasesMask = phjAllDataDF[phjConsultationIDVarName].isin(phjCasesDF)
             phjVerifiedCasesDF = phjAllDataDF.loc[phjCasesMask,:]
         
@@ -1071,7 +1084,7 @@ def phjGetVerifiedConsultationCases(phjAllDataDF,
             phjVerifiedCasesDF = None
             
     else:
-        print("\nThe object containing cases is not recognised.")
+        print("\nThe object ({}) containing cases is not valid.".format(type(phjCasesDF)))
         phjVerifiedCasesDF = None
     
     
@@ -1508,6 +1521,8 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
     # 8. Return dataframe containing list of cases and controls. This dataframe only
     #    contains columns with unique identifier, case and group id. It will,
     #    therefore need to be merged with the full database to get all other columns.
+    # 9. Remove rows from final dataframe that contain all NaN values due to too few
+    #    controls being available.
     
     # 1. Create empty dataframe
     # -------------------------
