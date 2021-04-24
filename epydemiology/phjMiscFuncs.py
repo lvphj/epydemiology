@@ -23,6 +23,7 @@ else:
 import re
 import collections
 import inspect
+import pprint
 
 from .phjTestFunctionParameters import phjAssert
 
@@ -37,32 +38,64 @@ def phjGetStrFromArgOrFile(phjStr = None,
     # given by a path and file name, or from a string entered as an argument for this
     # function. A string saved in a file is given preference (i.e. this is checked first).
     
-    # Initially set phjTempStr to be None
-    phjTempStr = None
-    
-    # If one or other of the string input options is not None then get query string
-    if (phjStr is not None) or (phjPathAndFileName is not None):
-        # File name and path given preference (i.e. check this first)
-        if phjPathAndFileName is not None:
-            # Load SQL query from text file
-            phjTempStr = phjReadTextFromFile(phjPathAndFileName = phjPathAndFileName,
-                                             phjMaxAttempts = phjAllowedAttempts,
-                                             phjPrintResults = False)
-            
-            if phjPrintResults == True:
-                print("\nString retrieved from file ('{0}'):".format(phjPathAndFileName))
-                print(phjTempStr)
+    try:
+        assert any(i is not None for i in [phjStr,phjPathAndFileName]), "Both phjStr and phjPathAndFileName arguments are None"
         
-        # If the text file did not yield a string, move on to the query string.
-        if (phjTempStr is None) and (phjStr is not None):
-            phjTempStr = phjStr
+        if phjPathAndFileName is not None:
+            phjAssert('phjPathAndFileName',phjPathAndFileName,str)
             
-            if phjPrintResults == True:
-                print("\nString retrieved from passed argument (phjStr):")
-                print(phjTempStr)
+        if phjStr is not None:
+            phjAssert('phjStr',phjStr,str)
     
-    else:
+    except AssertionError as e:
+        
+        # Define phjTempStr as None before returning
         phjTempStr = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+        
+    else:
+        # Initially set phjTempStr to be None
+        phjTempStr = None
+    
+        # If one or other of the string input options is not None then get query string
+        if (phjStr is not None) or (phjPathAndFileName is not None):
+            # File name and path given preference (i.e. check this first)
+            if phjPathAndFileName is not None:
+                # Load SQL query from text file
+                try:
+                    phjTempStr = phjReadTextFromFile(phjPathAndFileName = phjPathAndFileName,
+                                                     phjMaxAttempts = phjAllowedAttempts,
+                                                     phjPrintResults = False)
+                                                     
+                except FileNotFoundError as e:
+                     print('Error number {}: {}'.format(e.args[0],e.args[1]))
+                
+                else:
+                    if phjPrintResults == True:
+                        print("\nString retrieved from file ('{0}'):".format(phjPathAndFileName))
+                        print(phjTempStr)
+            
+            # If the text file did not yield a string, move on to the query string.
+            if (phjTempStr is None) and (phjStr is not None):
+                phjTempStr = phjStr
+            
+                if phjPrintResults == True:
+                    print("\nString retrieved from passed argument (phjStr):")
+                    print(phjTempStr)
+    
+        else:
+            phjTempStr = None
     
     return phjTempStr
 
@@ -105,6 +138,19 @@ def phjReadTextFromFile(phjPathAndFileName = None,
                 # If file can't be found then set phjTempText to None
                 print('\nFailed to find file containing text after {0} attempts.\n'.format(i+1))
                 phjTempText = None
+                
+                # If function has been called directly, present message.
+                if inspect.stack()[1][3] == '<module>':
+                    print("A FileNotFoundError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                 fname = inspect.stack()[0][3]))
+                
+                # If function has been called by another function then modify message and re-raise exception
+                else:
+                    print("An FileNotFoundError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                        fname = inspect.stack()[0][3],
+                                                                                                                                        callfname = inspect.stack()[1][3]))
+                    
+                    raise
     
     return phjTempText
 
