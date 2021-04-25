@@ -46,7 +46,10 @@ def phjGetStrFromArgOrFile(phjStr = None,
             
         if phjStr is not None:
             phjAssert('phjStr',phjStr,str)
-    
+        
+        phjAssert('phjAllowedAttempts',phjAllowedAttempts,int,phjAllowedOptions = {'min':1,'max':10})
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+
     except AssertionError as e:
         
         # Define phjTempStr as None before returning
@@ -116,52 +119,75 @@ def phjReadTextFromFile(phjPathAndFileName = None,
                         phjMaxAttempts = 3,
                         phjPrintResults = False):
     
-    for i in range(phjMaxAttempts):
+    try:
+        phjAssert('phjPathAndFileName',phjPathAndFileName,str)
+        phjAssert('phjMaxAttempts',phjMaxAttempts,int,phjAllowedOptions = {'min':1,'max':10})
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+    
+    except AssertionError as e:
         
-        if (phjPathAndFileName is None) or (i > 0):
-            phjPathAndFileName = input('Enter path and filename for file containing text (e.g. query or regex): ')
+        # Define phjTempText as None before returning
+        phjTempText = None
         
-        try:
-            # The following original code ran the risk of not closing the file if a
-            # problem occurred.
-            # phjTempFileObject = open(phjFilePathAndName)
-            # phjTempText = phjTempFileObject.read()
-            # phjTempFileObject.close()
-            
-            with open(phjPathAndFileName,'r') as phjTempFileObject:
-                phjTempText = phjTempFileObject.read()
-            
-            if phjPrintResults:
-                print('Text read from file:')
-                print(phjTempText)
-                print('\n')
-            
-            break
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
         
-        except FileNotFoundError as e:
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    else:
+        for i in range(phjMaxAttempts):
             
-            print("\nA FileNotFoundError occurred.\nError number {0}: {1}. File named \'{2}\' does not exist at that location.".format(e.args[0],e.args[1],phjPathAndFileName))
+            if (phjPathAndFileName is None) or (i > 0):
+                phjPathAndFileName = input('Enter path and filename for file containing text (e.g. query or regex): ')
             
-            if i < (phjMaxAttempts-1):
-                print('\nPlease re-enter path and filename details.\n')    # Only say 'Please try again' if not last attempt.
-            
-            else:
-                # If file can't be found then set phjTempText to None
-                print('\nFailed to find file containing text after {0} attempts.\n'.format(i+1))
-                phjTempText = None
+            try:
+                # The following original code ran the risk of not closing the file if a
+                # problem occurred.
+                # phjTempFileObject = open(phjFilePathAndName)
+                # phjTempText = phjTempFileObject.read()
+                # phjTempFileObject.close()
                 
-                # If function has been called directly, present message.
-                if inspect.stack()[1][3] == '<module>':
-                    print("A FileNotFoundError occurred in {fname}() function. ({msg})\n".format(msg = e,
-                                                                                                 fname = inspect.stack()[0][3]))
+                with open(phjPathAndFileName,'r') as phjTempFileObject:
+                    phjTempText = phjTempFileObject.read()
                 
-                # If function has been called by another function then modify message and re-raise exception
+                if phjPrintResults:
+                    print('Text read from file:')
+                    print(phjTempText)
+                    print('\n')
+                
+                break
+            
+            except FileNotFoundError as e:
+                
+                print("\nA FileNotFoundError occurred.\nError number {0}: {1}. File named \'{2}\' does not exist at that location.".format(e.args[0],e.args[1],phjPathAndFileName))
+                
+                if i < (phjMaxAttempts-1):
+                    print('\nPlease re-enter path and filename details.\n')    # Only say 'Please try again' if not last attempt.
+                
                 else:
-                    print("An FileNotFoundError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
-                                                                                                                                        fname = inspect.stack()[0][3],
-                                                                                                                                        callfname = inspect.stack()[1][3]))
+                    # If file can't be found then set phjTempText to None
+                    print('\nFailed to find file containing text after {0} attempts.\n'.format(i+1))
+                    phjTempText = None
                     
-                    raise
+                    # If function has been called directly, present message.
+                    if inspect.stack()[1][3] == '<module>':
+                        print("A FileNotFoundError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                     fname = inspect.stack()[0][3]))
+                    
+                    # If function has been called by another function then modify message and re-raise exception
+                    else:
+                        print("An FileNotFoundError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                            fname = inspect.stack()[0][3],
+                                                                                                                                            callfname = inspect.stack()[1][3]))
+                        
+                        raise
     
     return phjTempText
 
