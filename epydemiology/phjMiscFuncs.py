@@ -79,7 +79,18 @@ def phjGetStrFromArgOrFile(phjStr = None,
                                                      phjPrintResults = False)
                                                      
                 except FileNotFoundError as e:
-                     print('Error number {}: {}'.format(e.args[0],e.args[1]))
+                    # If function has been called directly, present message.
+                    if inspect.stack()[1][3] == '<module>':
+                        print("A FileNotFoundError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                     fname = inspect.stack()[0][3]))
+                    
+                    # If function has been called by another function then modify message and re-raise exception
+                    else:
+                        print("An FileNotFoundError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                            fname = inspect.stack()[0][3],
+                                                                                                                                            callfname = inspect.stack()[1][3]))
+                        
+                        raise
                 
                 else:
                     if phjPrintResults == True:

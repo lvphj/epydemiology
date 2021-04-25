@@ -189,7 +189,7 @@ from .phjTestFunctionParameters import phjAssert
 #    • Cases passed as a DATAFRAME containing several variables, one of which is the
 #      CONSULTATION ID but not all consultations are included in the dataframe of 'ALL' data.
 #      – FAILED
- 
+#
 #    • Cases passed as a DATAFRAME containing all the same variables as included in the
 #      'ALL' dataframe. Not all consultations are included in the dataframe of 'ALL' data.
 #      – SUCCESS
@@ -357,19 +357,70 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
                                                                  phjPrintResults = phjPrintResults)
             
             if phjVerifiedCasesDF is not None:
+                try:
+                    phjPotentialControlsDF = phjGetPotentialControls(phjDF = phjAllDataDF,   # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
+                                                                     phjCasesPatientIDSer = phjVerifiedCasesDF[phjPatientIDVarName],   # A pandas series containing patient ID for all confirmed cases
+                                                                     phjScreeningRegexStr = phjScreeningRegexStr,
+                                                                     phjScreeningRegexPathAndFileName = phjScreeningRegexPathAndFileName,
+                                                                     phjConsultationIDVarName = phjConsultationIDVarName,
+                                                                     phjConsultationDateVarName = phjConsultationDateVarName,
+                                                                     phjPatientIDVarName = phjPatientIDVarName,
+                                                                     phjRequiredColumnsList = phjRequiredColumnsList,   # Required columns that are needed to run the case-control functions (minus the freetext field)
+                                                                     phjFreeTextVarName = phjFreeTextVarName,
+                                                                     phjControlType = 'consultation',   # Other option would be 'patient'
+                                                                     phjAggDict = phjAggDict,
+                                                                     phjPrintResults = phjPrintResults)
                 
-                phjPotentialControlsDF = phjGetPotentialControls(phjDF = phjAllDataDF,   # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
-                                                                 phjCasesPatientIDSer = phjVerifiedCasesDF[phjPatientIDVarName],   # A pandas series containing patient ID for all confirmed cases
-                                                                 phjScreeningRegexStr = phjScreeningRegexStr,
-                                                                 phjScreeningRegexPathAndFileName = phjScreeningRegexPathAndFileName,
-                                                                 phjConsultationIDVarName = phjConsultationIDVarName,
-                                                                 phjConsultationDateVarName = phjConsultationDateVarName,
-                                                                 phjPatientIDVarName = phjPatientIDVarName,
-                                                                 phjRequiredColumnsList = phjRequiredColumnsList,   # Required columns that are needed to run the case-control functions (minus the freetext field)
-                                                                 phjFreeTextVarName = phjFreeTextVarName,
-                                                                 phjControlType = 'consultation',   # Other option would be 'patient'
-                                                                 phjAggDict = phjAggDict,
-                                                                 phjPrintResults = phjPrintResults)
+                except AssertionError as e:
+                    # Define phjPotentialControlsDF as None before returning
+                    phjPotentialControlsDF = None
+                    
+                    # If function has been called directly, present message.
+                    if inspect.stack()[1][3] == '<module>':
+                        print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                   fname = inspect.stack()[0][3]))
+                    
+                    # If function has been called by another function then modify message and re-raise exception
+                    else:
+                        print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                         fname = inspect.stack()[0][3],
+                                                                                                                                         callfname = inspect.stack()[1][3]))
+                        raise
+                
+                except FileNotFoundError as e:
+                    # If file can't be found then set phjPotentialControlsDF to None
+                    phjPotentialControlsDF = None
+                    
+                    # If function has been called directly, present message.
+                    if inspect.stack()[1][3] == '<module>':
+                        print("A FileNotFoundError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                     fname = inspect.stack()[0][3]))
+                    
+                    # If function has been called by another function then modify message and re-raise exception
+                    else:
+                        print("An FileNotFoundError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                            fname = inspect.stack()[0][3],
+                                                                                                                                            callfname = inspect.stack()[1][3]))
+            
+                        raise
+                
+                except re.error as e:
+                    # If regex does not compile then set phjPotentialControlsDF to None
+                    phjPotentialControlsDF = None
+                    
+                    # If function has been called directly, present message.
+                    if inspect.stack()[1][3] == '<module>':
+                        print("A regex error occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                     fname = inspect.stack()[0][3]))
+                    
+                    # If function has been called by another function then modify message and re-raise exception
+                    else:
+                        print("A regex error occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                            fname = inspect.stack()[0][3],
+                                                                                                                                            callfname = inspect.stack()[1][3]))
+                        
+                        raise
+            
             
             else:
                 phjPotentialControlsDF = None
@@ -1288,63 +1339,114 @@ def phjGetPotentialControls(phjDF,                      # A pandas dataframe con
     ### phjPatientIDVarName is a string and not a list and that is contained in dataframe
     ### phjCasesPatientSer is a Pandas series not a dataframe
     
-    # Get regex used to screen for original potential cases
-    phjScreeningRegex = phjGetRegexStr(phjRegexStr = phjScreeningRegexStr,
-                                       phjRegexPathAndFileName = phjScreeningRegexPathAndFileName,
-                                       phjPrintResults = phjPrintResults)
+    try:
+        # Get regex used to screen for original potential cases
+        phjScreeningRegex = phjGetRegexStr(phjRegexStr = phjScreeningRegexStr,
+                                           phjRegexPathAndFileName = phjScreeningRegexPathAndFileName,
+                                           phjPrintResults = phjPrintResults)
     
-    if phjScreeningRegex is not None:
-        # Compile regex
-        phjRegex = re.compile(phjScreeningRegex,flags=re.I|re.X)
-        
-        # Run regex against freetext field and create a binary mask to identify all
-        # consultations that match the regex.
-        # NA values are set to FALSE.
-        phjRegexMask = phjDF[phjFreeTextVarName].str.contains(phjRegex, na = False)
-        
-        # Retrieve patient IDs for consultations where freetext field contains a match
-        phjCasesPatientID = phjDF.loc[phjRegexMask,phjPatientIDVarName]
-        
-        # Combine with Patient IDs passed to function to produce an array of all
-        # patient IDs that should not be included in potential control dataframe
-        #phjCasesPatientIDArr = phjCasesPatientID.append(phjCasesPatientIDSer).unique()
-        phjCasesPatientIDArr = phjCasesPatientID.append(phjCasesPatientIDSer).unique()
-        
-        # Create a mask of all patients that could be included in potentials control
-        # list. (This is, in fact, the inverse of the output from .isin() method)
-        phjControlConsultationsMask = ~phjDF[phjPatientIDVarName].isin(phjCasesPatientIDArr)
-        
-        # Use the mask to remove all cases patients from the dataframe
-        # Only retain the required columns variables
-        phjControlConsultationsDF = phjDF.loc[phjControlConsultationsMask,phjRequiredColumnsList].reset_index(drop = True)
-        
-        if phjControlType == 'consultation':
-            # Return the dataframe of patient IDs that have already been calculated
-            phjPotentialControlsDF = phjControlConsultationsDF
-            
-        elif phjControlType == 'patient':
-            
-            # Need to consolidate based on patient ID.
-            # Return dataframe consisting of patient ID and a variable giving the count
-            # of the consultations
-            # phjPotentialControlsDF = phjControlConsultationsDF.groupby(phjPatientIDVarName).agg('count').rename(columns = {phjConsultationIDVarName:'consultation_count'}).reset_index(drop = False)
-            phjPotentialControlsDF = phjCollapseOnPatientID(phjAllDataDF = phjControlConsultationsDF,   # Dataframe containing all columns of data to be collapsed based on patient ID
-                                                            phjPatientIDVarName = phjPatientIDVarName,
-                                                            phjConsultationIDVarName = phjConsultationIDVarName,
-                                                            phjConsultationDateVarName = phjConsultationDateVarName,
-                                                            phjFreeTextVarName = None,
-                                                            phjAggDict = phjAggDict,
-                                                            phjPrintResults = phjPrintResults)
-            
-            
-        else:
-            print("Option entered for requested control type ('{0}') is not recognised.".format(phjControlType))
-            phjPotentialControlsDF = None
-    
-    else:
-        print('Could not identify the screening regex.')
+    except AssertionError as e:
+        # Define phjPotentialControlsDF as None before returning
         phjPotentialControlsDF = None
     
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    except FileNotFoundError as e:
+        # If file can't be found then set phjPotentialControlsDF to None
+        phjPotentialControlsDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("A FileNotFoundError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                         fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An FileNotFoundError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                fname = inspect.stack()[0][3],
+                                                                                                                                callfname = inspect.stack()[1][3]))
+            
+            raise
+    
+    except re.error as e:
+        # If regex does not compile then set phjPotentialControlsDF to None
+        phjPotentialControlsDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("A regex error occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                         fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("A regex error occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                fname = inspect.stack()[0][3],
+                                                                                                                                callfname = inspect.stack()[1][3]))
+            
+            raise
+    
+    else:
+        if phjScreeningRegex is not None:
+            # Compile regex
+            phjRegex = re.compile(phjScreeningRegex,flags=re.I|re.X)
+        
+            # Run regex against freetext field and create a binary mask to identify all
+            # consultations that match the regex.
+            # NA values are set to FALSE.
+            phjRegexMask = phjDF[phjFreeTextVarName].str.contains(phjRegex, na = False)
+        
+            # Retrieve patient IDs for consultations where freetext field contains a match
+            phjCasesPatientID = phjDF.loc[phjRegexMask,phjPatientIDVarName]
+        
+            # Combine with Patient IDs passed to function to produce an array of all
+            # patient IDs that should not be included in potential control dataframe
+            #phjCasesPatientIDArr = phjCasesPatientID.append(phjCasesPatientIDSer).unique()
+            phjCasesPatientIDArr = phjCasesPatientID.append(phjCasesPatientIDSer).unique()
+        
+            # Create a mask of all patients that could be included in potentials control
+            # list. (This is, in fact, the inverse of the output from .isin() method)
+            phjControlConsultationsMask = ~phjDF[phjPatientIDVarName].isin(phjCasesPatientIDArr)
+        
+            # Use the mask to remove all cases patients from the dataframe
+            # Only retain the required columns variables
+            phjControlConsultationsDF = phjDF.loc[phjControlConsultationsMask,phjRequiredColumnsList].reset_index(drop = True)
+        
+            if phjControlType == 'consultation':
+                # Return the dataframe of patient IDs that have already been calculated
+                phjPotentialControlsDF = phjControlConsultationsDF
+            
+            elif phjControlType == 'patient':
+            
+                # Need to consolidate based on patient ID.
+                # Return dataframe consisting of patient ID and a variable giving the count
+                # of the consultations
+                # phjPotentialControlsDF = phjControlConsultationsDF.groupby(phjPatientIDVarName).agg('count').rename(columns = {phjConsultationIDVarName:'consultation_count'}).reset_index(drop = False)
+                phjPotentialControlsDF = phjCollapseOnPatientID(phjAllDataDF = phjControlConsultationsDF,   # Dataframe containing all columns of data to be collapsed based on patient ID
+                                                                phjPatientIDVarName = phjPatientIDVarName,
+                                                                phjConsultationIDVarName = phjConsultationIDVarName,
+                                                                phjConsultationDateVarName = phjConsultationDateVarName,
+                                                                phjFreeTextVarName = None,
+                                                                phjAggDict = phjAggDict,
+                                                                phjPrintResults = phjPrintResults)
+            
+            
+            else:
+                print("Option entered for requested control type ('{0}') is not recognised.".format(phjControlType))
+                phjPotentialControlsDF = None
+    
+        else:
+            print('Could not identify the screening regex.')
+            phjPotentialControlsDF = None
     
     return phjPotentialControlsDF
 
@@ -1808,22 +1910,73 @@ def phjGetRegexStr(phjRegexStr = None,
                    phjAllowedAttempts = 3,
                    phjPrintResults = False):
     
-    phjTempRegex = phjGetStrFromArgOrFile(phjStr = phjRegexStr,
-                                          phjPathAndFileName = phjRegexPathAndFileName,
-                                          phjAllowedAttempts = phjAllowedAttempts,
-                                          phjPrintResults = phjPrintResults)
+    try:
+        phjTempRegex = phjGetStrFromArgOrFile(phjStr = phjRegexStr,
+                                              phjPathAndFileName = phjRegexPathAndFileName,
+                                              phjAllowedAttempts = phjAllowedAttempts,
+                                              phjPrintResults = phjPrintResults)
     
-    # Check whether regex string compiles
-    if phjTempRegex is not None:
-        try:
-            re.compile(phjTempRegex)
-        except re.error:
-            print('The regex given did not compile.')
-            phjTempRegex = None
+    except AssertionError as e:
+        # Define phjTempRegex as None before returning
+        phjTempRegex = None
     
-    if phjPrintResults == True:
-        print('\nRegex string used to screen cases:')
-        print(phjTempRegex)
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+        
+    except FileNotFoundError as e:
+        # If file can't be found then set phjTempText to None
+        phjTempRegex = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("A FileNotFoundError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                         fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An FileNotFoundError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                fname = inspect.stack()[0][3],
+                                                                                                                                callfname = inspect.stack()[1][3]))
+            
+            raise
+    
+    else:
+    
+        # Check whether regex string compiles
+        if phjTempRegex is not None:
+            try:
+                re.compile(phjTempRegex)
+                
+            except re.error as e:
+                # If regex does not compile then set phjTempText to None
+                phjTempRegex = None
+                
+                # If function has been called directly, present message.
+                if inspect.stack()[1][3] == '<module>':
+                    print("A regex error occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                 fname = inspect.stack()[0][3]))
+                
+                # If function has been called by another function then modify message and re-raise exception
+                else:
+                    print("A regex error occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                        fname = inspect.stack()[0][3],
+                                                                                                                                        callfname = inspect.stack()[1][3]))
+                    
+                    raise
+            
+            else:
+                if phjPrintResults == True:
+                    print('\nRegex string used to screen cases:')
+                    print(phjTempRegex)
     
     return phjTempRegex
 
