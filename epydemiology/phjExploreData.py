@@ -339,6 +339,7 @@ def phjCategoriseContinuousVariable(phjDF,
                                     phjNumberOfCategoriesInt = 5,
                                     phjNewCategoryVarName = None,
                                     phjCategorisationMethod = 'jenks',
+                                    phjNewCategoryNamesList = None,
                                     phjReturnBreaks = False,
                                     phjPrintResults = False):
     
@@ -360,6 +361,20 @@ def phjCategoriseContinuousVariable(phjDF,
         
         phjAssert('phjNumberOfCategoriesInt',phjNumberOfCategoriesInt,int,phjAllowedOptions = {'min':2,'max':min([100,len(pd.to_numeric(phjDF[phjContinuousVarName],errors = 'coerce').dropna(axis = 0))])})
         phjAssert('phjNewCategoryVarName',phjNewCategoryVarName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        
+        if phjNewCategoryNamesList is not None:
+            # Check phjNewCategoryNamesList is a list
+            phjAssert('phjNewCategoryNamesList',phjNewCategoryNamesList,list)
+            # Check all items in list are strings
+            assert all(isinstance(i, str) for i in phjNewCategoryNamesList), "All category names need to be strings."
+            # Check that number of items in phjNewCategoryNamesList list is the same as
+            # either the number of categories defined in the phjCategorisationMethod list
+            # (i.e. length of list minus one) or the number defined by the
+            # phjNumberOfCategoriesInt argument
+            if isinstance(phjCategorisationMethod,collections.Sequence) and not isinstance(phjCategorisationMethod,str):
+                assert len(phjNewCategoryNamesList) == len(phjCategorisationMethod) - 1, "Number of category names does not match number of groups inferred from defintion of breaks."
+            else:
+                assert len(phjNewCategoryNamesList) == phjNumberOfCategoriesInt, "Number of category names does not match requested number of groups."
         
         # Check phjCategorisationMethod is either a string indicating method to use to
         # calculate breaks or a list giving required breaks.
@@ -412,10 +427,16 @@ def phjCategoriseContinuousVariable(phjDF,
             
             phjBreaks = phjCategorisationMethod
             
-            phjDF[phjNewCategoryVarName] = pd.cut(phjContinuousSer,
-                                                  bins = phjBreaks,
-                                                  right = True,
-                                                  labels = False)
+            if phjNewCategoryNamesList is not None:
+                phjDF[phjNewCategoryVarName] = pd.cut(phjContinuousSer,
+                                                      bins = phjBreaks,
+                                                      right = True,
+                                                      labels = phjNewCategoryNamesList)
+            else:
+                phjDF[phjNewCategoryVarName] = pd.cut(phjContinuousSer,
+                                                      bins = phjBreaks,
+                                                      right = True,
+                                                      labels = False)
         
         # If phjCategorisationMethod is a string, use the appropriate method to
         # calculate breaks
@@ -431,10 +452,16 @@ def phjCategoriseContinuousVariable(phjDF,
                                                   phjPrintResults = phjPrintResults)
                 
                 # Cut data series based on Jenks breaks
-                phjDF[phjNewCategoryVarName] = pd.cut(phjContinuousSer,
-                                                          bins = phjBreaks,
-                                                          right = True,
-                                                          labels = False)
+                if phjNewCategoryNamesList is not None:
+                    phjDF[phjNewCategoryVarName] = pd.cut(phjContinuousSer,
+                                                              bins = phjBreaks,
+                                                              right = True,
+                                                              labels = phjNewCategoryNamesList)
+                else:
+                    phjDF[phjNewCategoryVarName] = pd.cut(phjContinuousSer,
+                                                              bins = phjBreaks,
+                                                              right = True,
+                                                              labels = False)
                 
                 if phjPrintResults == True:
                     print('Category quantile bins (Jenks) = ',phjBreaks)
@@ -444,16 +471,25 @@ def phjCategoriseContinuousVariable(phjDF,
             elif phjCategorisationMethod.lower() == 'quantile':
             
                 # Cut data series based on quantiles / number of required bins
-                phjDF[phjNewCategoryVarName], phjBreaks = pd.cut(phjContinuousSer,
-                                                                 bins = phjNumberOfCategoriesInt,
-                                                                 right = True,
-                                                                 retbins = True,
-                                                                 labels = False)
+                if phjNewCategoryNamesList is not None:
+                    phjDF[phjNewCategoryVarName], phjBreaks = pd.cut(phjContinuousSer,
+                                                                     bins = phjNumberOfCategoriesInt,
+                                                                     right = True,
+                                                                     retbins = True,
+                                                                     labels = phjNewCategoryNamesList)
+                else:
+                    phjDF[phjNewCategoryVarName], phjBreaks = pd.cut(phjContinuousSer,
+                                                                     bins = phjNumberOfCategoriesInt,
+                                                                     right = True,
+                                                                     retbins = True,
+                                                                     labels = False)
                 
                 if phjPrintResults == True:
                     print('Category quantile bins (quantile) = ',phjBreaks)
                     print('\n')
-    
+        
+        # If a list of categories has been supplied in phjNewCategoryNamesList argument,
+        # then name categories. Categories are added in order entered in list
     
     if phjReturnBreaks == True:
         return phjDF,phjBreaks
