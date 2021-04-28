@@ -355,7 +355,17 @@ def phjViewLogOdds(phjDF,
                 phjRiskFactorBaseValue = 0
             else:
                 phjRiskFactorBaseValue = phjNewCategoryNamesList[0]
-        
+            
+            
+            # This may be the point to separate analyses based on group.
+            # May need to include code to ensure that OR tables for each group
+            # contains output for each category even if categories do not contain
+            # any information in some groups.
+            # Use groupby to slice dataframe based on phjGroupVarName and step through
+            # each group.
+            # for g in phjGroupVarName:
+            #     etc.
+            
             # The following DF contains an index that may be numeric.
             phjOR = phjOddsRatio(phjDF = phjDF,
                                  phjCaseVarName = phjBinaryDepVarName,
