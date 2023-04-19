@@ -59,6 +59,10 @@ else:
 
 # Checking that pyxdameraulevenshtein package is installed does not work using the
 # above method because attribute .DistributionNotFound is not present.
+# Installation of pyxdameraulevenshtein library requires access to C compiler which may
+# not be available on all systems. If pyxdameraulevenshtein library is not installed
+# then pyxdlPresent is set to False and an alternative, pure Python implementation by
+# Michael Homer can be used instead.
 try:
     import pyxdameraulevenshtein as pyxdl
     pyxdlPresent = True
@@ -574,7 +578,7 @@ def phjGetPostcodeRegexGroupNamesList(phjPrintResults = False):
 def phjGetCompiledPostcodeRegex(phjPostcodeComponent = 'all',
                                 phjPrintResults = False):
     
-    # This function returns returns a compiled regex for either the whole postcode regex
+    # This function returns a compiled regex for either the whole postcode regex
     # or a component of the postcode regex (outward or inward)
     
     # Retrieve postcode regex definitions for outward and inward parts and compile
