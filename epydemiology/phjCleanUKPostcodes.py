@@ -1183,7 +1183,7 @@ def mhDamerauLevenshtein(seq,seqArr):
     # faster pyxdameraulevenshtein library which may not be installable on some systems.
     phjList = []
     for iseq in seqArr:
-        phjList = phjList + [dameraulevenshtein(seq,iseq)]
+        phjList.append(dameraulevenshtein(seq,iseq))
     return phjList
 
 
