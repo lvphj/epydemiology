@@ -934,7 +934,7 @@ def phjPostcodeFormat7(phjDF,
                                                            (phjDF[phjPostcodeVarName].str.len() <= 7),phjPostcodeVarName]
             
             # Remove all whitespace and punctuation from the text strings and convert to upper case.
-            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','').str.upper()
+            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','',regex = True).str.upper()
         
         else:
             # Copy potential postcode strings to postcode7 variable irrespective of content
@@ -943,7 +943,7 @@ def phjPostcodeFormat7(phjDF,
             # Remove all whitespace and punctuation from the text strings, remove strings
             # that contain fewer than 5 characters or greater than 7 characters and 
             # convert to upper case.
-            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','')
+            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','',regex = True)
             phjDF[phjPostcode7VarName] = phjDF.loc[(phjDF[phjPostcode7VarName].str.len() >= 5) &
                                                            (phjDF[phjPostcode7VarName].str.len() <= 7),phjPostcode7VarName]
             phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.upper()
@@ -952,7 +952,7 @@ def phjPostcodeFormat7(phjDF,
         # Basically, the following function puts a space between the leading characters and the final 3 characters.
         # If the pattern now consists of 2 characters and a space at the start of the string, add an extra space.
         # If the pattern consists of 4 characters and a space at the start of the string, remove the space.
-        phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('(\w{3})$',r' \1').str.replace('^(\w{2})\s',r'\1  ').str.replace('^(\w{4})\s',r'\1')
+        phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('(\w{3})$',r' \1',regex = True).str.replace('^(\w{2})\s',r'\1  ',regex = True).str.replace('^(\w{4})\s',r'\1',regex = True)
     
     return phjDF
 
