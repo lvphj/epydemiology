@@ -1181,6 +1181,93 @@ def phjStripWhiteSpc(phjDF,
 
 
 
+def phjUKDateStrToDatetime(x,
+                           phjCentury = 2000,
+                           phjPrintResults = False):
+
+    '''
+    Converts a UK (day first) date string to a consistent date format
+
+    This function converts a UK (day first) date string (e.g. 24-03-2022) to a consistent format
+    so that pd.to_datetime() method can be used to convert the string to datetime. The need for
+    the function arose when importing data from an Excel spreadsheet where the formats for date
+    strings were inconsistent (e.g. 24-03-2022, 24/03/2022, 24/03/22, etc.). In such cases, strings
+    of a different format were returned as NaT values, resulting in lost data.
+
+    Parameters
+    ----------
+    x : str
+        A date string
+
+    phjCentury : int
+                 The default century to use when only 2-digit century is included, default: 2000
+
+    phjPrintResults : Boolean
+                      Parameter to indicate whether intermediate results (if
+                      there are any) should be printed. Useful for debugging.
+                        
+    Returns
+    -------
+    phjOut : Either a datetime or np.nan
+
+    Raises
+    ------
+    None
+
+    See Also
+    --------
+    None
+
+    Examples
+    --------    
+    
+    '''
+    
+    # If the cell string is not NaN then attempt to process as a date string:
+    if not pd.isna(x):
+        # Process if x is a string
+        # N.B. isinstance() is recommended for testing the type of an object because it takes subclasses
+        # into account (see answer by Gabriel Staples at https://stackoverflow.com/questions/4843173/how-to-check-if-type-of-a-variable-is-string)
+        if isinstance(x,str):
+            # If date string includes a time component then delete
+            x = re.sub("\s\d\d:\d\d:\d\d$",'',x)
+
+            # Defining the regex to match punctuation marks is challenging due to the need
+            # to escape special characters. The following works but "[/\-:., _]" does not.
+            #phjDatePartsList = re.split("[/\-:., _]",x)   # does not work
+            phjDatePartsList = re.split("/|\\\\|\-|:|\.|,| |_",x)   # The escape character needs to be escaped twice or use r"/|\\|\-|:|\.|,| |_"
+
+            if phjPrintResults == True:
+                print("Original string: {}; list of date parts: {}".format(x,phjDatePartsList))
+
+            # Splitting the date string should result in a list with 3 items; if so, attempt to process as a date:
+            if len(phjDatePartsList) == 3:
+                # The final item in the list should be the year; if the year has 2 digits then convert to 4 digits:
+                if len(phjDatePartsList[-1]) == 2:
+                    phjDatePartsList[-1] = str(phjCentury + int(phjDatePartsList[-1]))
+
+                phjDateStr = '-'.join([phjDatePartsList[2],phjDatePartsList[1].zfill(2),phjDatePartsList[0].zfill(2)])
+
+                if phjPrintResults == True:
+                    print("    Harmonised date string:{}".format(phjDateStr))
+
+                phjOut = pd.to_datetime(phjDateStr,
+                                        dayfirst = True,
+                                        errors = 'coerce')
+        
+        # Process if x is a datetime
+        elif isinstance(x,datetime.datetime):
+            phjOut = x
+            
+        else:
+            phjOut = np.nan
+        
+    else:
+        phjOut = np.nan
+        
+    return phjOut
+
+
 if __name__ == '__main__':
     main()
 
