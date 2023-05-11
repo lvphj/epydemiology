@@ -15,6 +15,8 @@ from .phjMiscFuncs import phjReverseMap
 from .phjMiscFuncs import phjRetrieveUniqueFromMultiDataFrames
 from .phjMiscFuncs import phjUpdateLUT
 from .phjMiscFuncs import phjUpdateLUTToLatestValues
+from .phjMiscFuncs import phjStripWhiteSpc
+from .phjMiscFuncs import phjUKDateStrToDatetime
 
 from .phjMatrices import phjBinaryVarsToSquareMatrix
 from .phjMatrices import phjLongToWideBinary
