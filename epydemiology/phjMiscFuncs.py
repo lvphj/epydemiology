@@ -1119,7 +1119,67 @@ def phjUpdateLUTToLatestValues(phjDF,
         
     return phjOutDF
     
+
+
+
+def phjStripWhiteSpc(phjDF,
+                     phjPrintResults = False):
+
+    '''
+    Strip whitespace from all columns of dtype 'object' (and only from str data within column)
+
+    Using .str.strip() on columns that are not text strings can cause the cell content
+    to be converted to NaN. Some columns with object dtype actually contain mixed data
+    types (e.g. text strings and datetime). Applying .str.strip() to these columns
+    inadvertently deletes data.
     
+    This function steps through each column in a Pandas dataframe and for each column
+    of type 'object' creates a mask that identifies all cells containing str data. The
+    function then strips white space from start and end using .strip() method.
+
+    Parameters
+    ----------
+    phjDF : Pandas dataframe
+            The dataframe from which white space should be stripped
+
+    phjPrintResults : Boolean, default: False
+                      Parameter to indicate whether intermediate results (if
+                      there are any) should be printed. Useful for debugging.
+
+    Returns
+    -------
+    phjDF : Pandas dataframe
+            Returns the pandas dataframe which has had whitespace stripped.
+
+    Raises
+    ------
+    None
+
+    See Also
+    --------
+    None
+
+    Examples
+    --------
+    
+    '''
+
+    
+    # Add checks to ensure passed parameters are correct
+    
+    # Step through list of column names
+    for c in phjDF.columns.to_list():
+        
+        # Only select columns of type object
+        if phjDF[c].dtype == 'object':
+            # Create a mask to identify cells that contain strings
+            phjStrMask = phjDF[c].apply(type) == str
+            # Strip whitespace from string cells only
+            phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.strip()
+        
+    return phjDF
+
+
 
 if __name__ == '__main__':
     main()
