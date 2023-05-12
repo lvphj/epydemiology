@@ -1267,6 +1267,7 @@ def phjUKDateStrToDatetime(x,
                                          '02/03\\2006',
                                          '03.04,2005',
                                          '5 6:2005',
+                                         'abc',
                                          np.nan]})
 
     print("Example dateframe")
@@ -1283,9 +1284,8 @@ def phjUKDateStrToDatetime(x,
     print('\n')
 
     # Print new column and dtype
-    print("Date column dtype")
     print("Example dateframe")
-    print('-----------------')
+    print("-----------------")
     print(phjTempDF)
     print('\n')
     print("Date column dtype")
@@ -1324,7 +1324,10 @@ def phjUKDateStrToDatetime(x,
                 phjOut = pd.to_datetime(phjDateStr,
                                         dayfirst = True,
                                         errors = 'coerce')
-        
+
+            else:
+                phjOut = np.nan
+                
         # Process if x is a datetime
         elif isinstance(x,datetime.datetime):
             phjOut = x
