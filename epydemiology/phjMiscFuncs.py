@@ -1221,7 +1221,40 @@ def phjUKDateStrToDatetime(x,
 
     Examples
     --------    
-    
+    # Define a dataframe with UK date strings with multiple separators and 2- or 4-digit years
+    phjTempDF = pd.DataFrame({'datecol':[np.nan,
+                                         '20/03/04',
+                                         '21/04/2004',
+                                         '19-03-2010 00:00:00',
+                                         '01-02_2002',
+                                         '30-02-2003',
+                                         '02/03\\2006',
+                                         '03.04,2005',
+                                         '5 6:2005',
+                                         np.nan]})
+
+    print("Example dateframe")
+    print('-----------------')
+    print(phjTempDF)
+    print('\n')
+    print("Date column dtype")
+    print("-----------------")
+    print(phjTempDF.dtypes)
+    print('\n')
+
+    # Convert date string to datetime using phjUKDateStrToDatetime() function
+    phjTempDF['datecol'] = phjTempDF['datecol'].apply(lambda x: epy.phjUKDateStrToDatetime(x,phjCentury = 2000,phjPrintResults = True))
+    print('\n')
+
+    # Print new column and dtype
+    print("Date column dtype")
+    print("Example dateframe")
+    print('-----------------')
+    print(phjTempDF)
+    print('\n')
+    print("Date column dtype")
+    print("-----------------")
+    print(phjTempDF.dtypes)
     '''
     
     # If the cell string is not NaN then attempt to process as a date string:
