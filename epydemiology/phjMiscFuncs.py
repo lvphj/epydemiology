@@ -1162,7 +1162,43 @@ def phjStripWhiteSpc(phjDF,
 
     Examples
     --------
+    # Define a dataframe with a column that contains data consisting of strings and numeric values
+    phjTempDF = pd.DataFrame({'column1':[' abc  ',1,' def  ',2,3.14,' ghi  ']})
+    print(phjTempDF)
+
+    # View the mixed data types in 'column1' of the dataframe
+    # Taken from: https://stackoverflow.com/questions/38964819/warning-multiple-data-types-in-column-of-very-large-dataframe
+    print('dtypes of data columns in dataframe')
+    print('-----------------------------------')
+    print(phjTempDF.dtypes)
+    print('\n')
+
+    print('Number of each different data type in single column')
+    print('---------------------------------------------------')
+    phjTempDF['column1'].apply(type).value_counts()
+
+    # Create a second dataframe and create a column that contains the values
+    # from the original dataframe but with trailing white space stripped using
+    # standard .str.strip() method. Notice that the values which were not strings
+    # have been converted to NaN values.
+    phjTemp2DF = pd.DataFrame()
+    phjTemp2DF['column1'] = phjTempDF['column1'].str.strip()
     
+    print('Effect of using standard .str.strip() method on object column')
+    print('-------------------------------------------------------------')
+    print(phjTemp2DF)
+
+    # Strip white space from string values only
+    phjTempDF = epy.phjStripWhiteSpc(phjTempDF,
+                                     phjPrintResults = False)
+
+    print('Effect of stripping white space from object column using phjStripWhiteSpc()')
+    print('---------------------------------------------------------------------------')
+    print(phjTempDF)
+    print('\n')
+
+    print('...but the data types within the column remain the same')
+    phjTempDF['column1'].apply(type).value_counts()
     '''
 
     
