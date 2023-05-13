@@ -15,8 +15,6 @@ from .phjMiscFuncs import phjReverseMap
 from .phjMiscFuncs import phjRetrieveUniqueFromMultiDataFrames
 from .phjMiscFuncs import phjUpdateLUT
 from .phjMiscFuncs import phjUpdateLUTToLatestValues
-from .phjMiscFuncs import phjStripWhiteSpc
-from .phjMiscFuncs import phjUKDateStrToDatetime
 
 from .phjMatrices import phjBinaryVarsToSquareMatrix
 from .phjMatrices import phjLongToWideBinary
@@ -32,6 +30,8 @@ from .phjCleanUKPostcodes import phjPostcodeFormat7
 from .phjCleanUKPostcodes import phjConvertOSGridRefToLatLong
 
 from .phjCleanData import phjParseDateVar
+from .phjCleanData import phjStripWhiteSpc
+from .phjCleanData import phjUKDateStrToDatetime
 
 from .phjExploreData import phjViewLogOdds
 from .phjExploreData import phjCategoriseContinuousVariable
