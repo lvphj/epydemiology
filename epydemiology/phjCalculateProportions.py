@@ -70,33 +70,6 @@ from .phjTestFunctionParameters import phjAssert
 # ==============
 # Main functions
 # ==============
-#
-# Calculate binomial proportions
-# ------------------------------
-# This function calculates the binomial proportions for a series of binomial variables
-# for each level of a given group variable. The dataframe has the following format:
-#
-#         group     A    B    C
-#     0      g1   yes   no  yes
-#     1      g1   yes  NaN  yes
-#     2      g2    no  NaN  yes
-#     3      g1    no  yes  NaN
-#     4      g2    no  yes   no
-#     5      g2    no  yes  yes
-#     6      g1    no  yes  yes
-#     7      g1   yes   no  yes
-#     8      g2   NaN   no   no
-#     9      g1   yes   no   no
-#
-#  ...and produces the following dataframe:
-#
-#     group   var   count   success   propn
-#        g1     A       6         4    0.66
-#        g1     B       5         2    0.40
-#        g1     C       5         4    0.80
-#        g2     A       3         0    0.00
-#        g2     B       4         2    0.50
-#        g2     C       4         2    0.50
  
 def phjCalculateBinomialProportions(phjDF,
                                     phjColumnsList,
@@ -110,7 +83,40 @@ def phjCalculateBinomialProportions(phjDF,
                                     phjSortProportions = False,
                                     phjGraphTitle = None,
                                     phjPrintResults = False):
- 
+    
+    """
+    Calculates the binomial proportions for a series of binomial variables for each level of a given group variable
+    
+    The input dataframe has the following format (where columns A, B and C indicate the presence
+    or absence of individual characteristics):
+
+            group     A    B    C
+        0      g1   yes   no  yes
+        1      g1   yes  NaN  yes
+        2      g2    no  NaN  yes
+        3      g1    no  yes  NaN
+        4      g2    no  yes   no
+        5      g2    no  yes  yes
+        6      g1    no  yes  yes
+        7      g1   yes   no  yes
+        8      g2   NaN   no   no
+        9      g1   yes   no   no
+
+
+    ...and produces the following dataframe:
+
+            group   var   count   success   propn
+        0      g1     A       6         4    0.66
+        1      g1     B       5         2    0.40
+        2      g1     C       5         4    0.80
+        3      g2     A       3         0    0.00
+        4      g2     B       4         2    0.50
+        5      g2     C       4         2    0.50
+
+    A more detailed description of the function and its usage can be found at:
+        https://github.com/lvphj/epydemiology/wiki/Calculate-and-plot-proportions
+    """
+    
     # Check whether required parameters have been set to correct type and are set to
     # allowable values. N.B. isinstance() can take a tuple to test against multiple types.
     try:
