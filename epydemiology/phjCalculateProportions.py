@@ -112,7 +112,9 @@ def phjCalculateBinomialProportions(phjDF,
         3      g2     A       3         0    0.00
         4      g2     B       4         2    0.50
         5      g2     C       4         2    0.50
-
+    
+    See Also
+    --------
     A more detailed description of the function and its usage can be found at:
         https://github.com/lvphj/epydemiology/wiki/Calculate-and-plot-proportions
     """
@@ -335,11 +337,7 @@ def phjCalculateBinomialProportions(phjDF,
  
  
  
-# Calculates relative frequencies and multinomial confidence intervals
-# --------------------------------------------------------------------
-# This function calculates proportions, simultaneous confidence intervals for a categorical
-# variable and plots bar charts with asymmetrical error bars.
- 
+
 def phjCalculateMultinomialProportions(phjDF,
                                        phjCategoryVarName,
                                        phjGroupVarName = None,
@@ -351,6 +349,66 @@ def phjCalculateMultinomialProportions(phjDF,
                                        phjGroupsToPlotList = None,   # Currently not implemented
                                        phjGraphTitle = None,
                                        phjPrintResults = False):
+    
+    """
+    Calculates relative frequencies and multinomial confidence intervals
+    
+    This function calculates proportions and simultaneous confidence intervals for a categorical
+    variable, and plots bar charts with asymmetrical error bars.
+    
+    The input dataframe has the following format (where 'category' is a categorical
+    variable over which the multinomial proportions are calculated (e.g. dog breed),
+    'group indicates group membership for which multinomial confidence intervals will be
+    separately calculated (e.g. cases and controls), and 'catint' is an arbitrary variable
+    included in the dataset:
+    
+              group  category  catint
+        0      case       NaN       1
+        1      case   spaniel       2
+        2      case   missing       3
+        3   control   terrier       2
+        4   control    collie       3
+        5      case  labrador       2
+        6      case  labrador       1
+        7      case    collie       2
+        8   control   spaniel       1
+        9   control   spaniel       2
+        10  control  labrador       3
+        11  control    collie       2
+        12     case   terrier       3
+        13     case   terrier       2
+        14     case   terrier       3
+        15  control    collie       1
+        16  control  labrador       2
+        17  control  labrador       3
+        18  control  labrador       2
+        19     case   spaniel       3
+        20     case   spaniel       2
+        21     case    collie       3
+        22     case    collie       2
+        23     case    collie       3
+        24      NaN   terrier       1
+        25      NaN   spaniel       2
+    
+    The output dataframe takes the form:
+    
+                 case_count  control_count  case_prop  control_prop  case_95CI_llim  \
+        spaniel           3              2   0.250000           0.2        0.068217   
+        terrier           3              1   0.250000           0.1        0.068217   
+        collie            4              3   0.333333           0.3        0.108808   
+        labrador          2              4   0.166667           0.4        0.034702   
+        
+                  case_95CI_ulim  control_95CI_llim  control_95CI_ulim  
+        spaniel         0.602809           0.041845           0.588663  
+        terrier         0.602809           0.012443           0.494901  
+        collie          0.671876           0.082588           0.671084  
+        labrador        0.526666           0.132347           0.744489  
+    
+    See Also
+    --------
+    A more detailed description of the function and its usage can be found at:
+        https://github.com/lvphj/epydemiology/wiki/Calculate-and-plot-proportions
+    """
     
     # Check whether required parameters have been set to correct type and are set to
     # allowable values. N.B. isinstance() can take a tuple to test against multiple types.
