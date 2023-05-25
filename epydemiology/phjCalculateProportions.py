@@ -698,10 +698,17 @@ def phjSummaryTableToBinaryOutcomes(phjDF,
                                     phjOutcomeVarName = 'outcome',
                                     phjPrintResults = False):
     
-    # This function takes a table of counted binary results and converts it
-    # to a dataframe of binary outcomes, ready for logistic regression.
-    # (This is useful if the function used to do logistic regression does not
-    # include a frequency weight option.)
+    """
+    Converts a table containing summary count data (e.g. number of cases of disease
+    per year) and converts it to a dataframe containing binary outcome data. This is
+    useful when creating logistic regression models but the function does not have an
+    option to include frequency weights.
+    
+    See Also
+    --------
+    A more detailed description of the function and its usage can be found at:
+        https://github.com/lvphj/epydemiology/wiki/Convert-a-disease-summary-table-to-a-dataframe-of-binary-outcomes
+    """
     
     # Check whether function parameters have been set to correct type and are of
     # correct values.
