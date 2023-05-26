@@ -704,6 +704,28 @@ def phjSummaryTableToBinaryOutcomes(phjDF,
     useful when creating logistic regression models but the function does not have an
     option to include frequency weights.
     
+    The format of the original table of summary results may take the following format:
+    
+           year  cases  controls
+        0  2010     23      1023
+        1  2011     34      1243
+        2  2012     41      1145
+        3  2013     57      2017
+        4  2014     62      1876
+        
+        This dataset has a total of 7,521 subjects, 217 cases and 7,304 controls. The
+        phjSummaryTableToBinaryOutcomes() function would return a dataframe with 7,521
+        rows of data with the following structure:
+        
+              year  outcome
+        0     2010        1
+        1     2010        1
+        2     2010        1
+        ...    ...      ...
+        7518  2014        0
+        7519  2014        0
+        7520  2014        0
+    
     See Also
     --------
     A more detailed description of the function and its usage can be found at:
