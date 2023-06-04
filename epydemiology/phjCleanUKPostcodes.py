@@ -6,6 +6,10 @@ These functions take a dataframe containing postcode information and attempts
 to correct errors and extract outward (first half), inward (second half) and
 postcode area (first letters) components of the postcode.
 
+In a similar vein, functions are also included to extract Ordnance Survey grid
+references from column of free-text, correct typos, adjust to required accuracy
+and convert to latitude and longitude.
+
 """
 
 # Import required packages
@@ -43,16 +47,35 @@ else:
     import epydemiology as epy
 
 
+try:
+    pkg_resources.get_distribution('osgb')
+except pkg_resources.DistributionNotFound:
+    osgbPresent = False
+    print("Error: OSGB package not available.")
+else:
+    osgbPresent = True
+    import osgb as osgb
+    
+
 # Checking that pyxdameraulevenshtein package is installed does not work using the
 # above method because attribute .DistributionNotFound is not present.
+# Installation of pyxdameraulevenshtein library requires access to C compiler which may
+# not be available on all systems. If pyxdameraulevenshtein library is not installed
+# then pyxdlPresent is set to False and an alternative, pure Python implementation by
+# Michael Homer can be used instead.
 try:
     import pyxdameraulevenshtein as pyxdl
+    pyxdlPresent = True
 except ImportError:
     print("Error: pyxdameraulevenshtein package not installed. Some features may not be available.")
+    pyxdlPresent = False
 
 
 import re
 import math
+import inspect
+
+from .phjTestFunctionParameters import phjAssert
 
 
 
@@ -555,7 +578,7 @@ def phjGetPostcodeRegexGroupNamesList(phjPrintResults = False):
 def phjGetCompiledPostcodeRegex(phjPostcodeComponent = 'all',
                                 phjPrintResults = False):
     
-    # This function returns returns a compiled regex for either the whole postcode regex
+    # This function returns a compiled regex for either the whole postcode regex
     # or a component of the postcode regex (outward or inward)
     
     # Retrieve postcode regex definitions for outward and inward parts and compile
@@ -911,7 +934,7 @@ def phjPostcodeFormat7(phjDF,
                                                            (phjDF[phjPostcodeVarName].str.len() <= 7),phjPostcodeVarName]
             
             # Remove all whitespace and punctuation from the text strings and convert to upper case.
-            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','').str.upper()
+            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','',regex = True).str.upper()
         
         else:
             # Copy potential postcode strings to postcode7 variable irrespective of content
@@ -920,7 +943,7 @@ def phjPostcodeFormat7(phjDF,
             # Remove all whitespace and punctuation from the text strings, remove strings
             # that contain fewer than 5 characters or greater than 7 characters and 
             # convert to upper case.
-            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','')
+            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','',regex = True)
             phjDF[phjPostcode7VarName] = phjDF.loc[(phjDF[phjPostcode7VarName].str.len() >= 5) &
                                                            (phjDF[phjPostcode7VarName].str.len() <= 7),phjPostcode7VarName]
             phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.upper()
@@ -929,7 +952,7 @@ def phjPostcodeFormat7(phjDF,
         # Basically, the following function puts a space between the leading characters and the final 3 characters.
         # If the pattern now consists of 2 characters and a space at the start of the string, add an extra space.
         # If the pattern consists of 4 characters and a space at the start of the string, remove the space.
-        phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('(\w{3})$',r' \1').str.replace('^(\w{2})\s',r'\1  ').str.replace('^(\w{4})\s',r'\1')
+        phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('(\w{3})$',r' \1',regex = True).str.replace('^(\w{2})\s',r'\1  ',regex = True).str.replace('^(\w{4})\s',r'\1',regex = True)
     
     return phjDF
 
@@ -1079,9 +1102,31 @@ def phjCalcMinDamLevDistAndEdits(x,
     # Convert the numpy array of postcodes to a Pandas dataframe
     phjPostcodeDF = pd.DataFrame(phjRealPostcodeArr,columns = ['pcdMin'])
     
-    # Calculate distance from string to each postcode in dataframe
-    phjPostcodeDF['tempDL'] = pyxdl.damerau_levenshtein_distance_ndarray(x[phjNewPostcodeVarName], phjRealPostcodeArr)
+    # Calculate Damerau-Levenshtein distance from entered postcode to all real postcodes
+    # Calculate distance from string to each element in an array.
+    # Ideally use pyxdameraulevenshtein library because faster but if not installed
+    # then use pure Python implementation by Michael Homer available at:
+    # https://web.archive.org/web/20150909134357/http://mwh.geek.nz:80/2009/04/26/python-damerau-levenshtein-distance/
     
+    # Set pyxdlPresent to False for testing purposes, to force the use of an
+    # algorithm different from pyxdameraulevenshtein  - comment out when testing complete
+    #pyxdlPresent = False
+    
+    if pyxdlPresent == True:
+        # In versions of pyxdameraulevenshtein library before 1.7.0, the function used was
+        # damerau_levenshtein_distance_ndarray(). This used np.array.
+        # In version 1.7.0, the function was changed to damerau_levenshtein_distance_seqs()
+        # which uses built-in Python lists.
+        # The following addressess issue #44 on epydemiology GitHub Issues page.
+        if pkg_resources.get_distribution("pyxdameraulevenshtein").version < '1.7.0':
+            phjPostcodeDF['tempDL'] = pyxdl.damerau_levenshtein_distance_ndarray(x[phjNewPostcodeVarName], phjRealPostcodeArr)
+            
+        else:
+            phjPostcodeDF['tempDL'] = pyxdl.damerau_levenshtein_distance_seqs(x[phjNewPostcodeVarName], phjRealPostcodeArr)
+            
+    else:
+        phjPostcodeDF['tempDL'] = mhDamerauLevenshtein(x[phjNewPostcodeVarName], phjRealPostcodeArr)
+            
     # Calculate minimum DL distance
     phjMinDamLevDist = phjPostcodeDF['tempDL'].min(axis = 0)
     
@@ -1113,7 +1158,7 @@ def phjCalcMinDamLevDistAndEdits(x,
                                                                                                                     phjColHeading = 'pcdMin',
                                                                                                                     phjCleanInputStrings = False,
                                                                                                                     phjIncludeEquivalenceEdits = False),axis=1)
-
+        
         
         
                 
@@ -1129,6 +1174,86 @@ def phjCalcMinDamLevDistAndEdits(x,
     print('   Returned list of edits: {0}\n'.format([phjMinDamLevDist,phjPossPostcodesList]))
     
     return pd.Series([phjMinDamLevDist,phjPossPostcodesList],index=['minDamLevDist','bestAlternatives'])
+
+
+def mhDamerauLevenshtein(seq,seqArr):
+    # This function compares a fixed sequence with every element in an array and
+    # produces a list of DL distances using the pure Python implementation of the
+    # Damerau-Levenshtein algorithm by Michael Homer as an alternative to using the
+    # faster pyxdameraulevenshtein library which may not be installable on some systems.
+    phjList = []
+    for iseq in seqArr:
+        phjList.append(dameraulevenshtein(seq,iseq))
+    return phjList
+
+
+def dameraulevenshtein(seq1, seq2):
+# Pure Python implementation to calculate Damerau-Levenshtein by Michael Homer available at:
+# https://web.archive.org/web/20150909134357/http://mwh.geek.nz:80/2009/04/26/python-damerau-levenshtein-distance/
+# Original implementation in Python 2; could be updated to Python 3 using 2to3 but
+# in the following, the code was updated by hand.
+    """Calculate the Damerau-Levenshtein distance between sequences.
+
+    This distance is the number of additions, deletions, substitutions,
+    and transpositions needed to transform the first sequence into the
+    second. Although generally used with strings, any sequences of
+    comparable objects will work.
+
+    Transpositions are exchanges of *consecutive* characters; all other
+    operations are self-explanatory.
+
+    This implementation is O(N*M) time and O(M) space, for N and M the
+    lengths of the two sequences.
+
+    >>> dameraulevenshtein('ba', 'abc')
+    2
+    >>> dameraulevenshtein('fee', 'deed')
+    2
+
+    It works with arbitrary sequences too:
+    >>> dameraulevenshtein('abcd', ['b', 'a', 'c', 'd', 'e'])
+    2
+    """
+    # codesnippet:D0DE4716-B6E6-4161-9219-2903BF8F547F
+    # Conceptually, this is based on a len(seq1) + 1 * len(seq2) + 1 matrix.
+    # However, only the current and two previous rows are needed at once,
+    # so we only store those.
+#    oneago = None
+#    thisrow = range(1, len(seq2) + 1) + [0]
+#    for x in xrange(len(seq1)):
+#        # Python lists wrap around for negative indices, so put the
+#        # leftmost column at the *end* of the list. This matches with
+#        # the zero-indexed strings and saves extra calculation.
+#        twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
+#        for y in xrange(len(seq2)):
+#            delcost = oneago[y] + 1
+#            addcost = thisrow[y - 1] + 1
+#            subcost = oneago[y - 1] + (seq1[x] != seq2[y])
+#            thisrow[y] = min(delcost, addcost, subcost)
+#            # This block deals with transpositions
+#            if (x > 0 and y > 0 and seq1[x] == seq2[y - 1]
+#                and seq1[x-1] == seq2[y] and seq1[x] != seq2[y]):
+#                thisrow[y] = min(thisrow[y], twoago[y - 2] + 1)
+#    return thisrow[len(seq2) - 1]
+
+    oneago = None
+    thisrow = list(range(1, len(seq2) + 1)) + [0]
+    for x in range(len(seq1)):
+        # Python lists wrap around for negative indices, so put the
+        # leftmost column at the *end* of the list. This matches with
+        # the zero-indexed strings and saves extra calculation.
+        twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
+        for y in range(len(seq2)):
+            delcost = oneago[y] + 1
+            addcost = thisrow[y - 1] + 1
+            subcost = oneago[y - 1] + (seq1[x] != seq2[y])
+            thisrow[y] = min(delcost, addcost, subcost)
+            # This block deals with transpositions
+            if (x > 0 and y > 0 and seq1[x] == seq2[y - 1]
+                and seq1[x-1] == seq2[y] and seq1[x] != seq2[y]):
+                thisrow[y] = min(thisrow[y], twoago[y - 2] + 1)
+    return thisrow[len(seq2) - 1]
+
 
 
 def phjCallDLEditsFunction(row,
@@ -1535,6 +1660,276 @@ def phjDefineKeyboardCoords(phjKeyboardType = 'qwerty'):
         phjKeyboardCoords = None
         
     return phjKeyboardCoords
+
+
+
+
+# Functions to extract and convert Ordnance Survey grid reference from column of text
+# ===================================================================================
+
+def phjConvertOSGridRefToLatLong(phjDF,
+                                 phjOrigGridRefVarName = 'origGridRef',
+                                 phjExtrGridRefStrVarName = 'extrGridRefStr',
+                                 phjFmtGridRefStrVarName = 'fmtGridRefStr',
+                                 phjAccuracyVarName = 'accuracy',
+                                 phjTruncateAccuracy = None,
+                                 phjErrorMsgVarName = 'errorMsg',
+                                 phjLatLongVarNameList = ['lat','long'],
+                                 phjPrintResults = False):
+    
+    # The function uses a regular expression to extract an OS grid reference
+    # from a string and convert to decimal latitude and longitude (need
+    # OSGB library installed).
+    
+    try:
+        phjAssert('phjDF',phjDF,pd.DataFrame,phjBespokeMessage = 'phjDF is not a Pandas dataframe.')
+        phjAssert('phjOrigGridRefVarName',phjOrigGridRefVarName,str,phjMustBePresentColumnList = phjDF.columns.tolist())
+        phjAssert('phjExtrGridRefStrVarName',phjExtrGridRefStrVarName,str,phjMustBeAbsentColumnList = phjDF.columns.tolist())
+        phjAssert('phjFmtGridRefStrVarName',phjFmtGridRefStrVarName,str,phjMustBeAbsentColumnList = phjDF.columns.tolist())
+        phjAssert('phjAccuracyVarName',phjAccuracyVarName,str,phjMustBeAbsentColumnList = phjDF.columns.tolist())
+        
+        if phjTruncateAccuracy is not None:
+            phjAssert('phjTruncateAccuracy',phjTruncateAccuracy,int,phjAllowedOptions = [1000,100,10,1])
+        
+        phjAssert('phjErrorMsgVarName',phjErrorMsgVarName,str,phjMustBeAbsentColumnList = phjDF.columns.tolist())
+        
+        if phjLatLongVarNameList is not None:
+            phjAssert('phjLatLongVarNameList',phjLatLongVarNameList,list)
+            
+            assert len(phjLatLongVarNameList) == 2,"Variable phjLatLongVarNameList must be a list of 2 elements."
+            
+            for i in phjLatLongVarNameList:
+                assert isinstance(i,str),"Elements in list must be strings."
+        
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+    
+    
+    except AssertionError as e:
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    else:
+
+    
+    
+        # Accuracy can be truncated to required level of accuracy in metres; options are None, 1000, 100, 10, 1.
+    
+        # Function creates temporary columns - ensure they don't already exist
+        # Need to check columns tempMap and tempCoords don't exist
+        # Also tempCoordsList
+        # Also tempLatLong (but only if phjLatLongVarNameList is not None)
+    
+        # phjLatLongVarName can be a list of 2 variable names or can be None if conversion
+        # is not required.
+    
+        # Create a working dataframe so that if any errors occur, the original dataframe
+        # can be returned
+        phjWorkingDF = phjDF.copy()
+    
+        # Record original column names
+        phjOrigCols = phjWorkingDF.columns.to_list()
+    
+        # Define regex to extract any grid reference included in freetext field
+        phjExtractGridRefStrRegex = re.compile('([HJNOST][A-HJ-Z]\s*[0-9]{2,6}\s*[0-9]{2,6})',re.I)
+    
+        # Extract regex from text column
+        phjWorkingDF[phjExtrGridRefStrVarName] = phjWorkingDF[phjOrigGridRefVarName].str.strip().str.extract(phjExtractGridRefStrRegex)
+
+        # Replace multiple white space in extracted string with single space
+        phjWorkingDF[phjExtrGridRefStrVarName] = phjWorkingDF[phjExtrGridRefStrVarName].replace('\s+', ' ', regex=True)
+        phjWorkingDF[phjExtrGridRefStrVarName] = phjWorkingDF[phjExtrGridRefStrVarName].str.upper()
+    
+        if phjPrintResults == True:
+            with pd.option_context('display.max_rows', 80, 'display.max_columns', 6, 'display.max_colwidth', 40):
+                print('Extracted grid references')
+                print('=========================')
+                print(phjWorkingDF[[phjOrigGridRefVarName,phjExtrGridRefStrVarName]])
+                print('\n')
+            
+        # Create column containing OS map (i.e. first 2 capital letters)
+        phjWorkingDF['tempMap'] = phjWorkingDF[phjExtrGridRefStrVarName].str[:2]
+
+        # Create all the digits representing the grid reference co-ordinates data
+        phjWorkingDF['tempCoords'] = phjWorkingDF[phjExtrGridRefStrVarName].str.extract('([0-9]{2,6}\s*[0-9]{2,6}$)')
+    
+        if phjPrintResults == True:
+            print('Temporary map and co-ordinates')
+            print('==============================')
+            print(phjWorkingDF)
+            print('\n')
+    
+    
+        # Convert the grid reference co-ordinate values to appropriate number of digits (e.g. if there
+        # are 2 integers with different number of digits then set both to same as the minimum)
+        # using the functions defined above
+
+        # N.B. There is no axis param for a Series.apply call, as distinct to a
+        # DataFrame.apply call, therefore use the phjMapRefDF[['coords']] structure
+        # rather than phjMapRefDF['coords']
+        phjWorkingDF['tempCoordsList'],phjWorkingDF[phjAccuracyVarName],phjWorkingDF[phjErrorMsgVarName] = zip(*phjWorkingDF.apply(lambda x: phjGetGridRefCoords(x,
+                                                                                                                                     phjExtrGridRefStrVarName = phjExtrGridRefStrVarName,
+                                                                                                                                     phjTruncateAccuracy = phjTruncateAccuracy),
+                                                                                                                 axis = 1))
+    
+        if phjPrintResults == True:
+            print('Extracted valid information')
+            print('===========================')
+            print(phjWorkingDF)
+            print('\n')
+        
+        
+        # Produce final formatted grid reference
+        phjWorkingDF[phjFmtGridRefStrVarName] = phjWorkingDF[['tempMap','tempCoordsList']].apply(lambda x: phjConcatCols(x), axis = 1)
+
+        if phjPrintResults == True:
+            print('Formatted grid reference')
+            print('========================')
+            print(phjWorkingDF)
+            print('\n')
+    
+    
+        # Convert to latitude and longitude
+        if phjLatLongVarNameList is not None:
+            phjWorkingDF['tempLatLong'] = phjWorkingDF[phjFmtGridRefStrVarName].apply(lambda x: phjConvertGrid(x))
+
+            phjWorkingDF[phjLatLongVarNameList] = pd.DataFrame(phjWorkingDF["tempLatLong"].to_list(),
+                                                        index = phjWorkingDF.index)
+
+            phjWorkingDF[phjLatLongVarNameList[0]] = pd.to_numeric(phjWorkingDF[phjLatLongVarNameList[0]], errors = 'coerce')
+            phjWorkingDF[phjLatLongVarNameList[1]] = pd.to_numeric(phjWorkingDF[phjLatLongVarNameList[1]], errors = 'coerce')
+
+        if phjPrintResults == True:
+            print('Grid reference with converted latitude and longitude')
+            print('====================================================')
+            print(phjWorkingDF)
+            print('\n')
+        
+        # Copy working dataframe back to phjDF so it can be returned
+        phjDF = phjWorkingDF[phjOrigCols + [phjExtrGridRefStrVarName, phjFmtGridRefStrVarName, phjAccuracyVarName, phjErrorMsgVarName] + phjLatLongVarNameList].copy()
+
+    # Return final dataframe
+    return phjDF
+
+
+# Occasional typos occur when entering grid reference. The most common
+# typo seems to be due to missing one digit from easting or northing,
+# especially if there are 4 or more digits. The following function
+# sets number of digits in each value to be equal to the minimum number,
+# including truncated to required accuracy given in function arguments,
+# without rounding (as required by OS because grid reference should
+# define the bottom left corner of the containing square).
+def phjGetGridRefCoords(row,
+                        phjExtrGridRefStrVarName = 'extrGridRefStr',
+                        phjTruncateAccuracy = None):
+    
+    if pd.notna(row[phjExtrGridRefStrVarName]):
+    
+        # Ensure digits are represented as a string
+        x = str(row['tempCoords'])
+        
+        # Calculate number of digits required for requested accuracy.
+        # The [5 - int(math.log10(phjTruncateAccuracy))] code converts 1 to 5 and 1000 to 2
+        if phjTruncateAccuracy in [1000,100,10,1]:
+            phjAccChars = (5 - int(math.log10(phjTruncateAccuracy)))
+        else:
+            phjAccChars = None
+
+        # If string representing easting and northing contains a space then
+        # split into list at the space
+        if (re.search('\s+',x)):
+            n = re.split('\s+',x)
+
+            # Convert integer to required number of digits (i.e. both set to minimum length)
+            # and truncate to required accuracy if excessive digits present in original.
+            if phjAccChars is not None:
+                minLen = min([len(i) for i in n] + [phjAccChars])
+            else:
+                minLen = min([len(i) for i in n])
+                
+            n = [i[:minLen] for i in n]
+
+            # Calculate accuracy of grid reference
+            a = int(math.pow(10,(5 - minLen)))
+
+            # Message relating to grid reference
+            m = ''
+
+        # If string representing easting and northing does not contain a
+        # space but consists of an even number of digits then split into
+        # list consisting of 2 equal strings
+        elif (len(x)%2 == 0):
+            n = [x[:int(len(x)/2)],
+                 x[int(len(x)/2):]]
+            
+            # Truncate to required accuracy
+            if phjAccChars is not None:
+                n = [i[:min([len(i),phjAccChars])] for i in n]
+            
+            # Calculate accuracy of grid reference
+            a = 1 * int(math.pow(10,5 - min([len(x)/2,phjAccChars])))
+
+            # Message relating to grid reference
+            m = ''
+
+        # If string representing easting and northing does not contain a
+        # space and consists of an ODD number of digits then cannot
+        # divide into easting and northing
+        elif (len(x)%2 == 1):
+            n = np.nan
+            a = np.nan
+            m = 'Discrepancy in accuracy of easting and northing'
+            
+        else:
+            n = np.nan
+            a = np.nan
+            m = 'Misc error'
+    
+    else:
+        n = np.nan
+        a = np.nan
+        m = 'Unable to extract grid reference'
+    
+    return n,a,m
+
+
+
+# Recombine values to produce a column containing grid reference to appropriate level
+# of accuracy
+def phjConcatCols(x):
+    if np.all(pd.notnull(x)):
+        s = x['tempMap'] + ''.join(x['tempCoordsList'])
+    else:
+        s = np.nan
+        
+    return s
+
+
+
+# The following version of the phjConvertGrid() function uses
+# the OSGB library, which seems to perform better than previously
+# tried libraries or functions.
+def phjConvertGrid(x):
+    if pd.notnull(x):
+        # Convert OS map reference to grid reference using osgb.gridder() function
+        phjTempEast,phjTempNrth = osgb.gridder.parse_grid(x)
+        
+        # Convert grid reference to longitude and latitude
+        phjLatLong = osgb.convert.grid_to_ll(phjTempEast,phjTempNrth,model = u'WGS84')
+        
+    else:
+        phjLatLong = np.nan
+        
+    return phjLatLong
+
 
 
 if __name__ == '__main__':

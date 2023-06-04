@@ -53,6 +53,7 @@ else:
 
 import re
 import collections
+import inspect
 
 
 
@@ -70,6 +71,7 @@ from .phjRROR import phjRemoveNaNRows
 from .phjCalculateProportions import phjDefineSuffixDict
 from .phjCalculateProportions import phjGetYErrors
 from .phjExtFuncs import getJenksBreaks
+from .phjTestFunctionParameters import phjAssert
 
 
 
@@ -78,10 +80,14 @@ from .phjExtFuncs import getJenksBreaks
 # ==============
 #
 def phjViewLogOdds(phjDF,
-                   phjBinaryDepVarName = None,
+                   phjBinaryDepVarName = None,   # This is a required variable therefore setting default to None
+                                                 # is not required but all parameters without default values need
+                                                 # to be defined first which would change the order in which
+                                                 # parameters are defined; and order is useful to ensure correct
+                                                 # values are defined.
                    phjCaseValue = 1,
                    phjContIndepVarName = None,
-                   phjMissingValue = 'missing',
+                   phjMissingValue = np.nan,
                    phjNumberOfCategoriesInt = 5,
                    phjNewCategoryVarName = None,
                    phjCategorisationMethod = 'jenks',   # Need to be able to pass a list of cut-off values here as well.
@@ -99,25 +105,58 @@ def phjViewLogOdds(phjDF,
         phjNewCategoryVarName = phjSuffixDict['joinstr'].join([phjContIndepVarName.replace(' ','_'),
                                                                phjSuffixDict['categorisedvar']])
     
-    ###
-    ### NEED TO CHECK THAT CATEGORICAL VAR NAME DOES NOT ALREADY EXIST
-    ###
+    try:
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        phjAssert('phjBinaryDepVarName',phjBinaryDepVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        phjAssert('phjCaseValue',phjCaseValue,(str,int,float),phjAllowedOptions = list(phjDF[phjBinaryDepVarName].replace(phjMissingValue,np.nan).dropna().unique()))
+        phjAssert('phjContIndepVarName',phjContIndepVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        phjAssert('phjMissingValue',phjMissingValue,(str,int,float))
+        phjAssert('phjNumberOfCategoriesInt',phjNumberOfCategoriesInt,int,phjAllowedOptions = {'min':2,'max':len(phjDF.index)})
+        phjAssert('phjNewCategoryVarName',phjNewCategoryVarName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        phjAssert('phjCategorisationMethod',phjCategorisationMethod,(str,collections.abc.Mapping))
+        
+        if phjGroupVarName is not None:
+            phjAssert('phjGroupVarName',phjGroupVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        
+        phjAssert('phjAlpha',phjAlpha,float,phjAllowedOptions = {'min':0.0001,'max':0.9999})
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+        
+    except AssertionError as e:
+        
+        # Assign value to variable phjOR which will be returned at end of function.
+        phjOR = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
     
-    # Retain only those columns that will be analysed (otherwise, it is feasible that
-    # unrelated columns that contain np.nan values will cause removal of rows in
-    # unexpected ways.
-    phjDF = phjDF[[col for col in [phjBinaryDepVarName,phjContIndepVarName,phjGroupVarName] if col is not None]]
-    
-    # Data to use - remove rows that have a missing value
-    phjDF = phjRemoveNaNRows(phjDF = phjDF,
+    else:
+        # Retain only those columns that will be analysed (otherwise, it is feasible that
+        # unrelated columns that contain np.nan values will cause removal of rows in
+        # unexpected ways.
+        phjDF = phjDF[[col for col in [phjBinaryDepVarName,phjContIndepVarName,phjGroupVarName] if col is not None]]
+        
+        # Data to use - remove rows that have a missing value
+        phjDF = phjRemoveNaNRows(phjDF = phjDF,
                                  phjCaseVarName = phjBinaryDepVarName,
                                  phjRiskFactorVarName = phjContIndepVarName,
                                  phjMissingValue = phjMissingValue)
-    
-    # Convert a continuous variable to a categorical variable using a variety of methods.
-    # If phjReturnBreaks = True then function also returns a list of the break points
-    # for the continuous variable.
-    phjDF, phjBreaks = phjCategoriseContinuousVariable(phjDF = phjDF,
+        
+        # Deep copy phjDF to phjDF to avoid errors relating editing dataframe slice
+        phjDF = phjDF.copy(deep = True)
+        
+        # Convert a continuous variable to a categorical variable using a variety of methods.
+        # If phjReturnBreaks = True then function also returns a list of the break points
+        # for the continuous variable.
+        phjDF, phjBreaks = phjCategoriseContinuousVariable(phjDF = phjDF,
                                                            phjContinuousVarName = phjContIndepVarName,
                                                            phjMissingValue = phjMissingValue,
                                                            phjNumberOfCategoriesInt = phjNumberOfCategoriesInt,
@@ -125,92 +164,97 @@ def phjViewLogOdds(phjDF,
                                                            phjCategorisationMethod = phjCategorisationMethod,
                                                            phjReturnBreaks = True,
                                                            phjPrintResults = phjPrintResults)
-    
-    # If the breaks have been calculated (and the continuous variable categorised successfully)
-    # then plot the graph of logodds against mid-points
-    if phjBreaks is not None:
-        
-        # The following DF contains an index that may be numeric.
-        phjOR = phjOddsRatio(phjDF = phjDF,
-                             phjCaseVarName = phjBinaryDepVarName,
-                             phjCaseValue = phjCaseValue,
-                             phjRiskFactorVarName = phjNewCategoryVarName,
-                             phjRiskFactorBaseValue = 0,   # Use the minimum value as the base value (but it's not important in this context)
-                             phjMissingValue = phjMissingValue,
-                             phjAlpha = phjAlpha,
-                             phjPrintResults = phjPrintResults)
         
         
-        if phjOR is not None:
-            
-            phjOR[phjSuffixDict['logodds']] = np.log(phjOR[phjSuffixDict['odds']])
-            
-            # Calculate log odds using logistic regression and retrieve the se from the statistical model
-            phjSE = phjCalculateLogOddsSE(phjDF = phjDF,
-                                          phjCaseVarName = phjBinaryDepVarName,
-                                          phjCaseValue = phjCaseValue,
-                                          phjCategoricalVarName = phjNewCategoryVarName,
-                                          phjMissingValue = phjMissingValue,
-                                          phjAlpha = phjAlpha,
-                                          phjPrintResults = phjPrintResults)
-            
-            # Join to phjOR dataframe
-            phjOR = phjOR.join(phjSE)
-            
-            
-            # Calculate lower and upper limits assuming normal distribution
-            phjRelCoef = norm.ppf(1 - (phjAlpha/2))
-            
-            phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
-                                                 phjSuffixDict['cilowlim']])] = phjOR[phjSuffixDict['logodds']] - (phjRelCoef * phjOR[phjSuffixDict['stderr']])
-            
-            phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
-                                                 phjSuffixDict['ciupplim']])] = phjOR[phjSuffixDict['logodds']] + (phjRelCoef * phjOR[phjSuffixDict['stderr']])
+        print('Third DF')
+        print(phjBreaks)
+        print(phjDF)
+        
+        
+        
+        # If the breaks have been calculated (and the continuous variable categorised successfully)
+        # then plot the graph of logodds against mid-points
+        if phjBreaks is not None:
+        
+            # The following DF contains an index that may be numeric.
+            phjOR = phjOddsRatio(phjDF = phjDF,
+                                 phjCaseVarName = phjBinaryDepVarName,
+                                 phjCaseValue = phjCaseValue,
+                                 phjRiskFactorVarName = phjNewCategoryVarName,
+                                 phjRiskFactorBaseValue = 0,   # Use the minimum value as the base value (but it's not important in this context)
+                                 phjMissingValue = phjMissingValue,
+                                 phjAlpha = phjAlpha,
+                                 phjPrintResults = phjPrintResults)
             
             
-            # Calculae midpoints of categories
-            phjOR[phjSuffixDict['catmidpoints']] = [((phjBreaks[i] + phjBreaks[i+1]) / 2) for i in range(len(phjBreaks) - 1)]
+            print('Fourth DF')
+            print(phjOR)
             
             
-            # Plot log odds against midpoints of categories
-            phjYErrors = phjGetYErrors(phjDF = phjOR,
-                                       phjCategoriesToPlotList = phjOR.index.tolist(),
-                                       phjParameterValue = 'logodds',
-                                       phjGroupVarName = None,
-                                       phjGroupLevelsList = None,
-                                       phjAlpha = phjAlpha,
-                                       phjPrintResults = phjPrintResults)
-            
-            ax = phjOR.plot(x = phjSuffixDict['catmidpoints'],
-                            y = phjSuffixDict['logodds'],
-                            kind = 'line',
-                            yerr = phjYErrors,
-                            capsize = 4,
-                            title = 'Log-odds against mid-points of categories')
-            ax.set_ylabel("Log odds")
-            ax.set_xlabel(phjNewCategoryVarName)
-            ax.set_xlim([phjBreaks[0],phjBreaks[-1]])
-            
-            # Add vertical lines to indicate boundaries of categories
-            for xline in phjBreaks:
-                ax.axvline(x = xline,
-                           linestyle = 'dashed',
-                           color = 'gray')
+            if phjOR is not None:
+                
+                phjOR[phjSuffixDict['logodds']] = np.log(phjOR[phjSuffixDict['odds']])
+                
+                # Calculate log odds using logistic regression and retrieve the se from the statistical model
+                phjSE = phjCalculateLogOddsSE(phjDF = phjDF,
+                                              phjCaseVarName = phjBinaryDepVarName,
+                                              phjCaseValue = phjCaseValue,
+                                              phjCategoricalVarName = phjNewCategoryVarName,
+                                              phjMissingValue = phjMissingValue,
+                                              phjAlpha = phjAlpha,
+                                              phjPrintResults = phjPrintResults)
+                
+                # Join to phjOR dataframe
+                phjOR = phjOR.join(phjSE)
+                
+                
+                # Calculate lower and upper limits assuming normal distribution
+                phjRelCoef = norm.ppf(1 - (phjAlpha/2))
+                
+                phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
+                                                     phjSuffixDict['cilowlim']])] = phjOR[phjSuffixDict['logodds']] - (phjRelCoef * phjOR[phjSuffixDict['stderr']])
+                
+                phjOR[phjSuffixDict['joinstr'].join([phjSuffixDict['cisuffix'],
+                                                     phjSuffixDict['ciupplim']])] = phjOR[phjSuffixDict['logodds']] + (phjRelCoef * phjOR[phjSuffixDict['stderr']])
+                
+                
+                # Calculae midpoints of categories
+                phjOR[phjSuffixDict['catmidpoints']] = [((phjBreaks[i] + phjBreaks[i+1]) / 2) for i in range(len(phjBreaks) - 1)]
+                
+                
+                # Plot log odds against midpoints of categories
+                phjYErrors = phjGetYErrors(phjDF = phjOR,
+                                           phjCategoriesToPlotList = phjOR.index.tolist(),
+                                           phjParameterValue = 'logodds',
+                                           phjGroupVarName = None,
+                                           phjGroupLevelsList = None,
+                                           phjAlpha = phjAlpha,
+                                           phjPrintResults = phjPrintResults)
+                
+                ax = phjOR.plot(x = phjSuffixDict['catmidpoints'],
+                                y = phjSuffixDict['logodds'],
+                                kind = 'line',
+                                yerr = phjYErrors,
+                                capsize = 4,
+                                title = 'Log-odds against mid-points of categories')
+                ax.set_ylabel("Log odds")
+                ax.set_xlabel(phjNewCategoryVarName)
+                ax.set_xlim([phjBreaks[0],phjBreaks[-1]])
+                
+                # Add vertical lines to indicate boundaries of categories
+                for xline in phjBreaks:
+                    ax.axvline(x = xline,
+                               linestyle = 'dashed',
+                               color = 'gray')
         
         else:
-            # Otherwise, attempts to calculate the basic OR table failed and phjOR
-            # was returned as None. Strictly speaking, the following is not required
-            # but it makes it easier to follow the structure.
+            # Otherwise, attempts to categorise the data failed and phjBreaks returned as None
             phjOR = None
-    
-    else:
-        # Otherwise, attempts to categorise the data failed and phjBreaks returned as None
-        phjOR = None
     
     if phjPrintResults == True:
         print('\nOdds ratio dataframe')
         print(phjOR)
-
+    
     return phjOR
 
 
@@ -291,71 +335,125 @@ def phjCalculateLogOddsSE(phjDF,
 
 def phjCategoriseContinuousVariable(phjDF,
                                     phjContinuousVarName = None,
-                                    phjMissingValue = 'missing',
+                                    phjMissingValue = np.nan,
                                     phjNumberOfCategoriesInt = 5,
                                     phjNewCategoryVarName = None,
                                     phjCategorisationMethod = 'jenks',
                                     phjReturnBreaks = False,
                                     phjPrintResults = False):
     
+    phjDF = phjDF.copy(deep = True)
     
-    # Check if phjCategorisationMethod is a list.
-    # If so, the phjNumberOfCategoriesInt is ignored and the number of categories
-    # is inferred from the break points.
-    if isinstance(phjCategorisationMethod,collections.Sequence) and not isinstance(phjCategorisationMethod,str):
+    try:
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        phjAssert('phjContinuousVarName',phjContinuousVarName,str,phjMustBePresentColumnList = list(phjDF.columns))
         
-        # Check the list contains only numbers and that each consecutive number
-        # is greater than the number preceding it.
-        if phjCheckListOfIncreasingNumbers(phjList = phjCategorisationMethod) == True:
+        # Deal with missing values in continuous variable.
+        # The phjMissingValue argument can be str, float or int. If str then check that
+        # the only string in the column is equal to the phjMissingValue argument. This
+        # is done by creating a list of items that cannot be converted to a number and
+        # do not match the phjMissingValue argument. If the list is not empty then it
+        # indicates that there are strings in the variable.
+        phjAssert('phjMissingValue',phjMissingValue,(str,int,float))
+        phjExtraStrs = list(set([s for s in phjDF[phjContinuousVarName] if ((phjCheckIsNumber(s) is False) & (s != phjMissingValue))]))
+        assert len(phjExtraStrs) == 0, 'The continuous variable contains strings that are not recognised as missing values (namely {}).'.format(phjExtraStrs)
+        
+        phjAssert('phjNumberOfCategoriesInt',phjNumberOfCategoriesInt,int,phjAllowedOptions = {'min':2,'max':min([100,len(pd.to_numeric(phjDF[phjContinuousVarName],errors = 'coerce').dropna(axis = 0))])})
+        phjAssert('phjNewCategoryVarName',phjNewCategoryVarName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        
+        # Check phjCategorisationMethod is either a string indicating method to use to
+        # calculate breaks or a list giving required breaks.
+        # If a string is entered, check it is one of the recognised options.
+        # If a list is entered, check it contains only numbers and that each consecutive
+        # number is greater than the number preceding it.
+        phjAssert('phjCategorisationMethod',phjCategorisationMethod,(str,list))
+        if isinstance(phjCategorisationMethod,str):
+            phjAssert('phjCategorisationMethod', phjCategorisationMethod.lower(), str,
+                      phjBespokeMessage = "The selected method to calculate category boundaries is not recognised or has not yet been implemented. The variable '{}' has not been categorised.".format(phjContinuousVarName),
+                      phjAllowedOptions = ['quantile','jenks'])
+        elif isinstance(phjCategorisationMethod,collections.Sequence):
+            assert phjCheckListOfIncreasingNumbers(phjList = phjCategorisationMethod) == True, "The list entered for phjCategorisationMethod must contain sequentially increasing numbers."
+        
+        phjAssert('phjReturnBreaks',phjReturnBreaks,bool)
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+        
+    except AssertionError as e:
+        
+        # Define phjBreaks before returning at end of function
+        if phjReturnBreaks == True:
+            phjBreaks = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    else:
+        # Deal with missing values in continuous variable.
+        # If a variable contains a missing value string, the dtype is 'object'. If
+        # the missing value string is replaced by np.nan then the variable is changed
+        # to 'float' and number strings are converted to actual numbers. However, if
+        # there is another string in the variable, the dtype remains as 'object'; the
+        # latter situation should have been identified by the assert statement above.
+        phjContinuousSer = phjDF[phjContinuousVarName].replace(phjMissingValue,np.nan)
+        
+        
+        # Check if phjCategorisationMethod is a list.
+        # If so, the phjNumberOfCategoriesInt is ignored and the number of categories
+        # is inferred from the break points.
+        if isinstance(phjCategorisationMethod,collections.Sequence) and not isinstance(phjCategorisationMethod,str):
             
             phjBreaks = phjCategorisationMethod
             
-            phjDF[phjNewCategoryVarName] = pd.cut(phjDF[phjContinuousVarName],
-                                                      bins = phjBreaks,
-                                                      right = True,
-                                                      labels = False)
-        
-        else:
-            # If a list has been entered but it is not correct, return
-            # the dataframe unchanged.
-            phjDF = phjDF
-            phjBreaks = None
-    
-    
-    elif phjCategorisationMethod == 'jenks':
-        
-        phjBreaks = phjImplementGetBreaks(phjDF = phjDF,
-                                          phjContinuousVarName = phjContinuousVarName,
-                                          phjMissingValue = phjMissingValue,
-                                          phjNumberOfCategoriesInt = phjNumberOfCategoriesInt,
-                                          phjPrintResults = phjPrintResults)
-        
-        # Cut data series based on Jenks breaks
-        phjDF[phjNewCategoryVarName] = pd.cut(phjDF[phjContinuousVarName],
+            phjDF[phjNewCategoryVarName] = pd.cut(phjContinuousSer,
                                                   bins = phjBreaks,
                                                   right = True,
                                                   labels = False)
         
-        if phjPrintResults == True:
-            print('Category quantile bins (Jenks) = ',phjBreaks)
-    
-    
-    elif phjCategorisationMethod == 'quantile':
+        # If phjCategorisationMethod is a string, use the appropriate method to
+        # calculate breaks
+        # N.B. If add additional methods, remember to add to list in phjAssert() function.
+        elif isinstance(phjCategorisationMethod,str):
         
-        # Cut data series based on quantiles / number of required bins
-        phjDF[phjNewCategoryVarName], phjBreaks = pd.cut(phjDF[phjContinuousVarName],
-                                                             bins = phjNumberOfCategoriesInt,
-                                                             right = True,
-                                                             retbins = True,
-                                                             labels = False)
-        
-        if phjPrintResults == True:
-            print('Category quantile bins = ',phjBreaks)
+            if phjCategorisationMethod.lower() == 'jenks':
+            
+                phjBreaks = phjImplementGetBreaks(phjDF = phjDF,
+                                                  phjContinuousVarName = phjContinuousVarName,
+                                                  phjMissingValue = phjMissingValue,
+                                                  phjNumberOfCategoriesInt = phjNumberOfCategoriesInt,
+                                                  phjPrintResults = phjPrintResults)
+                
+                # Cut data series based on Jenks breaks
+                phjDF[phjNewCategoryVarName] = pd.cut(phjContinuousSer,
+                                                          bins = phjBreaks,
+                                                          right = True,
+                                                          labels = False)
+                
+                if phjPrintResults == True:
+                    print('Category quantile bins (Jenks) = ',phjBreaks)
+                    print('\n')
+            
+            
+            elif phjCategorisationMethod.lower() == 'quantile':
+            
+                # Cut data series based on quantiles / number of required bins
+                phjDF[phjNewCategoryVarName], phjBreaks = pd.cut(phjContinuousSer,
+                                                                 bins = phjNumberOfCategoriesInt,
+                                                                 right = True,
+                                                                 retbins = True,
+                                                                 labels = False)
+                
+                if phjPrintResults == True:
+                    print('Category quantile bins (quantile) = ',phjBreaks)
+                    print('\n')
     
-    
-    else:
-        print('The selected method to calculate category boundaries has not yet been implemented. The variable has not be categorised.')
-        phjBreaks = None
     
     if phjReturnBreaks == True:
         return phjDF,phjBreaks
@@ -420,7 +518,7 @@ def phjImplementGetBreaks(phjDF,
                           phjCategorisationMethod = 'jenks',
                           phjPrintResults = False):
     
-    phjTempSer = phjDF[phjContinuousVarName].replace('missing',np.nan).dropna(axis = 0)
+    phjTempSer = phjDF[phjContinuousVarName].replace(phjMissingValue,np.nan).dropna(axis = 0)
     
     if phjCategorisationMethod == 'jenks':
         if len(phjTempSer.index) <= 1000:
