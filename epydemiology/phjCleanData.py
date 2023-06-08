@@ -22,6 +22,10 @@ else:
 
 import datetime
 import re
+import inspect
+import sys
+
+from .phjTestFunctionParameters import phjAssert
 
 
 
@@ -402,6 +406,202 @@ def phjUKDateStrToDatetime(x,
         phjOut = np.nan
         
     return phjOut
+
+
+
+def phjAddColumnOfMinRepeatingString(phjDF,
+                                     phjColName,
+                                     phjNewColName,
+                                     phjPrefixStr = None,
+                                     phjSuffixStr = None,
+                                     phjStripWhiteSpc = True,
+                                     phjPrintResults = False):
+    """
+    Extracts minimum repeating string from string variable
+    
+    This function identifies the minimum string that is repeated in a given string. In the
+    event that the string does not consist of a repeating unit, the whole string is returned.
+    
+    
+    This function is based on an answer given by David Zhang at:
+    https://stackoverflow.com/questions/29481088/how-can-i-tell-if-a-string-repeats-itself-in-python/29482936
+    The function does not use regular expressions and appears to be much quicker than other methods.
+    
+    Parameters
+    ----------
+    phjDF : pd.DataFrame
+            A Pandas dataframe
+
+    phjColName : str
+                 The name of the column containing strings that may consist of replicating
+                 strings
+
+    phjNewColName : str
+                    The name of the column that will be added to the dataframe to contain
+                    the minimal replicating strings
+
+    phjPrefixStr : str
+                   Prefix string to remove from the start of the string before trying to
+                   find the replicating string.
+    
+    phjSuffixStr : str
+                   Suffix string to remove from the end of the string before trying to
+                   find the replicating string.
+    
+    phjStripWhiteSpc : Boolean
+                       The repeating string may contain a trailing space; strip the white
+                       space from the repeating string.
+    
+    phjPrintResults : Boolean
+                      Print intermediate results.
+    
+    Returns
+    -------
+    phjDF : Dataframe with additional column (phjNewColName) containing minimal repeating
+            string.
+
+    Raises
+    ------
+    AssertionError if any passed parameter is not correct.
+
+    See Also
+    --------
+    None
+
+    Examples
+    --------
+    df = pd.DataFrame({'OriginalStr':['Value:abcdabcd','defdefxyz','hij hij ']})
+    
+    df = epy.phjAddColumnOfMinRepeatingString(phjDF = df,
+                                              phjColName = 'OriginalStr',
+                                              phjNewColName = 'RepeatingStr',
+                                              phjPrefixStr = 'Value:',
+                                              phjSuffixStr = 'xyz',
+                                              phjStripWhiteSpc = True,
+                                              phjPrintResults = True)
+    
+    Returned dataframe
+    ==================
+          OriginalStr RepeatingStr
+    0  Value:abcdabcd         abcd
+    1       defdefxyz          def
+    2        hij hij           hij
+    
+    """
+    
+    
+    try:
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        phjAssert('phjColName',phjColName,str,phjMustBePresentColumnList = list(phjDF.columns))
+        phjAssert('phjNewColName',phjNewColName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        phjAssert('phjStripWhiteSpc',phjStripWhiteSpc,bool)
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+    
+    except AssertionError as e:
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    else:
+        phjDF[phjNewColName] = phjDF[phjColName].apply(lambda s: phjExtractRepeatingString(s,
+                                                                                           phjPrefixStr = phjPrefixStr,
+                                                                                           phjSuffixStr = phjSuffixStr,
+                                                                                           phjStripWhiteSpc = phjStripWhiteSpc,
+                                                                                           phjPrintResults = phjPrintResults))
+    
+    finally:
+        if phjPrintResults == True:
+            print('Returned dataframe')
+            print('==================')
+            with pd.option_context('display.max_rows',10, 'display.max_columns',10):
+                print(phjDF)
+            print('\n')
+        
+        return phjDF
+
+
+
+def phjExtractRepeatingString(phjStr,
+                              phjPrefixStr = None,
+                              phjSuffixStr = None,
+                              phjStripWhiteSpc = True,
+                              phjPrintResults = False):
+    """
+    Extract minimum repeating string from string
+    
+    This function identifies the minimum string that is repeated in a given string. In the
+    event that the string does not consist of a repeating unit, the whole string is returned.
+    """
+    if (phjPrefixStr is not None) | (phjSuffixStr is not None):
+        phjStr = phjRemoveAffixes(phjStr,
+                                  phjPrefixStr = phjPrefixStr,
+                                  phjSuffixStr = phjSuffixStr,
+                                  phjPrintResults = False)
+    
+    # Identify minimum repeating string
+    # The following finds the repeating string and, if it exists, assigns the string to
+    # the phjStr variable.
+    # In Python 3.8, the use of the Walrus operator (:=) would make things clearer. This
+    # operator evaluates the result before set value of a variable. However, the := operator
+    # is raised as a SyntaxError in earlier versions.
+    phjTemp = principal_period(phjStr)
+    if phjTemp != None:
+        phjStr = phjTemp
+    
+    # Strip white space from start and end of extracted repeating string
+    if phjStripWhiteSpc == True:
+        phjStr = phjStr.strip()
+        
+    return phjStr
+    
+    
+def phjRemoveAffixes(phjStr,
+                     phjPrefixStr = None,
+                     phjSuffixStr = None,
+                     phjPrintResults = False):
+    """
+    Removes prefix and/or suffix from a string
+    """
+    # First try to remove prefixes
+    if phjPrefixStr is not None:
+        try:
+            if sys.version_info >= (3,9):
+                phjStr = phjStr.removeprefix(phjPrefixStr)
+            else:
+                if phjStr.startswith(phjPrefixStr):
+                    phjStr = phjStr[len(phjPrefixStr):]
+        except (AttributeError, TypeError):
+            print('Input variable, phjPrefixStr (\'{}\'), must be a string; prefix has not been removed.'.format(phjPrefixStr))
+
+    # Next, try to remove suffixes
+    if phjSuffixStr is not None:
+        try:
+            if sys.version_info >= (3,9):
+                phjStr = phjStr.removesuffix(phjSuffixStr)
+            else:
+                if phjStr.endswith(phjSuffixStr):
+                    phjStr = phjStr[:-len(phjSuffixStr)]
+        except (AttributeError, TypeError):
+            print('Input variable, phjSuffixStr, must be a string; suffix has not been removed.')
+            
+    return phjStr
+    
+    
+# Answer given by David Zhang at:
+# https://stackoverflow.com/questions/29481088/how-can-i-tell-if-a-string-repeats-itself-in-python/29482936
+# Short link to answer: https://stackoverflow.com/a/29489919/1718097
+def principal_period(s):
+    i = (s+s).find(s, 1, -1)
+    return None if i == -1 else s[:i]
 
 
 if __name__ == '__main__':

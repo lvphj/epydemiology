@@ -32,6 +32,7 @@ from .phjCleanUKPostcodes import phjConvertOSGridRefToLatLong
 from .phjCleanData import phjParseDateVar
 from .phjCleanData import phjStripWhiteSpc
 from .phjCleanData import phjUKDateStrToDatetime
+from .phjCleanData import phjAddColumnOfMinRepeatingString
 
 from .phjExploreData import phjViewLogOdds
 from .phjExploreData import phjCategoriseContinuousVariable
