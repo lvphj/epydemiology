@@ -1676,10 +1676,12 @@ def phjConvertOSGridRefToLatLong(phjDF,
                                  phjErrorMsgVarName = 'errorMsg',
                                  phjLatLongVarNameList = ['lat','long'],
                                  phjPrintResults = False):
-    
-    # The function uses a regular expression to extract an OS grid reference
-    # from a string and convert to decimal latitude and longitude (need
-    # OSGB library installed).
+
+    """
+    The function uses a regular expression to extract an OS grid reference
+    from a string and convert to decimal latitude and longitude (need
+    OSGB library installed).
+    """
     
     try:
         phjAssert('phjDF',phjDF,pd.DataFrame,phjBespokeMessage = 'phjDF is not a Pandas dataframe.')
@@ -1801,8 +1803,26 @@ def phjConvertOSGridRefToLatLong(phjDF,
         if phjLatLongVarNameList is not None:
             phjWorkingDF['tempLatLong'] = phjWorkingDF[phjFmtGridRefStrVarName].apply(lambda x: phjConvertGrid(x))
 
-            phjWorkingDF[phjLatLongVarNameList] = pd.DataFrame(phjWorkingDF["tempLatLong"].to_list(),
-                                                        index = phjWorkingDF.index)
+            # The original version of the following line simply applied to_list() method on a column of a
+            # dataframe. This converted the 2-element tuple to a list which was then converted to a 2-column
+            # dataframe with the same index as the original dataframe. In cases where an element contained a
+            # NaN value rather than a tuple, both columns of the resulting dataframe contained NaN. This
+            # generally worked well except in situations where the first element in a column was NaN.
+            # In such situations, a ValueError occurred because the dataframe created contained only a
+            # single column; it was as though the first NaN value prevented the to_list() method working.
+            # 
+            # phjWorkingDF[phjLatLongVarNameList] = pd.DataFrame(phjWorkingDF["tempLatLong"].to_list(),
+            #                                                    index = phjWorkingDF.index)
+            #
+            # The solution to this was described by Shubham Sharma at:
+            # https://stackoverflow.com/questions/66407174/to-list-not-working-with-pandas-when-null-values-in-pandas
+            #
+            # This solution drops all the NaN values first. When the dataframe is joined to the original dataframe, the
+            # index values ensure that any NaN values in the original column are converted to NaN values in both new columns.
+            
+            phjWorkingDF[phjLatLongVarNameList] = pd.DataFrame(phjWorkingDF["tempLatLong"].dropna().to_list(),
+                                                               index = phjWorkingDF["tempLatLong"].dropna().index)
+            
 
             phjWorkingDF[phjLatLongVarNameList[0]] = pd.to_numeric(phjWorkingDF[phjLatLongVarNameList[0]], errors = 'coerce')
             phjWorkingDF[phjLatLongVarNameList[1]] = pd.to_numeric(phjWorkingDF[phjLatLongVarNameList[1]], errors = 'coerce')
@@ -1820,16 +1840,18 @@ def phjConvertOSGridRefToLatLong(phjDF,
     return phjDF
 
 
-# Occasional typos occur when entering grid reference. The most common
-# typo seems to be due to missing one digit from easting or northing,
-# especially if there are 4 or more digits. The following function
-# sets number of digits in each value to be equal to the minimum number,
-# including truncated to required accuracy given in function arguments,
-# without rounding (as required by OS because grid reference should
-# define the bottom left corner of the containing square).
 def phjGetGridRefCoords(row,
                         phjExtrGridRefStrVarName = 'extrGridRefStr',
                         phjTruncateAccuracy = None):
+    """
+    Occasional typos occur when entering grid reference. The most common
+    typo seems to be due to missing one digit from easting or northing,
+    especially if there are 4 or more digits. The following function
+    sets number of digits in each value to be equal to the minimum number,
+    including truncated to required accuracy given in function arguments,
+    without rounding (as required by OS because grid reference should
+    define the bottom left corner of the containing square).
+    """
     
     if pd.notna(row[phjExtrGridRefStrVarName]):
     
