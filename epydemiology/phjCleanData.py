@@ -414,6 +414,8 @@ def phjAddColumnOfMinRepeatingString(phjDF,
                                      phjNewColName,
                                      phjPrefixStr = None,
                                      phjSuffixStr = None,
+                                     phjReattachAffixes = False,
+                                     phjReduceMultiSpc = True,
                                      phjStripWhiteSpc = True,
                                      phjPrintResults = False):
     """
@@ -440,19 +442,26 @@ def phjAddColumnOfMinRepeatingString(phjDF,
                     The name of the column that will be added to the dataframe to contain
                     the minimal replicating strings
 
-    phjPrefixStr : str
+    phjPrefixStr : str (default = None)
                    Prefix string to remove from the start of the string before trying to
                    find the replicating string.
     
-    phjSuffixStr : str
+    phjSuffixStr : str (default = None)
                    Suffix string to remove from the end of the string before trying to
                    find the replicating string.
+
+    phjReattachAffixes: Boolean (default = False)
+                        Indicates whether prefixes and suffixes should be reattached to string.
     
-    phjStripWhiteSpc : Boolean
+    phjReduceMultiSpc = Boolean (default = True)
+                        Indicates whether duplicated spaces in string should be converted to a
+                        single space.
+    
+    phjStripWhiteSpc : Boolean (default = True)
                        The repeating string may contain a trailing space; strip the white
                        space from the repeating string.
     
-    phjPrintResults : Boolean
+    phjPrintResults : Boolean (default = False)
                       Print intermediate results.
     
     Returns
@@ -477,6 +486,8 @@ def phjAddColumnOfMinRepeatingString(phjDF,
                                               phjNewColName = 'RepeatingStr',
                                               phjPrefixStr = 'Value:',
                                               phjSuffixStr = 'xyz',
+                                              phjReattachAffixes = False,
+                                              phjReduceMultiSpc = True,
                                               phjStripWhiteSpc = True,
                                               phjPrintResults = True)
     
@@ -494,6 +505,8 @@ def phjAddColumnOfMinRepeatingString(phjDF,
         phjAssert('phjDF',phjDF,pd.DataFrame)
         phjAssert('phjColName',phjColName,str,phjMustBePresentColumnList = list(phjDF.columns))
         phjAssert('phjNewColName',phjNewColName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        phjAssert('phjReattachAffixes',phjStripWhiteSpc,bool)
+        phjAssert('phjReduceMultiSpc',phjStripWhiteSpc,bool)
         phjAssert('phjStripWhiteSpc',phjStripWhiteSpc,bool)
         phjAssert('phjPrintResults',phjPrintResults,bool)
     
@@ -512,11 +525,25 @@ def phjAddColumnOfMinRepeatingString(phjDF,
             raise
     
     else:
-        phjDF[phjNewColName] = phjDF[phjColName].apply(lambda s: phjExtractRepeatingString(s,
+        # If a prefix or suffix is entered as '' then this should be considered as None
+        if phjPrefixStr == '':
+            phjPrefixStr = None
+            
+        if phjSuffixStr == '':
+            phjSuffixStr = None
+
+        # Add new column containing repeating string
+        phjDF[phjNewColName] = phjDF[phjColName].apply(lambda s: phjExtractRepeatingString(phjStr = s,
                                                                                            phjPrefixStr = phjPrefixStr,
                                                                                            phjSuffixStr = phjSuffixStr,
+                                                                                           phjReattachAffixes = phjReattachAffixes,
+                                                                                           phjReduceMultiSpc = phjReduceMultiSpc,
                                                                                            phjStripWhiteSpc = phjStripWhiteSpc,
                                                                                            phjPrintResults = phjPrintResults))
+        
+        # Ensure leading and trailing spaces have been removed from strings which do not contain duplication
+        if phjStripWhiteSpc == True:
+            phjDF[phjNewColName] = phjDF[phjNewColName].str.strip()
     
     finally:
         if phjPrintResults == True:
@@ -533,6 +560,8 @@ def phjAddColumnOfMinRepeatingString(phjDF,
 def phjExtractRepeatingString(phjStr,
                               phjPrefixStr = None,
                               phjSuffixStr = None,
+                              phjReattachAffixes = True,
+                              phjReduceMultiSpc = True,
                               phjStripWhiteSpc = True,
                               phjPrintResults = False):
     """
@@ -540,12 +569,14 @@ def phjExtractRepeatingString(phjStr,
     
     This function identifies the minimum string that is repeated in a given string. In the
     event that the string does not consist of a repeating unit, the whole string is returned.
+    The prefix and suffix, if present, can be reattached to the extracted string before it
+    is returned.
     """
     if (phjPrefixStr is not None) | (phjSuffixStr is not None):
-        phjStr = phjRemoveAffixes(phjStr,
-                                  phjPrefixStr = phjPrefixStr,
-                                  phjSuffixStr = phjSuffixStr,
-                                  phjPrintResults = False)
+        phjStr,phjPrefixPresent,phjSuffixPresent = phjRemoveAffixes(phjStr,
+                                                                    phjPrefixStr = phjPrefixStr,
+                                                                    phjSuffixStr = phjSuffixStr,
+                                                                    phjPrintResults = False)
     
     # Identify minimum repeating string
     # The following finds the repeating string and, if it exists, assigns the string to
@@ -553,10 +584,24 @@ def phjExtractRepeatingString(phjStr,
     # In Python 3.8, the use of the Walrus operator (:=) would make things clearer. This
     # operator evaluates the result before set value of a variable. However, the := operator
     # is raised as a SyntaxError in earlier versions.
-    phjTemp = principal_period(phjStr)
+    
+    if phjReduceMultiSpc == True:
+        phjTemp = principal_period(re.sub(r"\s+"," ",phjStr))
+    else:
+        phjTemp = principal_period(phjStr)
+                                   
     if phjTemp != None:
         phjStr = phjTemp
-    
+        
+    # If a duplicated string has been identified then return string with affixes reattached;
+    # if a prefix and/or affix exists but no duplicated string is identified then attach
+    # affixes to original string
+    if phjReattachAffixes == True:
+        if (phjPrefixStr != None) & (phjPrefixPresent == True):
+            phjStr = phjPrefixStr + phjStr
+        if (phjSuffixStr != None) & (phjSuffixPresent == True):
+            phjStr = phjStr + phjSuffixStr
+        
     # Strip white space from start and end of extracted repeating string
     if phjStripWhiteSpc == True:
         phjStr = phjStr.strip()
@@ -569,31 +614,62 @@ def phjRemoveAffixes(phjStr,
                      phjSuffixStr = None,
                      phjPrintResults = False):
     """
-    Removes prefix and/or suffix from a string
+    Removes prefix and/or suffix from a string. The function returns the cleaned
+    string and also two binary variables, phjPrefixPresent and phjSuffixPresent,
+    indicating whether the prefix and/or suffix were present, respectively.
+    The binary variables allow the affix to be reattached to the extracted string
+    if required.
     """
+    
+    # Set phjPrefixPresent and phjSuffixPresent to False by default
+    phjPrefixPresent = False
+    phjSuffixPresent = False
+    
     # First try to remove prefixes
     if phjPrefixStr is not None:
         try:
-            if sys.version_info >= (3,9):
-                phjStr = phjStr.removeprefix(phjPrefixStr)
-            else:
-                if phjStr.startswith(phjPrefixStr):
+            # Check whether the string starts with the prefix
+            if phjStr.startswith(phjPrefixStr):
+                
+                # If so, set phjPrefixPresent variable to True
+                phjPrefixPresent = True
+                
+                # Remove prefix (depending on installed version)
+                if sys.version_info >= (3,9):
+                    phjStr = phjStr.removeprefix(phjPrefixStr)
+                else:
                     phjStr = phjStr[len(phjPrefixStr):]
+                    
+            # If string does not start with prefix then set phjPrefixPresent variable to False
+            else:
+                phjPrefixPresent = False
+                
         except (AttributeError, TypeError):
             print('Input variable, phjPrefixStr (\'{}\'), must be a string; prefix has not been removed.'.format(phjPrefixStr))
 
     # Next, try to remove suffixes
     if phjSuffixStr is not None:
         try:
-            if sys.version_info >= (3,9):
-                phjStr = phjStr.removesuffix(phjSuffixStr)
-            else:
-                if phjStr.endswith(phjSuffixStr):
+            # Check whether the string ends with the suffix
+            if phjStr.endswith(phjSuffixStr):
+                
+                # If so, set the phjSuffixPresent variable to True
+                phjSuffixPresent = True
+                
+                # Remove suffix (depending on installed version)
+                if sys.version_info >= (3,9):
+                    phjStr = phjStr.removesuffix(phjSuffixStr)
+                else:
                     phjStr = phjStr[:-len(phjSuffixStr)]
+                    
+            # If string does not end with suffix then set the phjSuffixPresent variable to False
+            else:
+                phjSuffixPresent = False
+            
         except (AttributeError, TypeError):
             print('Input variable, phjSuffixStr, must be a string; suffix has not been removed.')
             
-    return phjStr
+    return (phjStr,phjPrefixPresent,phjSuffixPresent)
     
     
 # Answer given by David Zhang at:
