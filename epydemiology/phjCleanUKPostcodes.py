@@ -1806,10 +1806,10 @@ def phjConvertOSGridRefToLatLong(phjDF,
             # The original version of the following line simply applied to_list() method on a column of a
             # dataframe. This converted the 2-element tuple to a list which was then converted to a 2-column
             # dataframe with the same index as the original dataframe. In cases where an element contained a
-            # NaN valute rather than a tuple, both columns of the resulting dataframe contained NaN. This
+            # NaN value rather than a tuple, both columns of the resulting dataframe contained NaN. This
             # generally worked well except in situations where the first element in a column was NaN.
             # In such situations, a ValueError occurred because the dataframe created contained only a
-            # column; it was as though the first NaN value prevented the to_list() method working.
+            # single column; it was as though the first NaN value prevented the to_list() method working.
             # 
             # phjWorkingDF[phjLatLongVarNameList] = pd.DataFrame(phjWorkingDF["tempLatLong"].to_list(),
             #                                                    index = phjWorkingDF.index)
@@ -1819,7 +1819,7 @@ def phjConvertOSGridRefToLatLong(phjDF,
             #
             # This solution drops all the NaN values first. When the dataframe is joined to the original dataframe, the
             # index values ensure that any NaN values in the original column are converted to NaN values in both new columns.
-
+            
             phjWorkingDF[phjLatLongVarNameList] = pd.DataFrame(phjWorkingDF["tempLatLong"].dropna().to_list(),
                                                                index = phjWorkingDF["tempLatLong"].dropna().index)
             
