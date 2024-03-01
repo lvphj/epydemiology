@@ -39,7 +39,7 @@ else:
 
 try:
     pkg_resources.get_distribution('epydemiology')
-except pkg_resources.DistrbutionNotFound:
+except pkg_resources.DistributionNotFound:
     epydemiologyPresent = False
     print("Error: Epydemiology package not available.")
 else:
