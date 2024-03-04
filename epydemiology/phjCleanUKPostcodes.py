@@ -110,7 +110,7 @@ def phjCleanUKPostcodeVariable(phjDF,
         # Create a working dataframe containing postcode variable only and
         # making sure that new columns that will be created (e.g. to store cleaned
         # postcodes) don't already exist. If phjDropExisting is set to True,
-        # pre-existing columns will be dropped from th original dataframe before
+        # pre-existing columns will be dropped from the original dataframe before
         # joining the data from the working dataframe.
         phjTempWorkingDF = phjCreateWorkingPostcodeDF(phjDF = phjDF,
                                                       phjRealPostcodeSer = phjRealPostcodeSer,
@@ -167,7 +167,7 @@ def phjCleanUKPostcodeVariable(phjDF,
                     #phjRealPostcodeDF = pd.DataFrame(phjRealPostcodeSer.rename('pcd'))
                     #phjRealPostcodeDF['pcdMin'] = phjRealPostcodeDF['pcd'].replace('''[\W_]+''',value='',regex = True).str.upper()
                     #phjRealPostcodeArr = np.array(phjRealPostcodeDF['pcdMin'])
-                    phjRealPostcodeSer = phjRealPostcodeSer.replace('''[\W_]+''',value='',regex = True).str.upper()
+                    phjRealPostcodeSer = phjRealPostcodeSer.replace('''[\W_]+''',value = '',regex = True).str.upper()
                     phjRealPostcodeArr = np.array(phjRealPostcodeSer)
                     
                     # Create array of unique postcode districts for future use.
@@ -253,7 +253,6 @@ def phjCleanUKPostcodeVariable(phjDF,
                                                             phjPostcodeComponent = 'all',
                                                             phjPrintResults = phjPrintResults)
             
-            
             # If checking by dictionary, get the best alternative postcodes using adjusted
             # Damerau-Levenshtein distances
             if phjCheckByOption == 'dictionary':
@@ -266,7 +265,6 @@ def phjCleanUKPostcodeVariable(phjDF,
                                                                   phjMinDamerauLevenshteinDistanceVarName = phjMinDamerauLevenshteinDistanceVarName,
                                                                   phjBestAlternativesVarName = phjBestAlternativesVarName,
                                                                   phjPrintResults = phjPrintResults)
-            
             
             # If requested, attempt to salvage the postcode outward (postcode area)
             if phjSalvageOutwardPostcodeComponent == True:
@@ -1078,16 +1076,24 @@ def phjGetBestAlternativePostcodes(phjDF,
                                  ((phjDF[phjNewPostcodeStrLenVarName] >= 4) &
                                   (phjDF[phjNewPostcodeStrLenVarName] <= 8)),:].copy(deep = True)
     
-    
-    # Calculate the minimum DL distance for the postcode being checked (assessed against array of all postcodes)
-    phjScratchDF[[phjMinDamerauLevenshteinDistanceVarName,
-                  phjBestAlternativesVarName]] = phjScratchDF.apply(lambda x: phjCalcMinDamLevDistAndEdits(x,
-                                                                                                           phjRealPostcodeArr = phjRealPostcodeArr,
-                                                                                                           phjNewPostcodeVarName = phjNewPostcodeVarName,
-                                                                                                           phjAllowedEdits = 1),axis = 1)
-    
-    phjDF.update(phjScratchDF)
-    
+    # Assuming there are some incorrect postcodes, calculate the min DL distance.
+    # The following condition to ensure the phjScratchDF was not empty was introduced
+    # to fix issue #62 "phjCleanUKPostcodeVariable fails with ValueError under certain
+    # circumstances".
+    # Checking that the length of the dataframe index is not zero is faster than using
+    # the .empty method, at least according to answer by Zero at:
+    # https://stackoverflow.com/questions/19828822/how-do-i-check-if-a-pandas-dataframe-is-empty
+    if len(phjScratchDF.index) != 0:
+        # Calculate the minimum DL distance for the postcode being checked (assessed against array of all postcodes)
+        phjScratchDF[[phjMinDamerauLevenshteinDistanceVarName,
+                      phjBestAlternativesVarName]] = phjScratchDF.apply(lambda x: phjCalcMinDamLevDistAndEdits(x,
+                                                                                                               phjRealPostcodeArr = phjRealPostcodeArr,
+                                                                                                               phjNewPostcodeVarName = phjNewPostcodeVarName,
+                                                                                                               phjAllowedEdits = 1),axis = 1)
+        
+        phjDF.update(phjScratchDF)
+
+    # Return the original dataframe with new columns added
     return phjDF
 
 
