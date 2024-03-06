@@ -28,6 +28,7 @@ from .phjCalculateProportions import phjAnnualDiseaseTrend
 from .phjCleanUKPostcodes import phjCleanUKPostcodeVariable
 from .phjCleanUKPostcodes import phjPostcodeFormat7
 from .phjCleanUKPostcodes import phjConvertOSGridRefToLatLong
+from .phjCleanUKPostcodes import phjSetPlacenameConjunctionsToLower
 
 from .phjCleanData import phjParseDateVar
 from .phjCleanData import phjStripWhiteSpc
