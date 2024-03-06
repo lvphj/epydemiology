@@ -1960,5 +1960,150 @@ def phjConvertGrid(x):
 
 
 
+# Function to convert place name conjunctions to lower case
+# =========================================================
+
+def phjSetPlacenameConjunctionsToLower(phjDF,
+                                       phjSmallWordList = ['of','upon','on','under','and','le','the'],
+                                       phjSepList = ['\\s','-','_'],
+                                       phjColNameList = ['city','county'],
+                                       phjPrintResults = False):
+    
+    """
+    Ensures that conjunctions found in placenames are set to be lowercase. This ensures that the
+    name format is more consistent with the output of, for example, OS Names API.
+    For example, Isle Of Wight will be changed to Isle of Wight, etc.
+    The separators used either side of the conjunction may be a space, a hyphen or an underscore.
+    This function searches for each combination of conjunction and separator. This enables the
+    case of the conjunction to be changed to lowercase while ensuring that the separator is not
+    changed.
+    
+    Parameters
+    ----------
+    phjDF = Dataframe
+    
+    phjSmallWordList = List of conjunctions to search; the default list
+                       is ['of','upon','on','under','and','le','the']
+    
+    phjSepList = List of separators; the default list is ['\\s','-','_'].
+                 It is assumed that the separators on either side of conjunction
+                 will be the same.
+    
+    phjColNameList = List of column headings in which to search; default = ['city','county']
+    
+    phjPrintResults = Print intermediate steps; default = False
+
+    Example
+    -------
+    
+    df = pd.DataFrame({'town':['Poulton-LE-Fylde',
+                               'Stratford Upon Avon',
+                               'Newcastle UPON Tyne',
+                               'Newcastle_Under_Lyme',
+                               'Isle Of Wight',
+                               'Stow-On-The-Wold']})
+    
+    print(df)
+
+                       town
+    0      Poulton-LE-Fylde
+    1   Stratford Upon Avon
+    2   Newcastle UPON Tyne
+    3  Newcastle_Under_Lyme
+    4         Isle Of Wight
+    5      Stow-On-The-Wold
+    
+    df = epy.phjSetPlacenameConjunctionsToLower(phjDF = df,
+                                                phjSmallWordList = ['of','upon','on','under','and','le','the'],
+                                                phjSepList = ['\\s','-','_'],
+                                                phjColNameList = ['town'],
+                                                phjPrintResults = True)
+    
+    print(df)
+    
+    List of constructed regexes
+    ---------------------------
+    ['(?i)\\sof\\s', '(?i)-of-', '(?i)_of_', '(?i)\\supon\\s', '(?i)-upon-', '(?i)_upon_', '(?i)\\son\\s', '(?i)-on-', '(?i)_on_', '(?i)\\sunder\\s', '(?i)-under-', '(?i)_under_', '(?i)\\sand\\s', '(?i)-and-', '(?i)_and_', '(?i)\\sle\\s', '(?i)-le-', '(?i)_le_', '(?i)\\sthe\\s', '(?i)-the-', '(?i)_the_']
+
+
+                       town
+    0      Poulton-le-Fylde
+    1   Stratford upon Avon
+    2   Newcastle upon Tyne
+    3  Newcastle_under_Lyme
+    4         Isle of Wight
+    5      Stow-on-the-Wold
+    
+    """
+    
+    try:
+        phjAssert('phjDF',phjDF,pd.DataFrame,phjBespokeMessage = 'phjDF is not a Pandas dataframe.')
+        
+        phjAssert('phjSmallWordList',phjSmallWordList,list)
+        for i in phjSmallWordList:
+            assert isinstance(i,str),"Elements in list must be strings."
+
+        phjAssert('phjSepList',phjSepList,list)
+        for i in phjSepList:
+            assert isinstance(i,str),"Elements in list must be strings."
+
+        phjAssert('phjColNameList',phjColNameList,list)
+        for i in phjColNameList:
+            assert isinstance(i,str),"Elements in list must be strings."
+            assert i in list(phjDF.columns),"Column names must be present in dataframe."
+
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+    
+    
+    except AssertionError as e:
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    else:
+
+        # Define an emtpy list to store constructed regexes
+        phjTempRegexList = []
+        
+        # Step through each small word...
+        for w in phjSmallWordList:
+
+            # ... and each separator
+            for s in phjSepList:
+
+                # Construct a regex (with case ignored) e.g. '-on-', ' and ', etc.
+                phjTempRegex = "(?i){0}{1}{0}".format(s,w)
+
+                # Add constructed regex to list of regexes
+                phjTempRegexList.append(phjTempRegex)
+                
+                # Change escaped regex for white space '\\s' to ' ' to use in replacing string
+                if s == '\\s':
+                    s = ' '
+
+                # Replace matches in listed columns
+                for c in phjColNameList:
+                    phjDF[c] = phjDF[c].str.replace(phjTempRegex,"{0}{1}{0}".format(s,w),
+                                                    regex = True)
+
+        if phjPrintResults == True:
+            print('List of constructed regexes')
+            print('---------------------------')
+            print(phjTempRegexList)
+            print('\n')
+
+    finally:
+        
+        return phjDF
+
+
 if __name__ == '__main__':
     main()
