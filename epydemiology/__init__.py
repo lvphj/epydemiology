@@ -28,8 +28,12 @@ from .phjCalculateProportions import phjAnnualDiseaseTrend
 from .phjCleanUKPostcodes import phjCleanUKPostcodeVariable
 from .phjCleanUKPostcodes import phjPostcodeFormat7
 from .phjCleanUKPostcodes import phjConvertOSGridRefToLatLong
+from .phjCleanUKPostcodes import phjSetPlacenameConjunctionsToLower
 
 from .phjCleanData import phjParseDateVar
+from .phjCleanData import phjStripWhiteSpc
+from .phjCleanData import phjUKDateStrToDatetime
+from .phjCleanData import phjAddColumnOfMinRepeatingString
 
 from .phjExploreData import phjViewLogOdds
 from .phjExploreData import phjCategoriseContinuousVariable

@@ -301,7 +301,7 @@ def phjCreateNamedGroupRegex(phjDF,
         # Complete function if no exception raised
         else:
             # Create a column containing a concatenated and combined named group regex for each group
-            phjCategoryGroupRegexDF['NamedGroupRegex'] = '(?P<' + phjCategoryGroupRegexDF[phjGroupVarName].map(str).str.strip().str.replace(' ','_').str.replace('[^\w\s]','') + '>' + phjCategoryGroupRegexDF[phjRegexVarName].map(str) + ')'
+            phjCategoryGroupRegexDF['NamedGroupRegex'] = '(?P<' + phjCategoryGroupRegexDF[phjGroupVarName].map(str).str.strip().str.replace(' ','_',regex = False).str.replace('[^\w\s]','',regex = True) + '>' + phjCategoryGroupRegexDF[phjRegexVarName].map(str) + ')'
             
             # Create a string representing entire regex
             # Various string patterns are included to ensure the final string is easier to read:
@@ -312,8 +312,10 @@ def phjCreateNamedGroupRegex(phjDF,
             #    (?:fgh)|
             #    (?:ijk))
             phjCategoryGroupRegexStr = phjCategoryGroupRegexDF['NamedGroupRegex'].map(str).str.replace('>\(\?',
-                                                                                                       '>\n    (?').str.replace('\)\|\(',
-                                                                                                                                ')|\n    (').str.cat(others = None, sep = '|\n')
+                                                                                                       '>\n    (?',
+                                                                                                       regex = True).str.replace('\)\|\(',
+                                                                                                                                  ')|\n    (',
+                                                                                                                                  regex = True).str.cat(others = None, sep = '|\n')
             
             if phjPrintResults == True:
                 print("\nFull Regex string")
@@ -1200,7 +1202,7 @@ def phjUpdateLUTToLatestValues(phjDF,
         
     return phjOutDF
     
-    
+
 
 if __name__ == '__main__':
     main()

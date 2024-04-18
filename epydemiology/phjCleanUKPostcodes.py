@@ -39,7 +39,7 @@ else:
 
 try:
     pkg_resources.get_distribution('epydemiology')
-except pkg_resources.DistrbutionNotFound:
+except pkg_resources.DistributionNotFound:
     epydemiologyPresent = False
     print("Error: Epydemiology package not available.")
 else:
@@ -59,10 +59,16 @@ else:
 
 # Checking that pyxdameraulevenshtein package is installed does not work using the
 # above method because attribute .DistributionNotFound is not present.
+# Installation of pyxdameraulevenshtein library requires access to C compiler which may
+# not be available on all systems. If pyxdameraulevenshtein library is not installed
+# then pyxdlPresent is set to False and an alternative, pure Python implementation by
+# Michael Homer can be used instead.
 try:
     import pyxdameraulevenshtein as pyxdl
+    pyxdlPresent = True
 except ImportError:
     print("Error: pyxdameraulevenshtein package not installed. Some features may not be available.")
+    pyxdlPresent = False
 
 
 import re
@@ -104,7 +110,7 @@ def phjCleanUKPostcodeVariable(phjDF,
         # Create a working dataframe containing postcode variable only and
         # making sure that new columns that will be created (e.g. to store cleaned
         # postcodes) don't already exist. If phjDropExisting is set to True,
-        # pre-existing columns will be dropped from th original dataframe before
+        # pre-existing columns will be dropped from the original dataframe before
         # joining the data from the working dataframe.
         phjTempWorkingDF = phjCreateWorkingPostcodeDF(phjDF = phjDF,
                                                       phjRealPostcodeSer = phjRealPostcodeSer,
@@ -161,7 +167,7 @@ def phjCleanUKPostcodeVariable(phjDF,
                     #phjRealPostcodeDF = pd.DataFrame(phjRealPostcodeSer.rename('pcd'))
                     #phjRealPostcodeDF['pcdMin'] = phjRealPostcodeDF['pcd'].replace('''[\W_]+''',value='',regex = True).str.upper()
                     #phjRealPostcodeArr = np.array(phjRealPostcodeDF['pcdMin'])
-                    phjRealPostcodeSer = phjRealPostcodeSer.replace('''[\W_]+''',value='',regex = True).str.upper()
+                    phjRealPostcodeSer = phjRealPostcodeSer.replace('''[\W_]+''',value = '',regex = True).str.upper()
                     phjRealPostcodeArr = np.array(phjRealPostcodeSer)
                     
                     # Create array of unique postcode districts for future use.
@@ -247,7 +253,6 @@ def phjCleanUKPostcodeVariable(phjDF,
                                                             phjPostcodeComponent = 'all',
                                                             phjPrintResults = phjPrintResults)
             
-            
             # If checking by dictionary, get the best alternative postcodes using adjusted
             # Damerau-Levenshtein distances
             if phjCheckByOption == 'dictionary':
@@ -260,7 +265,6 @@ def phjCleanUKPostcodeVariable(phjDF,
                                                                   phjMinDamerauLevenshteinDistanceVarName = phjMinDamerauLevenshteinDistanceVarName,
                                                                   phjBestAlternativesVarName = phjBestAlternativesVarName,
                                                                   phjPrintResults = phjPrintResults)
-            
             
             # If requested, attempt to salvage the postcode outward (postcode area)
             if phjSalvageOutwardPostcodeComponent == True:
@@ -572,7 +576,7 @@ def phjGetPostcodeRegexGroupNamesList(phjPrintResults = False):
 def phjGetCompiledPostcodeRegex(phjPostcodeComponent = 'all',
                                 phjPrintResults = False):
     
-    # This function returns returns a compiled regex for either the whole postcode regex
+    # This function returns a compiled regex for either the whole postcode regex
     # or a component of the postcode regex (outward or inward)
     
     # Retrieve postcode regex definitions for outward and inward parts and compile
@@ -928,7 +932,7 @@ def phjPostcodeFormat7(phjDF,
                                                            (phjDF[phjPostcodeVarName].str.len() <= 7),phjPostcodeVarName]
             
             # Remove all whitespace and punctuation from the text strings and convert to upper case.
-            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','').str.upper()
+            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','',regex = True).str.upper()
         
         else:
             # Copy potential postcode strings to postcode7 variable irrespective of content
@@ -937,7 +941,7 @@ def phjPostcodeFormat7(phjDF,
             # Remove all whitespace and punctuation from the text strings, remove strings
             # that contain fewer than 5 characters or greater than 7 characters and 
             # convert to upper case.
-            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','')
+            phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('[\W_]','',regex = True)
             phjDF[phjPostcode7VarName] = phjDF.loc[(phjDF[phjPostcode7VarName].str.len() >= 5) &
                                                            (phjDF[phjPostcode7VarName].str.len() <= 7),phjPostcode7VarName]
             phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.upper()
@@ -946,7 +950,7 @@ def phjPostcodeFormat7(phjDF,
         # Basically, the following function puts a space between the leading characters and the final 3 characters.
         # If the pattern now consists of 2 characters and a space at the start of the string, add an extra space.
         # If the pattern consists of 4 characters and a space at the start of the string, remove the space.
-        phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('(\w{3})$',r' \1').str.replace('^(\w{2})\s',r'\1  ').str.replace('^(\w{4})\s',r'\1')
+        phjDF[phjPostcode7VarName] = phjDF[phjPostcode7VarName].str.replace('(\w{3})$',r' \1',regex = True).str.replace('^(\w{2})\s',r'\1  ',regex = True).str.replace('^(\w{4})\s',r'\1',regex = True)
     
     return phjDF
 
@@ -1072,16 +1076,24 @@ def phjGetBestAlternativePostcodes(phjDF,
                                  ((phjDF[phjNewPostcodeStrLenVarName] >= 4) &
                                   (phjDF[phjNewPostcodeStrLenVarName] <= 8)),:].copy(deep = True)
     
-    
-    # Calculate the minimum DL distance for the postcode being checked (assessed against array of all postcodes)
-    phjScratchDF[[phjMinDamerauLevenshteinDistanceVarName,
-                  phjBestAlternativesVarName]] = phjScratchDF.apply(lambda x: phjCalcMinDamLevDistAndEdits(x,
-                                                                                                           phjRealPostcodeArr = phjRealPostcodeArr,
-                                                                                                           phjNewPostcodeVarName = phjNewPostcodeVarName,
-                                                                                                           phjAllowedEdits = 1),axis = 1)
-    
-    phjDF.update(phjScratchDF)
-    
+    # Assuming there are some incorrect postcodes, calculate the min DL distance.
+    # The following condition to ensure the phjScratchDF was not empty was introduced
+    # to fix issue #62 "phjCleanUKPostcodeVariable fails with ValueError under certain
+    # circumstances".
+    # Checking that the length of the dataframe index is not zero is faster than using
+    # the .empty method, at least according to answer by Zero at:
+    # https://stackoverflow.com/questions/19828822/how-do-i-check-if-a-pandas-dataframe-is-empty
+    if len(phjScratchDF.index) != 0:
+        # Calculate the minimum DL distance for the postcode being checked (assessed against array of all postcodes)
+        phjScratchDF[[phjMinDamerauLevenshteinDistanceVarName,
+                      phjBestAlternativesVarName]] = phjScratchDF.apply(lambda x: phjCalcMinDamLevDistAndEdits(x,
+                                                                                                               phjRealPostcodeArr = phjRealPostcodeArr,
+                                                                                                               phjNewPostcodeVarName = phjNewPostcodeVarName,
+                                                                                                               phjAllowedEdits = 1),axis = 1)
+        
+        phjDF.update(phjScratchDF)
+
+    # Return the original dataframe with new columns added
     return phjDF
 
 
@@ -1096,19 +1108,31 @@ def phjCalcMinDamLevDistAndEdits(x,
     # Convert the numpy array of postcodes to a Pandas dataframe
     phjPostcodeDF = pd.DataFrame(phjRealPostcodeArr,columns = ['pcdMin'])
     
-    # Calculate distance from string to each postcode in dataframe.
-    # In versions of pyxdameraulevenshtein library before 1.7.0, the function used was
-    # damerau_levenshtein_distance_ndarray(). This used np.array.
-    # In version 1.7.0, the function was changed to damerau_levenshtein_distance_seqs()
-    # which uses built-in Python lists.
-    # The following addressess issue #44 on epydemiology GitHub Issues page.
-    if pkg_resources.get_distribution("pyxdameraulevenshtein").version < '1.7.0':
-        phjPostcodeDF['tempDL'] = pyxdl.damerau_levenshtein_distance_ndarray(x[phjNewPostcodeVarName], phjRealPostcodeArr)
+    # Calculate Damerau-Levenshtein distance from entered postcode to all real postcodes
+    # Calculate distance from string to each element in an array.
+    # Ideally use pyxdameraulevenshtein library because faster but if not installed
+    # then use pure Python implementation by Michael Homer available at:
+    # https://web.archive.org/web/20150909134357/http://mwh.geek.nz:80/2009/04/26/python-damerau-levenshtein-distance/
     
+    # Set pyxdlPresent to False for testing purposes, to force the use of an
+    # algorithm different from pyxdameraulevenshtein  - comment out when testing complete
+    #pyxdlPresent = False
+    
+    if pyxdlPresent == True:
+        # In versions of pyxdameraulevenshtein library before 1.7.0, the function used was
+        # damerau_levenshtein_distance_ndarray(). This used np.array.
+        # In version 1.7.0, the function was changed to damerau_levenshtein_distance_seqs()
+        # which uses built-in Python lists.
+        # The following addressess issue #44 on epydemiology GitHub Issues page.
+        if pkg_resources.get_distribution("pyxdameraulevenshtein").version < '1.7.0':
+            phjPostcodeDF['tempDL'] = pyxdl.damerau_levenshtein_distance_ndarray(x[phjNewPostcodeVarName], phjRealPostcodeArr)
+            
+        else:
+            phjPostcodeDF['tempDL'] = pyxdl.damerau_levenshtein_distance_seqs(x[phjNewPostcodeVarName], phjRealPostcodeArr)
+            
     else:
-        phjPostcodeDF['tempDL'] = pyxdl.damerau_levenshtein_distance_seqs(x[phjNewPostcodeVarName], phjRealPostcodeArr)
-        
-        
+        phjPostcodeDF['tempDL'] = mhDamerauLevenshtein(x[phjNewPostcodeVarName], phjRealPostcodeArr)
+            
     # Calculate minimum DL distance
     phjMinDamLevDist = phjPostcodeDF['tempDL'].min(axis = 0)
     
@@ -1140,7 +1164,7 @@ def phjCalcMinDamLevDistAndEdits(x,
                                                                                                                     phjColHeading = 'pcdMin',
                                                                                                                     phjCleanInputStrings = False,
                                                                                                                     phjIncludeEquivalenceEdits = False),axis=1)
-
+        
         
         
                 
@@ -1156,6 +1180,86 @@ def phjCalcMinDamLevDistAndEdits(x,
     print('   Returned list of edits: {0}\n'.format([phjMinDamLevDist,phjPossPostcodesList]))
     
     return pd.Series([phjMinDamLevDist,phjPossPostcodesList],index=['minDamLevDist','bestAlternatives'])
+
+
+def mhDamerauLevenshtein(seq,seqArr):
+    # This function compares a fixed sequence with every element in an array and
+    # produces a list of DL distances using the pure Python implementation of the
+    # Damerau-Levenshtein algorithm by Michael Homer as an alternative to using the
+    # faster pyxdameraulevenshtein library which may not be installable on some systems.
+    phjList = []
+    for iseq in seqArr:
+        phjList.append(dameraulevenshtein(seq,iseq))
+    return phjList
+
+
+def dameraulevenshtein(seq1, seq2):
+# Pure Python implementation to calculate Damerau-Levenshtein by Michael Homer available at:
+# https://web.archive.org/web/20150909134357/http://mwh.geek.nz:80/2009/04/26/python-damerau-levenshtein-distance/
+# Original implementation in Python 2; could be updated to Python 3 using 2to3 but
+# in the following, the code was updated by hand.
+    """Calculate the Damerau-Levenshtein distance between sequences.
+
+    This distance is the number of additions, deletions, substitutions,
+    and transpositions needed to transform the first sequence into the
+    second. Although generally used with strings, any sequences of
+    comparable objects will work.
+
+    Transpositions are exchanges of *consecutive* characters; all other
+    operations are self-explanatory.
+
+    This implementation is O(N*M) time and O(M) space, for N and M the
+    lengths of the two sequences.
+
+    >>> dameraulevenshtein('ba', 'abc')
+    2
+    >>> dameraulevenshtein('fee', 'deed')
+    2
+
+    It works with arbitrary sequences too:
+    >>> dameraulevenshtein('abcd', ['b', 'a', 'c', 'd', 'e'])
+    2
+    """
+    # codesnippet:D0DE4716-B6E6-4161-9219-2903BF8F547F
+    # Conceptually, this is based on a len(seq1) + 1 * len(seq2) + 1 matrix.
+    # However, only the current and two previous rows are needed at once,
+    # so we only store those.
+#    oneago = None
+#    thisrow = range(1, len(seq2) + 1) + [0]
+#    for x in xrange(len(seq1)):
+#        # Python lists wrap around for negative indices, so put the
+#        # leftmost column at the *end* of the list. This matches with
+#        # the zero-indexed strings and saves extra calculation.
+#        twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
+#        for y in xrange(len(seq2)):
+#            delcost = oneago[y] + 1
+#            addcost = thisrow[y - 1] + 1
+#            subcost = oneago[y - 1] + (seq1[x] != seq2[y])
+#            thisrow[y] = min(delcost, addcost, subcost)
+#            # This block deals with transpositions
+#            if (x > 0 and y > 0 and seq1[x] == seq2[y - 1]
+#                and seq1[x-1] == seq2[y] and seq1[x] != seq2[y]):
+#                thisrow[y] = min(thisrow[y], twoago[y - 2] + 1)
+#    return thisrow[len(seq2) - 1]
+
+    oneago = None
+    thisrow = list(range(1, len(seq2) + 1)) + [0]
+    for x in range(len(seq1)):
+        # Python lists wrap around for negative indices, so put the
+        # leftmost column at the *end* of the list. This matches with
+        # the zero-indexed strings and saves extra calculation.
+        twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
+        for y in range(len(seq2)):
+            delcost = oneago[y] + 1
+            addcost = thisrow[y - 1] + 1
+            subcost = oneago[y - 1] + (seq1[x] != seq2[y])
+            thisrow[y] = min(delcost, addcost, subcost)
+            # This block deals with transpositions
+            if (x > 0 and y > 0 and seq1[x] == seq2[y - 1]
+                and seq1[x-1] == seq2[y] and seq1[x] != seq2[y]):
+                thisrow[y] = min(thisrow[y], twoago[y - 2] + 1)
+    return thisrow[len(seq2) - 1]
+
 
 
 def phjCallDLEditsFunction(row,
@@ -1578,10 +1682,12 @@ def phjConvertOSGridRefToLatLong(phjDF,
                                  phjErrorMsgVarName = 'errorMsg',
                                  phjLatLongVarNameList = ['lat','long'],
                                  phjPrintResults = False):
-    
-    # The function uses a regular expression to extract an OS grid reference
-    # from a string and convert to decimal latitude and longitude (need
-    # OSGB library installed).
+
+    """
+    The function uses a regular expression to extract an OS grid reference
+    from a string and convert to decimal latitude and longitude (need
+    OSGB library installed).
+    """
     
     try:
         phjAssert('phjDF',phjDF,pd.DataFrame,phjBespokeMessage = 'phjDF is not a Pandas dataframe.')
@@ -1703,8 +1809,26 @@ def phjConvertOSGridRefToLatLong(phjDF,
         if phjLatLongVarNameList is not None:
             phjWorkingDF['tempLatLong'] = phjWorkingDF[phjFmtGridRefStrVarName].apply(lambda x: phjConvertGrid(x))
 
-            phjWorkingDF[phjLatLongVarNameList] = pd.DataFrame(phjWorkingDF["tempLatLong"].to_list(),
-                                                        index = phjWorkingDF.index)
+            # The original version of the following line simply applied to_list() method on a column of a
+            # dataframe. This converted the 2-element tuple to a list which was then converted to a 2-column
+            # dataframe with the same index as the original dataframe. In cases where an element contained a
+            # NaN value rather than a tuple, both columns of the resulting dataframe contained NaN. This
+            # generally worked well except in situations where the first element in a column was NaN.
+            # In such situations, a ValueError occurred because the dataframe created contained only a
+            # single column; it was as though the first NaN value prevented the to_list() method working.
+            # 
+            # phjWorkingDF[phjLatLongVarNameList] = pd.DataFrame(phjWorkingDF["tempLatLong"].to_list(),
+            #                                                    index = phjWorkingDF.index)
+            #
+            # The solution to this was described by Shubham Sharma at:
+            # https://stackoverflow.com/questions/66407174/to-list-not-working-with-pandas-when-null-values-in-pandas
+            #
+            # This solution drops all the NaN values first. When the dataframe is joined to the original dataframe, the
+            # index values ensure that any NaN values in the original column are converted to NaN values in both new columns.
+            
+            phjWorkingDF[phjLatLongVarNameList] = pd.DataFrame(phjWorkingDF["tempLatLong"].dropna().to_list(),
+                                                               index = phjWorkingDF["tempLatLong"].dropna().index)
+            
 
             phjWorkingDF[phjLatLongVarNameList[0]] = pd.to_numeric(phjWorkingDF[phjLatLongVarNameList[0]], errors = 'coerce')
             phjWorkingDF[phjLatLongVarNameList[1]] = pd.to_numeric(phjWorkingDF[phjLatLongVarNameList[1]], errors = 'coerce')
@@ -1722,16 +1846,18 @@ def phjConvertOSGridRefToLatLong(phjDF,
     return phjDF
 
 
-# Occasional typos occur when entering grid reference. The most common
-# typo seems to be due to missing one digit from easting or northing,
-# especially if there are 4 or more digits. The following function
-# sets number of digits in each value to be equal to the minimum number,
-# including truncated to required accuracy given in function arguments,
-# without rounding (as required by OS because grid reference should
-# define the bottom left corner of the containing square).
 def phjGetGridRefCoords(row,
                         phjExtrGridRefStrVarName = 'extrGridRefStr',
                         phjTruncateAccuracy = None):
+    """
+    Occasional typos occur when entering grid reference. The most common
+    typo seems to be due to missing one digit from easting or northing,
+    especially if there are 4 or more digits. The following function
+    sets number of digits in each value to be equal to the minimum number,
+    including truncated to required accuracy given in function arguments,
+    without rounding (as required by OS because grid reference should
+    define the bottom left corner of the containing square).
+    """
     
     if pd.notna(row[phjExtrGridRefStrVarName]):
     
@@ -1832,6 +1958,151 @@ def phjConvertGrid(x):
         
     return phjLatLong
 
+
+
+# Function to convert place name conjunctions to lower case
+# =========================================================
+
+def phjSetPlacenameConjunctionsToLower(phjDF,
+                                       phjSmallWordList = ['of','upon','on','under','and','le','the'],
+                                       phjSepList = ['\\s','-','_'],
+                                       phjColNameList = ['city','county'],
+                                       phjPrintResults = False):
+    
+    """
+    Ensures that conjunctions found in placenames are set to be lowercase. This ensures that the
+    name format is more consistent with the output of, for example, OS Names API.
+    For example, Isle Of Wight will be changed to Isle of Wight, etc.
+    The separators used either side of the conjunction may be a space, a hyphen or an underscore.
+    This function searches for each combination of conjunction and separator. This enables the
+    case of the conjunction to be changed to lowercase while ensuring that the separator is not
+    changed.
+    
+    Parameters
+    ----------
+    phjDF = Dataframe
+    
+    phjSmallWordList = List of conjunctions to search; the default list
+                       is ['of','upon','on','under','and','le','the']
+    
+    phjSepList = List of separators; the default list is ['\\s','-','_'].
+                 It is assumed that the separators on either side of conjunction
+                 will be the same.
+    
+    phjColNameList = List of column headings in which to search; default = ['city','county']
+    
+    phjPrintResults = Print intermediate steps; default = False
+
+    Example
+    -------
+    
+    df = pd.DataFrame({'town':['Poulton-LE-Fylde',
+                               'Stratford Upon Avon',
+                               'Newcastle UPON Tyne',
+                               'Newcastle_Under_Lyme',
+                               'Isle Of Wight',
+                               'Stow-On-The-Wold']})
+    
+    print(df)
+
+                       town
+    0      Poulton-LE-Fylde
+    1   Stratford Upon Avon
+    2   Newcastle UPON Tyne
+    3  Newcastle_Under_Lyme
+    4         Isle Of Wight
+    5      Stow-On-The-Wold
+    
+    df = epy.phjSetPlacenameConjunctionsToLower(phjDF = df,
+                                                phjSmallWordList = ['of','upon','on','under','and','le','the'],
+                                                phjSepList = ['\\s','-','_'],
+                                                phjColNameList = ['town'],
+                                                phjPrintResults = True)
+    
+    print(df)
+    
+    List of constructed regexes
+    ---------------------------
+    ['(?i)\\sof\\s', '(?i)-of-', '(?i)_of_', '(?i)\\supon\\s', '(?i)-upon-', '(?i)_upon_', '(?i)\\son\\s', '(?i)-on-', '(?i)_on_', '(?i)\\sunder\\s', '(?i)-under-', '(?i)_under_', '(?i)\\sand\\s', '(?i)-and-', '(?i)_and_', '(?i)\\sle\\s', '(?i)-le-', '(?i)_le_', '(?i)\\sthe\\s', '(?i)-the-', '(?i)_the_']
+
+
+                       town
+    0      Poulton-le-Fylde
+    1   Stratford upon Avon
+    2   Newcastle upon Tyne
+    3  Newcastle_under_Lyme
+    4         Isle of Wight
+    5      Stow-on-the-Wold
+    
+    """
+    
+    try:
+        phjAssert('phjDF',phjDF,pd.DataFrame,phjBespokeMessage = 'phjDF is not a Pandas dataframe.')
+        
+        phjAssert('phjSmallWordList',phjSmallWordList,list)
+        for i in phjSmallWordList:
+            assert isinstance(i,str),"Elements in list must be strings."
+
+        phjAssert('phjSepList',phjSepList,list)
+        for i in phjSepList:
+            assert isinstance(i,str),"Elements in list must be strings."
+
+        phjAssert('phjColNameList',phjColNameList,list)
+        for i in phjColNameList:
+            assert isinstance(i,str),"Elements in list must be strings."
+            assert i in list(phjDF.columns),"Column names must be present in dataframe."
+
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+    
+    
+    except AssertionError as e:
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    else:
+
+        # Define an emtpy list to store constructed regexes
+        phjTempRegexList = []
+        
+        # Step through each small word...
+        for w in phjSmallWordList:
+
+            # ... and each separator
+            for s in phjSepList:
+
+                # Construct a regex (with case ignored) e.g. '-on-', ' and ', etc.
+                phjTempRegex = "(?i){0}{1}{0}".format(s,w)
+
+                # Add constructed regex to list of regexes
+                phjTempRegexList.append(phjTempRegex)
+                
+                # Change escaped regex for white space '\\s' to ' ' to use in replacing string
+                if s == '\\s':
+                    s = ' '
+
+                # Replace matches in listed columns
+                for c in phjColNameList:
+                    phjDF[c] = phjDF[c].str.replace(phjTempRegex,"{0}{1}{0}".format(s,w),
+                                                    regex = True)
+
+        if phjPrintResults == True:
+            print('List of constructed regexes')
+            print('---------------------------')
+            print(phjTempRegexList)
+            print('\n')
+
+    finally:
+        
+        return phjDF
 
 
 if __name__ == '__main__':

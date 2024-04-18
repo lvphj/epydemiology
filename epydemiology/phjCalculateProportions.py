@@ -70,33 +70,6 @@ from .phjTestFunctionParameters import phjAssert
 # ==============
 # Main functions
 # ==============
-#
-# Calculate binomial proportions
-# ------------------------------
-# This function calculates the binomial proportions for a series of binomial variables
-# for each level of a given group variable. The dataframe has the following format:
-#
-#         group     A    B    C
-#     0      g1   yes   no  yes
-#     1      g1   yes  NaN  yes
-#     2      g2    no  NaN  yes
-#     3      g1    no  yes  NaN
-#     4      g2    no  yes   no
-#     5      g2    no  yes  yes
-#     6      g1    no  yes  yes
-#     7      g1   yes   no  yes
-#     8      g2   NaN   no   no
-#     9      g1   yes   no   no
-#
-#  ...and produces the following dataframe:
-#
-#     group   var   count   success   propn
-#        g1     A       6         4    0.66
-#        g1     B       5         2    0.40
-#        g1     C       5         4    0.80
-#        g2     A       3         0    0.00
-#        g2     B       4         2    0.50
-#        g2     C       4         2    0.50
  
 def phjCalculateBinomialProportions(phjDF,
                                     phjColumnsList,
@@ -110,7 +83,42 @@ def phjCalculateBinomialProportions(phjDF,
                                     phjSortProportions = False,
                                     phjGraphTitle = None,
                                     phjPrintResults = False):
- 
+    
+    """
+    Calculates the binomial proportions for a series of binomial variables for each level of a given group variable
+    
+    The input dataframe has the following format (where columns A, B and C indicate the presence
+    or absence of individual characteristics):
+
+            group     A    B    C
+        0      g1   yes   no  yes
+        1      g1   yes  NaN  yes
+        2      g2    no  NaN  yes
+        3      g1    no  yes  NaN
+        4      g2    no  yes   no
+        5      g2    no  yes  yes
+        6      g1    no  yes  yes
+        7      g1   yes   no  yes
+        8      g2   NaN   no   no
+        9      g1   yes   no   no
+
+
+    ...and produces the following dataframe:
+
+            group   var   count   success   propn
+        0      g1     A       6         4    0.66
+        1      g1     B       5         2    0.40
+        2      g1     C       5         4    0.80
+        3      g2     A       3         0    0.00
+        4      g2     B       4         2    0.50
+        5      g2     C       4         2    0.50
+    
+    See Also
+    --------
+    A more detailed description of the function and its usage can be found at:
+        https://github.com/lvphj/epydemiology/wiki/Calculate-and-plot-proportions
+    """
+    
     # Check whether required parameters have been set to correct type and are set to
     # allowable values. N.B. isinstance() can take a tuple to test against multiple types.
     try:
@@ -329,11 +337,7 @@ def phjCalculateBinomialProportions(phjDF,
  
  
  
-# Calculates relative frequencies and multinomial confidence intervals
-# --------------------------------------------------------------------
-# This function calculates proportions, simultaneous confidence intervals for a categorical
-# variable and plots bar charts with asymmetrical error bars.
- 
+
 def phjCalculateMultinomialProportions(phjDF,
                                        phjCategoryVarName,
                                        phjGroupVarName = None,
@@ -345,6 +349,66 @@ def phjCalculateMultinomialProportions(phjDF,
                                        phjGroupsToPlotList = None,   # Currently not implemented
                                        phjGraphTitle = None,
                                        phjPrintResults = False):
+    
+    """
+    Calculates relative frequencies and multinomial confidence intervals
+    
+    This function calculates proportions and simultaneous confidence intervals for a categorical
+    variable, and plots bar charts with asymmetrical error bars.
+    
+    The input dataframe has the following format (where 'category' is a categorical
+    variable over which the multinomial proportions are calculated (e.g. dog breed),
+    'group indicates group membership for which multinomial confidence intervals will be
+    separately calculated (e.g. cases and controls), and 'catint' is an arbitrary variable
+    included in the dataset:
+    
+              group  category  catint
+        0      case       NaN       1
+        1      case   spaniel       2
+        2      case   missing       3
+        3   control   terrier       2
+        4   control    collie       3
+        5      case  labrador       2
+        6      case  labrador       1
+        7      case    collie       2
+        8   control   spaniel       1
+        9   control   spaniel       2
+        10  control  labrador       3
+        11  control    collie       2
+        12     case   terrier       3
+        13     case   terrier       2
+        14     case   terrier       3
+        15  control    collie       1
+        16  control  labrador       2
+        17  control  labrador       3
+        18  control  labrador       2
+        19     case   spaniel       3
+        20     case   spaniel       2
+        21     case    collie       3
+        22     case    collie       2
+        23     case    collie       3
+        24      NaN   terrier       1
+        25      NaN   spaniel       2
+    
+    The output dataframe takes the form:
+    
+                 case_count  control_count  case_prop  control_prop  case_95CI_llim  \
+        spaniel           3              2   0.250000           0.2        0.068217   
+        terrier           3              1   0.250000           0.1        0.068217   
+        collie            4              3   0.333333           0.3        0.108808   
+        labrador          2              4   0.166667           0.4        0.034702   
+        
+                  case_95CI_ulim  control_95CI_llim  control_95CI_ulim  
+        spaniel         0.602809           0.041845           0.588663  
+        terrier         0.602809           0.012443           0.494901  
+        collie          0.671876           0.082588           0.671084  
+        labrador        0.526666           0.132347           0.744489  
+    
+    See Also
+    --------
+    A more detailed description of the function and its usage can be found at:
+        https://github.com/lvphj/epydemiology/wiki/Calculate-and-plot-proportions
+    """
     
     # Check whether required parameters have been set to correct type and are set to
     # allowable values. N.B. isinstance() can take a tuple to test against multiple types.
@@ -634,10 +698,39 @@ def phjSummaryTableToBinaryOutcomes(phjDF,
                                     phjOutcomeVarName = 'outcome',
                                     phjPrintResults = False):
     
-    # This function takes a table of counted binary results and converts it
-    # to a dataframe of binary outcomes, ready for logistic regression.
-    # (This is useful if the function used to do logistic regression does not
-    # include a frequency weight option.)
+    """
+    Converts a table containing summary count data (e.g. number of cases of disease
+    per year) and converts it to a dataframe containing binary outcome data. This is
+    useful when creating logistic regression models but the function does not have an
+    option to include frequency weights.
+    
+    The format of the original table of summary results may take the following format:
+    
+           year  cases  controls
+        0  2010     23      1023
+        1  2011     34      1243
+        2  2012     41      1145
+        3  2013     57      2017
+        4  2014     62      1876
+        
+        This dataset has a total of 7,521 subjects, 217 cases and 7,304 controls. The
+        phjSummaryTableToBinaryOutcomes() function would return a dataframe with 7,521
+        rows of data with the following structure:
+        
+              year  outcome
+        0     2010        1
+        1     2010        1
+        2     2010        1
+        ...    ...      ...
+        7518  2014        0
+        7519  2014        0
+        7520  2014        0
+    
+    See Also
+    --------
+    A more detailed description of the function and its usage can be found at:
+        https://github.com/lvphj/epydemiology/wiki/Convert-a-disease-summary-table-to-a-dataframe-of-binary-outcomes
+    """
     
     # Check whether function parameters have been set to correct type and are of
     # correct values.
