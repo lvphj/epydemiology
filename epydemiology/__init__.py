@@ -34,6 +34,8 @@ from .phjCleanData import phjParseDateVar
 from .phjCleanData import phjStripWhiteSpc
 from .phjCleanData import phjUKDateStrToDatetime
 from .phjCleanData import phjAddColumnOfMinRepeatingString
+from .phjCleanData import phjWide2Long
+from .phjCleanData import phjAggDupColsAndRows
 
 from .phjExploreData import phjViewLogOdds
 from .phjExploreData import phjCategoriseContinuousVariable
