@@ -685,246 +685,6 @@ def principal_period(s):
 
 
 
-def phjWide2Long(phjDF,
-                 phjReqVarList,
-                 phjReqVarAllPresent = True,
-                 phjAutoAgg = False,
-                 phjColAgg = 'sum', # Currently the only option
-                 phjRowAgg = 'sum', # Currently the only option
-                 phjNewCatColNameStr = 'category',
-                 phjNewAggColNameStr = 'count',
-                 phjDropZeros = False,
-                 phjPrintResults = False):
-    """
-    Converts a 'wide' dataframe to 'long' format.
-    
-    This function meets a specific data situation where an individual
-    subject is described in a series of categorical variables and the
-    additional numerical values are given in a series of variables
-    which are entered as separate columns. Clearly, this situation is
-    exactly what Pandas' wide_to_long() function is designed to do. This
-    wrapper, however, automatically adds an appropriate prefix to the
-    column headings to act as stubname and renames the column to more
-    intuitive values.
-
-    This function also provides the opportunity for duplicate columns and rows (as
-    defined by a series of named columns) to be automatically aggregated before
-    the wide_to_long() function is applied.
-    
-    The function retains all the named descriptive columns but then
-    converts the series of numeric columns to just two columns, one
-    called 'var' (phjPrefixStr) and the other called 'value' (phjValueStr).
-    
-    As a visual example, the following dataframe (df) consists of two
-    categorical variables defining each row, namely cat1 and cat2. The
-    remaining columns (stuff, things and value) represent variables that
-    need to be used to convert to long function.
-    
-           cat1 cat2  stuff  things  value
-        0     1    a   2230     489    143
-        1     2    b   1134     267     87
-        2     3    c   1165     256     25
-        3     4    d   1176     232     47
-        4     5    e   2279     478     86
-        5     6    f   1165     276     67
-        6     7    g   1176     287     87
-        7     8    h   3456     850    207
-        8     9    i   1156     245     34
-        9    10    j   1176     223     62
-    
-    longdf = epy.phjWide2Long(phjDF = df,
-                              phjReqVarList = ['cat1','cat2'],
-                              phjReqVarAllPresent = True,
-                              phjAutoAgg = True,
-                              phjColAgg = 'sum', # Currently the only option
-                              phjRowAgg = 'sum', # Currently the only option
-                              phjNewCatColNameStr = 'category',
-                              phjNewAggColNameStr = 'count',
-                              phjDropZeros = False,
-                              phjPrintResults = False)
-    
-    print(longdf)
-    
-        cat1 cat2 category  count
-    0      1    a    stuff   2230
-    1      1    a   things    489
-    2      1    a    value    143
-    3      2    b    stuff   1134
-    4      2    b   things    267
-    5      2    b    value     87
-    6      3    c    stuff   1165
-    7      3    c   things    256
-    8      3    c    value     25
-    9      4    d    stuff   1176
-    10     4    d   things    232
-    11     4    d    value     47
-    12     5    e    stuff   2279
-    13     5    e   things    478
-    14     5    e    value     86
-    15     6    f    stuff   1165
-    16     6    f   things    276
-    17     6    f    value     67
-    18     7    g    stuff   1176
-    19     7    g   things    287
-    20     7    g    value     87
-    21     8    h    stuff   3456
-    22     8    h   things    850
-    23     8    h    value    207
-    24     9    i    stuff   1156
-    25     9    i   things    245
-    26     9    i    value     34
-    27    10    j    stuff   1176
-    28    10    j   things    223
-    29    10    j    value     62
-
-    """
-    
-    # The function will (hopefully) eventually return a 'long' version of the
-    # dataframe. If a problem occurs, the original dataframe will be returned.
-    # Determining whether a problem has occurred before returning can be done
-    # by testing if phjTempLongDF variable contains long dataframe is None
-    phjTempLongDF = None
-    
-    try:
-        phjAssert('phjDF',phjDF,pd.DataFrame)
-        
-        phjAssert('phjReqVarAllPresent',phjReqVarAllPresent,bool)
-
-        if phjReqVarAllPresent == True:
-            phjAssert('phjReqVarList',phjReqVarList,(str,list),phjMustBePresentColumnList = list(phjDF.columns))
-        else:
-            phjAssert('phjReqVarList',phjReqVarList,(str,list))
-
-        phjAssert('phjAutoAgg',phjAutoAgg,bool)
-        phjAssert('phjColAgg',phjColAgg,str,phjAllowedOptions = ['sum']) # Currently only one option
-        phjAssert('phjRowAgg',phjRowAgg,str,phjAllowedOptions = ['sum']) # Currently only one option
-        phjAssert('phjNewCatColNameStr',phjNewCatColNameStr,str,phjMustBeAbsentColumnList = list(phjDF.columns))
-        phjAssert('phjNewAggColNameStr',phjNewAggColNameStr,str,phjMustBeAbsentColumnList = list(phjDF.columns))
-        phjAssert('phjDropZeros',phjDropZeros,bool)
-        phjAssert('phjPrintResults',phjPrintResults,bool)
-    
-    except AssertionError as e:
-        
-        # If function has been called directly, present message.
-        if inspect.stack()[1][3] == '<module>':
-            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
-                                                                                       fname = inspect.stack()[0][3]))
-        
-        # If function has been called by another function then modify message and re-raise exception
-        else:
-            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
-                                                                                                                             fname = inspect.stack()[0][3],
-                                                                                                                             callfname = inspect.stack()[1][3]))
-            raise
-    
-    else:
-        # Create a temporary copy of the dataframe which can be modified but, should
-        # an error occur, the original dataframe can be returned unaltered
-        phjTempDF = phjDF.copy(deep = True)
-
-        # In most cases, the required list of variables should all be present in the
-        # dataframe. However, in some cases, it might be that the data should only be
-        # grouped by those listed variables that are present in the dataframe. This
-        # situation has arisen when processing multiple files and in a small number
-        # of files, one of the variables had not been included. Therefore, if
-        # phjReqVarAllPresent is set to False, adjust to only include those required
-        # variables that are present in the dataframe.
-        if phjReqVarAllPresent == False:
-            phjReqVarList = [c for c in phjReqVarList if c in list(phjTempDF.columns)]
-        
-        # Set default prefix and separator that will be used to rename column headings
-        # to enable pd.wide_to_long() function to operate
-        #phjDefaultPrefixStr = 'column'
-        phjDefaultSeparator = '_'
-        
-        
-        # Aggregate duplicate columns and rows
-        # ------------------------------------
-        if phjAutoAgg == True:
-            phjTempDF = phjAggDupColsAndRows(phjDF = phjTempDF,
-                                             phjReqVarList = phjReqVarList,
-                                             phjReqVarAllPresent = phjReqVarAllPresent,
-                                             phjAutoAgg = phjAutoAgg,
-                                             phjColAgg = phjColAgg,
-                                             phjRowAgg = phjRowAgg,
-                                             phjPrintResults = phjPrintResults)
-        
-        # Add prefix to column headings not included in phjExceptionList
-        # --------------------------------------------------------------
-        phjTempDF = phjTempDF.rename(columns = phjAddColHeadingPrefix(phjColHeadingList = list(phjTempDF.columns),
-                                                                      phjExceptColHeadingList = phjReqVarList,
-                                                                      phjPrefixStr = phjNewAggColNameStr,   # 'count'
-                                                                      phjSeparator = phjDefaultSeparator,   # '_'
-                                                                      phjRemoveUnalteredEntries = True,
-                                                                      phjPrintResults = phjPrintResults
-                                                                     ))
-
-        # Convert wide-to-long
-        # --------------------
-        try:
-            phjTempLongDF = pd.wide_to_long(df = phjTempDF,
-                                            stubnames = phjNewAggColNameStr,
-                                            i = phjReqVarList,
-                                            j = phjNewCatColNameStr,
-                                            sep = phjDefaultSeparator,
-                                            suffix = '.+').reset_index(drop = False)
-            
-            # Rename columns so they make more sense
-            # (N.B. No longer required as column heading prefix used phjNewAggColNameStr parameter that
-            #       was passed into the function.)
-            #phjTempLongDF = phjTempLongDF.rename(columns = {phjDefaultPrefixStr:phjNewAggColNameStr})
-
-        except ValueError as e:
-            print('A ValueError occurred when converting a wide dataframe to long format ({}).'.format(e))
-            phjTempLongDF = None
-
-        except Exception as e:
-            print('An unexpected {} error occurred when converting a wide dataframe to long format ({}).'.format(type(e).__name__,e))
-            phjTempLongDF = None
-
-        else:
-            # Drop rows where aggregated column (e.g. 'count' column) is zero or NaN (or similar)
-            if phjDropZeros == True:
-                phjTempLongDF = phjTempLongDF.drop(phjTempLongDF[phjTempLongDF[phjNewAggColNameStr].fillna(0).eq(0)].index).reset_index(drop = True).copy(deep = True)
-
-            # Having dropped rows where aggregated column is NaN (i.e. a float value), determine
-            # whether all remaining values are integers (albeit expressed as .0 floats due to previous
-            # existance of NaN values) and, if so, recast column as integer
-            # (see answer by cs95 at:
-            # https://stackoverflow.com/questions/49249860/how-to-check-if-float-pandas-column-contains-only-integer-numbers)
-            # It is important to check that the column is float dtype otherwise a TypeError will be raised
-            # because is_integer requires a float value.
-            try:
-                if phjTempLongDF[phjNewAggColNameStr].dtype == np.float64:
-                    if (phjTempLongDF[phjNewAggColNameStr].apply(float.is_integer).all()) == True:
-                        phjTempLongDF[phjNewAggColNameStr] = phjTempLongDF[phjNewAggColNameStr].astype('int64')
-
-            except TypeError as e:
-                print('A TypeError occurred when trying to convert column to integer dtype ({}).'.format(e))
-                phjTempLongDF = None
-
-            except Exception as e:
-                print('An unexpected {} exception occurred when trying to convert column to integer dtype ({}).'.format(type(e).__name__,e))
-                phjTempLongDF = None
-
-            else:
-                if phjPrintResults == True:
-                    print('Long dataframe')
-                    print('--------------')
-                    print(phjTempLongDF)
-                    print('\n')
-
-    finally:
-        # If phjTempLongDF is not None then return phjTempLongDF dataframe, otherwise return
-        # original phjDF dataframe unaltered
-        if phjTempLongDF is not None:
-            return phjTempLongDF
-        else:
-            print('An error has occurred. The original dataframe has been returned unaltered.')
-            return phjDF
-
-
-
 def phjAddColHeadingPrefix(phjColHeadingList,
                            phjExceptColHeadingList,
                            phjPrefixStr,
@@ -1366,6 +1126,245 @@ def phjAggDupColsAndRows(phjDF,
         
     return phjTempDF
 
+
+
+def phjWide2Long(phjDF,
+                 phjReqVarList,
+                 phjReqVarAllPresent = True,
+                 phjAutoAgg = False,
+                 phjColAgg = 'sum', # Currently the only option
+                 phjRowAgg = 'sum', # Currently the only option
+                 phjNewCatColNameStr = 'category',
+                 phjNewAggColNameStr = 'count',
+                 phjDropZeros = False,
+                 phjPrintResults = False):
+    """
+    Converts a 'wide' dataframe to 'long' format.
+    
+    This function meets a specific data situation where an individual
+    subject is described in a series of categorical variables and the
+    additional numerical values are given in a series of variables
+    which are entered as separate columns. Clearly, this situation is
+    exactly what Pandas' wide_to_long() function is designed to do. This
+    wrapper, however, automatically adds an appropriate prefix to the
+    column headings to act as stubname and renames the column to more
+    intuitive values.
+
+    This function also provides the opportunity for duplicate columns and rows (as
+    defined by a series of named columns) to be automatically aggregated before
+    the wide_to_long() function is applied.
+    
+    The function retains all the named descriptive columns but then
+    converts the series of numeric columns to just two columns, one
+    called 'var' (phjPrefixStr) and the other called 'value' (phjValueStr).
+    
+    As a visual example, the following dataframe (df) consists of two
+    categorical variables defining each row, namely cat1 and cat2. The
+    remaining columns (stuff, things and value) represent variables that
+    need to be used to convert to long function.
+    
+           cat1 cat2  stuff  things  value
+        0     1    a   2230     489    143
+        1     2    b   1134     267     87
+        2     3    c   1165     256     25
+        3     4    d   1176     232     47
+        4     5    e   2279     478     86
+        5     6    f   1165     276     67
+        6     7    g   1176     287     87
+        7     8    h   3456     850    207
+        8     9    i   1156     245     34
+        9    10    j   1176     223     62
+    
+    longdf = epy.phjWide2Long(phjDF = df,
+                              phjReqVarList = ['cat1','cat2'],
+                              phjReqVarAllPresent = True,
+                              phjAutoAgg = True,
+                              phjColAgg = 'sum', # Currently the only option
+                              phjRowAgg = 'sum', # Currently the only option
+                              phjNewCatColNameStr = 'category',
+                              phjNewAggColNameStr = 'count',
+                              phjDropZeros = False,
+                              phjPrintResults = False)
+    
+    print(longdf)
+    
+        cat1 cat2 category  count
+    0      1    a    stuff   2230
+    1      1    a   things    489
+    2      1    a    value    143
+    3      2    b    stuff   1134
+    4      2    b   things    267
+    5      2    b    value     87
+    6      3    c    stuff   1165
+    7      3    c   things    256
+    8      3    c    value     25
+    9      4    d    stuff   1176
+    10     4    d   things    232
+    11     4    d    value     47
+    12     5    e    stuff   2279
+    13     5    e   things    478
+    14     5    e    value     86
+    15     6    f    stuff   1165
+    16     6    f   things    276
+    17     6    f    value     67
+    18     7    g    stuff   1176
+    19     7    g   things    287
+    20     7    g    value     87
+    21     8    h    stuff   3456
+    22     8    h   things    850
+    23     8    h    value    207
+    24     9    i    stuff   1156
+    25     9    i   things    245
+    26     9    i    value     34
+    27    10    j    stuff   1176
+    28    10    j   things    223
+    29    10    j    value     62
+
+    """
+    
+    # The function will (hopefully) eventually return a 'long' version of the
+    # dataframe. If a problem occurs, the original dataframe will be returned.
+    # Determining whether a problem has occurred before returning can be done
+    # by testing if phjTempLongDF variable contains long dataframe is None
+    phjTempLongDF = None
+    
+    try:
+        phjAssert('phjDF',phjDF,pd.DataFrame)
+        
+        phjAssert('phjReqVarAllPresent',phjReqVarAllPresent,bool)
+
+        if phjReqVarAllPresent == True:
+            phjAssert('phjReqVarList',phjReqVarList,(str,list),phjMustBePresentColumnList = list(phjDF.columns))
+        else:
+            phjAssert('phjReqVarList',phjReqVarList,(str,list))
+
+        phjAssert('phjAutoAgg',phjAutoAgg,bool)
+        phjAssert('phjColAgg',phjColAgg,str,phjAllowedOptions = ['sum']) # Currently only one option
+        phjAssert('phjRowAgg',phjRowAgg,str,phjAllowedOptions = ['sum']) # Currently only one option
+        phjAssert('phjNewCatColNameStr',phjNewCatColNameStr,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        phjAssert('phjNewAggColNameStr',phjNewAggColNameStr,str,phjMustBeAbsentColumnList = list(phjDF.columns))
+        phjAssert('phjDropZeros',phjDropZeros,bool)
+        phjAssert('phjPrintResults',phjPrintResults,bool)
+    
+    except AssertionError as e:
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    else:
+        # Create a temporary copy of the dataframe which can be modified but, should
+        # an error occur, the original dataframe can be returned unaltered
+        phjTempDF = phjDF.copy(deep = True)
+
+        # In most cases, the required list of variables should all be present in the
+        # dataframe. However, in some cases, it might be that the data should only be
+        # grouped by those listed variables that are present in the dataframe. This
+        # situation has arisen when processing multiple files and in a small number
+        # of files, one of the variables had not been included. Therefore, if
+        # phjReqVarAllPresent is set to False, adjust to only include those required
+        # variables that are present in the dataframe.
+        if phjReqVarAllPresent == False:
+            phjReqVarList = [c for c in phjReqVarList if c in list(phjTempDF.columns)]
+        
+        # Set default prefix and separator that will be used to rename column headings
+        # to enable pd.wide_to_long() function to operate
+        #phjDefaultPrefixStr = 'column'
+        phjDefaultSeparator = '_'
+        
+        
+        # Aggregate duplicate columns and rows
+        # ------------------------------------
+        if phjAutoAgg == True:
+            phjTempDF = phjAggDupColsAndRows(phjDF = phjTempDF,
+                                             phjReqVarList = phjReqVarList,
+                                             phjReqVarAllPresent = phjReqVarAllPresent,
+                                             phjAutoAgg = phjAutoAgg,
+                                             phjColAgg = phjColAgg,
+                                             phjRowAgg = phjRowAgg,
+                                             phjPrintResults = phjPrintResults)
+        
+        # Add prefix to column headings not included in phjExceptionList
+        # --------------------------------------------------------------
+        phjTempDF = phjTempDF.rename(columns = phjAddColHeadingPrefix(phjColHeadingList = list(phjTempDF.columns),
+                                                                      phjExceptColHeadingList = phjReqVarList,
+                                                                      phjPrefixStr = phjNewAggColNameStr,   # 'count'
+                                                                      phjSeparator = phjDefaultSeparator,   # '_'
+                                                                      phjRemoveUnalteredEntries = True,
+                                                                      phjPrintResults = phjPrintResults
+                                                                     ))
+
+        # Convert wide-to-long
+        # --------------------
+        try:
+            phjTempLongDF = pd.wide_to_long(df = phjTempDF,
+                                            stubnames = phjNewAggColNameStr,
+                                            i = phjReqVarList,
+                                            j = phjNewCatColNameStr,
+                                            sep = phjDefaultSeparator,
+                                            suffix = '.+').reset_index(drop = False)
+            
+            # Rename columns so they make more sense
+            # (N.B. No longer required as column heading prefix used phjNewAggColNameStr parameter that
+            #       was passed into the function.)
+            #phjTempLongDF = phjTempLongDF.rename(columns = {phjDefaultPrefixStr:phjNewAggColNameStr})
+
+        except ValueError as e:
+            print('A ValueError occurred when converting a wide dataframe to long format ({}).'.format(e))
+            phjTempLongDF = None
+
+        except Exception as e:
+            print('An unexpected {} error occurred when converting a wide dataframe to long format ({}).'.format(type(e).__name__,e))
+            phjTempLongDF = None
+
+        else:
+            # Drop rows where aggregated column (e.g. 'count' column) is zero or NaN (or similar)
+            if phjDropZeros == True:
+                phjTempLongDF = phjTempLongDF.drop(phjTempLongDF[phjTempLongDF[phjNewAggColNameStr].fillna(0).eq(0)].index).reset_index(drop = True).copy(deep = True)
+
+            # Having dropped rows where aggregated column is NaN (i.e. a float value), determine
+            # whether all remaining values are integers (albeit expressed as .0 floats due to previous
+            # existance of NaN values) and, if so, recast column as integer
+            # (see answer by cs95 at:
+            # https://stackoverflow.com/questions/49249860/how-to-check-if-float-pandas-column-contains-only-integer-numbers)
+            # It is important to check that the column is float dtype otherwise a TypeError will be raised
+            # because is_integer requires a float value.
+            try:
+                if phjTempLongDF[phjNewAggColNameStr].dtype == np.float64:
+                    if (phjTempLongDF[phjNewAggColNameStr].apply(float.is_integer).all()) == True:
+                        phjTempLongDF[phjNewAggColNameStr] = phjTempLongDF[phjNewAggColNameStr].astype('int64')
+
+            except TypeError as e:
+                print('A TypeError occurred when trying to convert column to integer dtype ({}).'.format(e))
+                phjTempLongDF = None
+
+            except Exception as e:
+                print('An unexpected {} exception occurred when trying to convert column to integer dtype ({}).'.format(type(e).__name__,e))
+                phjTempLongDF = None
+
+            else:
+                if phjPrintResults == True:
+                    print('Long dataframe')
+                    print('--------------')
+                    print(phjTempLongDF)
+                    print('\n')
+
+    finally:
+        # If phjTempLongDF is not None then return phjTempLongDF dataframe, otherwise return
+        # original phjDF dataframe unaltered
+        if phjTempLongDF is not None:
+            return phjTempLongDF
+        else:
+            print('An error has occurred. The original dataframe has been returned unaltered.')
+            return phjDF
 
 
 if __name__ == '__main__':
