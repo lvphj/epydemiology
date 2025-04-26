@@ -72,6 +72,10 @@ def phjGetStrFromArgOrFile(phjStr = None,
 def phjReadTextFromFile(phjPathAndFileName = None,
                         phjMaxAttempts = 3,
                         phjPrintResults = False):
+    """
+    Function retrieves a string contained in a text file given by a path and
+    file name entered as a parameter for this function.
+    """
     
     for i in range(phjMaxAttempts):
         
