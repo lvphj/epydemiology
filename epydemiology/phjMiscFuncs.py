@@ -32,10 +32,11 @@ def phjGetStrFromArgOrFile(phjStr = None,
                            phjPathAndFileName = None,
                            phjAllowedAttempts = 3,
                            phjPrintResults = False):
-    
-    # This function retrieves a string either from a string contained in a text file
-    # given by a path and file name, or from a string entered as an argument for this
-    # function. A string saved in a file is given preference (i.e. this is checked first).
+    """
+    Function retrieves a string either from a string contained in a text file
+    given by a path and file name, or from a string entered as an argument for this
+    function. A string saved in a file is given preference (i.e. this is checked first).
+    """
     
     # Initially set phjTempStr to be None
     phjTempStr = None
@@ -47,7 +48,7 @@ def phjGetStrFromArgOrFile(phjStr = None,
             # Load SQL query from text file
             phjTempStr = phjReadTextFromFile(phjPathAndFileName = phjPathAndFileName,
                                              phjMaxAttempts = phjAllowedAttempts,
-                                             phjPrintResults = False)
+                                             phjPrintResults = phjPrintResults)
             
             if phjPrintResults == True:
                 print("\nString retrieved from file ('{0}'):".format(phjPathAndFileName))
