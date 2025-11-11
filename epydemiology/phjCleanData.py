@@ -505,8 +505,8 @@ def phjAddColumnOfMinRepeatingString(phjDF,
         phjAssert('phjDF',phjDF,pd.DataFrame)
         phjAssert('phjColName',phjColName,str,phjMustBePresentColumnList = list(phjDF.columns))
         phjAssert('phjNewColName',phjNewColName,str,phjMustBeAbsentColumnList = list(phjDF.columns))
-        phjAssert('phjReattachAffixes',phjStripWhiteSpc,bool)
-        phjAssert('phjReduceMultiSpc',phjStripWhiteSpc,bool)
+        phjAssert('phjReattachAffixes',phjReattachAffixes,bool)
+        phjAssert('phjReduceMultiSpc',phjReduceMultiSpc,bool)
         phjAssert('phjStripWhiteSpc',phjStripWhiteSpc,bool)
         phjAssert('phjPrintResults',phjPrintResults,bool)
     

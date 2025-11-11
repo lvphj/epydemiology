@@ -33,10 +33,11 @@ def phjGetStrFromArgOrFile(phjStr = None,
                            phjPathAndFileName = None,
                            phjAllowedAttempts = 3,
                            phjPrintResults = False):
-    
-    # This function retrieves a string either from a string contained in a text file
-    # given by a path and file name, or from a string entered as an argument for this
-    # function. A string saved in a file is given preference (i.e. this is checked first).
+    """
+    Function retrieves a string either from a string contained in a text file
+    given by a path and file name, or from a string entered as an argument for this
+    function. A string saved in a file is given preference (i.e. this is checked first).
+    """
     
     try:
         assert any(i is not None for i in [phjStr,phjPathAndFileName]), "Both phjStr and phjPathAndFileName arguments are None"
@@ -118,6 +119,10 @@ def phjGetStrFromArgOrFile(phjStr = None,
 def phjReadTextFromFile(phjPathAndFileName = None,
                         phjMaxAttempts = 3,
                         phjPrintResults = False):
+    """
+    Function retrieves a string contained in a text file given by a path and
+    file name entered as a parameter for this function.
+    """
     
     try:
         phjAssert('phjPathAndFileName',phjPathAndFileName,str)
