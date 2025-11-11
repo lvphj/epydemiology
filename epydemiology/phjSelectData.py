@@ -22,12 +22,14 @@ else:
 
 import collections
 import re
+import inspect
 
 
 from .phjMiscFuncs import phjGetStrFromArgOrFile
 from .phjMiscFuncs import phjReadTextFromFile
 from .phjCleanData import phjParseDateVar
 
+from .phjTestFunctionParameters import phjAssert
 
 
 # Primary functions
@@ -93,25 +95,25 @@ from .phjCleanData import phjParseDateVar
 #      cases.
 #    
 #    • Remove all consultations from confirmed and potential case patients (regardless of
-#      whether the individual consultation was positive or negative. If a patient has one
+#      whether the individual consultation was positive or negative). If a patient has one
 #      consultation where the regex identifies a match, all consultations from that animal
 #      should be excluded from the list of potential controls. The remaining consultations
 #      are, therefore, potential cases.
 # 
 # 3. SELECT CONTROL DATASET
 #    • Select suitable controls from the dataframe of potential controls, either
-#      unmatched or matched on give variables. The controls can be either consultation
+#      unmatched or matched on given variables. The controls can be either consultation
 #      controls (where individual consultations are selected from the dataframe) or
 #      patient controls (where patients are selected).
 # 
 #    • When selecting patient controls, it is necessary to collapse the consultation-based
-#      dataframe down to a patient-based on patient ID. A default, a collapsed dataframe
+#      dataframe down to a patient-based on patient ID. As default, a collapsed dataframe
 #      will contain a 'count' variable to indicate how many consultations were recorded
 #      for each patient, the dates of the first and last consultations, and the last
 #      recorded entry for all other variables. This can, however, be altered as necessary.
 # 
 # 4. MERGE CASE-CONTROL DATASET WITH ORIGINAL DATAFRAMES
-#    The initial selection of case control dataset returns and minimalist dataframe that
+#    The initial selection of case-control dataset returns a minimalist dataframe that
 #    contains the bare minimum variables to be able to make the selection. After the
 #    case-control dataframe has been selected, it is necessary to merge with the original
 #    dataframe to return a complete dataset that contains all the original variables.
@@ -124,7 +126,7 @@ from .phjCleanData import phjParseDateVar
 #   of computer processing is required to collapse the dataset.
 # 
 # • The list of confirmed cases can be passed to the function either as a list (or series)
-#   with not other variables, or as a dataframe which contains several variables, one of
+#   with no other variables, or as a dataframe which contains several variables, one of
 #   which is the consultation ID or patient ID (depending on whether the required control
 #   dataset consists of consultations or patients).
 # 
@@ -151,7 +153,7 @@ from .phjCleanData import phjParseDateVar
 #    the necessary variables required for further analysis.
 # 
 # 2. phjGenerateCaseControlDataset()
-#    This function ultimates calls the phjSelectCaseControlDataset() function but it
+#    This function ultimately calls the phjSelectCaseControlDataset() function but it
 #    also attempts to automate a large proportion of the required pre- and post-
 #    production faffing around. For example, the function will determine whether a
 #    consultation-based or patient-based dataset is required, it will generate the
@@ -163,7 +165,7 @@ from .phjCleanData import phjParseDateVar
 # Passing suitable case data
 # --------------------------
 # The function should be passed a full dataframe containing 'ALL' the data. In fact, some
-# of the confirmed cases need not be included in the dataframe of 'ALL' data (but there
+# of the confirmed cases need not be included in the dataframe of 'ALL' data (but there are
 # some limitations if this is the case). The requested case-control dataset can be either
 # 'consultation-based' or 'patient-based'. In each of these cases, the confirmed cases
 # can be passed in one of several formats (but, in some situations, returning a valid
@@ -187,7 +189,7 @@ from .phjCleanData import phjParseDateVar
 #    • Cases passed as a DATAFRAME containing several variables, one of which is the
 #      CONSULTATION ID but not all consultations are included in the dataframe of 'ALL' data.
 #      – FAILED
- 
+#
 #    • Cases passed as a DATAFRAME containing all the same variables as included in the
 #      'ALL' dataframe. Not all consultations are included in the dataframe of 'ALL' data.
 #      – SUCCESS
@@ -245,99 +247,72 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
     
     try:
         # 1. Check whether entered parameters have been set to the correct type
-        assert isinstance(phjAllDataDF,pd.DataFrame), "Parameter 'phjAllDataDF' needs to be a Pandas dataframe."
-        assert isinstance(phjPatientIDVarName,str), "Parameter 'phjPatientIDVarName' needs to be a string."
-        assert isinstance(phjConsultationIDVarName,str), "Parameter 'phjConsultationIDVarName' needs to be a string."
-        assert isinstance(phjConsultationDateVarName,str), "Parameter 'phjConsultationDateVarName' needs to be a string."
-        assert isinstance(phjFreeTextVarName,str), "Parameter 'phjFreeTextVarName' needs to be a string."
-        assert isinstance(phjCasesDF,pd.DataFrame), "Parameter 'phjCasesDF' needs to be a Pandas dataframe."
+        # N.B. Converting column headings to list using df.columns.values.tolist() is
+        #      MUCH faster than list(df.columns).
+        #      See: https://stackoverflow.com/questions/19482970/get-list-from-pandas-dataframe-column-headers
+        phjAssert('phjAllDataDF',phjAllDataDF,pd.DataFrame)
+        phjAssert('phjPatientIDVarName',phjPatientIDVarName,str,phjMustBePresentColumnList = phjAllDataDF.columns.values.tolist())
+        phjAssert('phjConsultationIDVarName',phjConsultationIDVarName,str,phjMustBePresentColumnList = phjAllDataDF.columns.values.tolist())
+        phjAssert('phjConsultationDateVarName',phjConsultationDateVarName,str,phjMustBePresentColumnList = phjAllDataDF.columns.values.tolist())
+        phjAssert('phjFreeTextVarName',phjFreeTextVarName,str,phjMustBePresentColumnList = phjAllDataDF.columns.values.tolist())
+        phjAssert('phjCasesDF',phjCasesDF,(pd.DataFrame,pd.Series,list,tuple,np.ndarray))
         
         if phjMatchingVariablesList is not None:
-            assert isinstance(phjMatchingVariablesList,(list,str)), "Parameter 'phjMatchingVariablesList' needs to be a string of a single column heading or a list of column headings."
+            # If phjMatchingVariablesList is a list, check none of the elements is None.
+            if isinstance(phjMatchingVariablesList,list):
+                assert None not in phjMatchingVariablesList, "List of matching variables cannot contain None values."
+            
+            phjAssert('phjMatchingVariablesList',phjMatchingVariablesList,(list,str),phjMustBePresentColumnList = phjAllDataDF.columns.values.tolist())
         
-        assert isinstance(phjControlsPerCaseInt,int), "Parameter 'phjControlsPerCaseInt' needs to be an integer."
+        phjAssert('phjControlsPerCaseInt',phjControlsPerCaseInt,int)
         
         if phjScreeningRegexStr is not None:
-            assert isinstance(phjScreeningRegexStr,str), "Parameter 'phjScreeningRegexStr' needs to be a string."
+            phjAssert('phjScreeningRegexStr',phjScreeningRegexStr,str)
         
         if phjScreeningRegexPathAndFileName is not None:
-            assert isinstance(phjScreeningRegexPathAndFileName,str), "Parameter 'phjScreeningRegexPathAndFileName' needs to be a string."
+            phjAssert('phjScreeningRegexPathAndFileName',phjScreeningRegexPathAndFileName,str)
         
-        assert phjControlType in ['consultation','patient'], "Parameter 'phjControlType' can only take the value 'consultation' or 'patient'. The value '{0}' is not recognised.".format(phjControlType)
+        phjAssert('phjControlType',phjControlType,str,phjAllowedOptions = ['consultation','patient'])
         
         if phjAggDict is not None:
-            assert isinstance(phjAggDict,dict), "Parameter phjAggDict needs to be a dictionary."
+            phjAssert('phjAggDict',phjAggDict,collections.abc.Mapping)   # collections mapping works for Dict, OrderedDict and UserDict
             # N.B. Other checks on the contents of phjAggDict are done in the phjCollapseOnPatientID() function
         
-        assert isinstance(phjPrintResults,bool), "Parameter 'phjPrintResults' needs to be a boolean (True, False) value."
+        phjAssert('phjPrintResults',phjPrintResults,bool)
         
         
-        # 2. Check whether entered parameters have been set to an appropriate value
-        assert phjControlType in ['consultation','patient'], "Parameter 'phjControlType' can only take the value 'consultation' or 'patient'. The value '{0}' is not recognised.".format(phjControlType)
-        
-        # If phjMatchingVariablesList is not None then it must be a str or a list (as checked
-        # previously). If it is a list, check that none of the elements is None.
+        # 2. Check that new columns that will be created don't already exist.
+        #    If control type is 'consultation' then matched case-control dataframes will create
+        #    columns called 'case' and 'group'; if control type is 'patient' then will also
+        #    need to create a column called 'count'.
         if phjMatchingVariablesList is not None:
-            if isinstance(phjMatchingVariablesList,list):
-                # Check if any items in matching variables list is None
-                assert None not in phjMatchingVariablesList, "List of matching variables cannot contain None values."
-        
-        
-        # 3. Check that columns that are referenced by parameters do exist and that new
-        #    columns that will be created don't already exist
-        
-        # Create lists of all columns that need to be present and need to be absent in
-        # different scenarios.
-        
-        # If the control type is 'consultation' or 'patient' then the required columns in the
-        # dataframe containing ALL the data are:
-        #   i. consultation ID variable name
-        #  ii. patient ID variable name
-        # iii. freetext field
-        #  iv. consultation date
-        #   v. matching variables (if required)
-        
-        # Dictionary of required variables (excluding matching variables) when
-        # desired control type is 'consultation'.
-        phjBaselineVarsDict = {'phjConsultationIDVarName':phjConsultationIDVarName,
-                               'phjPatientIDVarName':phjPatientIDVarName,
-                               'phjFreeTextVarName':phjFreeTextVarName,
-                               'phjConsultationDateVarName':phjConsultationDateVarName}
-        
-        if phjMatchingVariablesList is not None:
-            if isinstance(phjMatchingVariablesList,list):
-                phjColumnsPresentList = list(phjBaselineVarsDict.values()) + phjMatchingVariablesList
-                
-            elif isinstance(phjMatchingVariablesList,str):
-                phjColumnsPresentList = list(phjBaselineVarsDict.values()) + [phjMatchingVariablesList]
-            
-            # If control type is 'consultation' then matched case-control dataframes will create
-            # columns called 'case' and 'group'; if control type is 'patient' then will also
-            # need to create a column called 'count'.
             if phjControlType == 'consultation':
                 phjColumnsAbsentList = ['case','group']
-            
+                assert set(phjColumnsAbsentList).isdisjoint(phjAllDataDF.columns.values.tolist()), "Columns '{}' and '{}' will be created and cannot already exist in dataframe; please rename and try again".format('\', \''.join(phjColumnsAbsentList[:-1]),phjColumnsAbsentList[-1])
             elif phjControlType == 'patient':
                 phjColumnsAbsentList = ['case','group','count']
-        
-        else:
-            # i.e. list of matching variables is None
-            phjColumnsPresentList = list(phjBaselineVarsDict.values())
-            phjColumnsAbsentList = None
-        
-        # Check that all the required columns are present or absent from the
-        # complete dataframe containing ALL the data.
-        assert phjCheckColumns(phjDF = phjAllDataDF,
-                               phjDFDescriptorStr = 'all_data',
-                               phjColumnsPresentList = phjColumnsPresentList,
-                               phjColumnsAbsentList = phjColumnsAbsentList,
-                               phjPrintResults = phjPrintResults), "Parameter check for column headings has failed. Not all required variables are appropriately contained in the dataframe."
+                assert set(phjColumnsAbsentList).isdisjoint(phjAllDataDF.columns.values.tolist()), "Columns '{}' and '{}' will be created and cannot already exist in dataframe; please rename and try again".format('\', \''.join(phjColumnsAbsentList[:-1]),phjColumnsAbsentList[-1])
     
+    # N.B. The column 'case' may be created even in unmatched datasets - CHECK
+    #      May need to add phjMustBeAbsentColumnsList = ['case'] to phjAssert() for
+    #      unmatched as well as matched datasets.
     
     except AssertionError as e:
-        print ("An AssertionError has occurred. ({0})".format(e))
         
+        # Define phjCaseControlDF as None before returning
         phjCaseControlDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
         
     else:
         
@@ -349,6 +324,26 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
         ### and produce a case-control dataframe containing only minimal variables. ###
         ###############################################################################
         
+        # Define a list of columns to keep in the dataframe for preliminary analysis,
+        # which is a list of the variables named in function arguments (except freetext
+        # column) plus any matched variables that are listed.
+        if phjMatchingVariablesList is not None:
+            if isinstance(phjMatchingVariablesList,list):
+                phjRequiredColumnsList = [phjPatientIDVarName,
+                                          phjConsultationIDVarName,
+                                          phjConsultationDateVarName] + phjMatchingVariablesList
+            
+            elif isinstance(phjMatchingVariablesList,str):
+                phjRequiredColumnsList = [phjPatientIDVarName,
+                                          phjConsultationIDVarName,
+                                          phjConsultationDateVarName] + [phjMatchingVariablesList]
+        
+        else:
+            phjRequiredColumnsList = [phjPatientIDVarName,
+                                      phjConsultationIDVarName,
+                                      phjConsultationDateVarName]
+        
+        
         #############################################
         ### CONSULTATION-BASED CASE-CONTROL STUDY ###
         #############################################
@@ -357,28 +352,75 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
             # STEP 1: Get dataframes of verified cases and potential controls
             # ===============================================================
             phjVerifiedCasesDF = phjGetVerifiedConsultationCases(phjAllDataDF = phjAllDataDF,
-                                                                 phjCasesDF = phjCasesDF,   # Can be a dataframe ideally but could also be a series, array or list but, based on initial checks, anything other than a dataframe will cause an AssertionError.
+                                                                 phjCasesDF = phjCasesDF,   # Can be a dataframe ideally but could also be a series, list, tuple or array.
                                                                  phjConsultationIDVarName = phjConsultationIDVarName,   # Either consultation ID or patient ID depending on control type
                                                                  phjPrintResults = phjPrintResults)
             
             if phjVerifiedCasesDF is not None:
+                try:
+                    phjPotentialControlsDF = phjGetPotentialControls(phjDF = phjAllDataDF,   # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
+                                                                     phjCasesPatientIDSer = phjVerifiedCasesDF[phjPatientIDVarName],   # A pandas series containing patient ID for all confirmed cases
+                                                                     phjScreeningRegexStr = phjScreeningRegexStr,
+                                                                     phjScreeningRegexPathAndFileName = phjScreeningRegexPathAndFileName,
+                                                                     phjConsultationIDVarName = phjConsultationIDVarName,
+                                                                     phjConsultationDateVarName = phjConsultationDateVarName,
+                                                                     phjPatientIDVarName = phjPatientIDVarName,
+                                                                     phjRequiredColumnsList = phjRequiredColumnsList,   # Required columns that are needed to run the case-control functions (minus the freetext field)
+                                                                     phjFreeTextVarName = phjFreeTextVarName,
+                                                                     phjControlType = 'consultation',   # Other option would be 'patient'
+                                                                     phjAggDict = phjAggDict,
+                                                                     phjPrintResults = phjPrintResults)
                 
-                # Define which columns to keep in the dataframe for preliminary analysis
-                phjRequiredColumnsList = phjColumnsPresentList
-                phjRequiredColumnsList.remove(phjFreeTextVarName)
+                except AssertionError as e:
+                    # Define phjPotentialControlsDF as None before returning
+                    phjPotentialControlsDF = None
+                    
+                    # If function has been called directly, present message.
+                    if inspect.stack()[1][3] == '<module>':
+                        print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                   fname = inspect.stack()[0][3]))
+                    
+                    # If function has been called by another function then modify message and re-raise exception
+                    else:
+                        print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                         fname = inspect.stack()[0][3],
+                                                                                                                                         callfname = inspect.stack()[1][3]))
+                        raise
                 
-                phjPotentialControlsDF = phjGetPotentialControls(phjDF = phjAllDataDF,   # A pandas dataframe containing all data from which controls can be selected. May also contain cases as well (these will be excluded).
-                                                                 phjCasesPatientIDSer = phjVerifiedCasesDF[phjPatientIDVarName],   # A pandas series containing patient ID for all confirmed cases
-                                                                 phjScreeningRegexStr = phjScreeningRegexStr,
-                                                                 phjScreeningRegexPathAndFileName = phjScreeningRegexPathAndFileName,
-                                                                 phjConsultationIDVarName = phjConsultationIDVarName,
-                                                                 phjConsultationDateVarName = phjConsultationDateVarName,
-                                                                 phjPatientIDVarName = phjPatientIDVarName,
-                                                                 phjRequiredColumnsList = phjRequiredColumnsList,   # Required columns that are needed to run the case-control functions (minus the freetext field)
-                                                                 phjFreeTextVarName = phjFreeTextVarName,
-                                                                 phjControlType = 'consultation',   # Other option would be 'patient'
-                                                                 phjAggDict = phjAggDict,
-                                                                 phjPrintResults = phjPrintResults)
+                except FileNotFoundError as e:
+                    # If file can't be found then set phjPotentialControlsDF to None
+                    phjPotentialControlsDF = None
+                    
+                    # If function has been called directly, present message.
+                    if inspect.stack()[1][3] == '<module>':
+                        print("A FileNotFoundError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                     fname = inspect.stack()[0][3]))
+                    
+                    # If function has been called by another function then modify message and re-raise exception
+                    else:
+                        print("An FileNotFoundError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                            fname = inspect.stack()[0][3],
+                                                                                                                                            callfname = inspect.stack()[1][3]))
+            
+                        raise
+                
+                except re.error as e:
+                    # If regex does not compile then set phjPotentialControlsDF to None
+                    phjPotentialControlsDF = None
+                    
+                    # If function has been called directly, present message.
+                    if inspect.stack()[1][3] == '<module>':
+                        print("A regex error occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                     fname = inspect.stack()[0][3]))
+                    
+                    # If function has been called by another function then modify message and re-raise exception
+                    else:
+                        print("A regex error occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                            fname = inspect.stack()[0][3],
+                                                                                                                                            callfname = inspect.stack()[1][3]))
+                        
+                        raise
+            
             
             else:
                 phjPotentialControlsDF = None
@@ -415,7 +457,7 @@ def phjGenerateCaseControlDataset(phjAllDataDF,             # A dataframe contai
             # STEP 1: Get dataframes of verified cases and potential controls
             # ===============================================================
             phjVerifiedCasesDF = phjGetVerifiedPatientCases(phjAllDataDF = phjAllDataDF,
-                                                            phjCasesDF = phjCasesDF,   # Can be a dataframe ideally but could also be a series, array or list.
+                                                            phjCasesDF = phjCasesDF,   # Can be a dataframe ideally but could also be a series, list, tuple or array.
                                                             phjConsultationIDVarName = phjConsultationIDVarName,
                                                             phjConsultationDateVarName = phjConsultationDateVarName,
                                                             phjPatientIDVarName = phjPatientIDVarName,
@@ -692,61 +734,116 @@ def phjSelectCaseControlDataset(phjCasesDF,
                                 phjControlsPerCaseInt = 1,
                                 phjPrintResults = False):
     
-    # Print summary of parameters passed to function
-    # ==============================================
-    if phjPrintResults == True:
-        print('\n*** WARNING: Setting phjPrintResults to True causes a lot of output   ***')
-        print('*** to be printed. With Jupyter-Notebook, this seems to be associated ***')
-        print('*** with losing connection with the kernel and, as such, may cause    ***')
-        print('*** the function to not complete correctly.                           ***')
+    try:
+        phjAssert('phjCasesDF',phjCasesDF,pd.DataFrame)
+        phjAssert('phjPotentialControlsDF',phjPotentialControlsDF,pd.DataFrame)
         
-        print('\nSummary of parameters passed to phjSelectCaseControlDataset() function')
-        print('======================================================================')
-        with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
-            print('\nCASES\n-----')
-            print(phjCasesDF)
-            print('\nPOTENTIAL CONTROLS\n------------------\n')
-            print(phjPotentialControlsDF)
-        print('Unique identifier variable = ', phjUniqueIdentifierVarName)
-        print('Number of controls to be selected per case = ',phjControlsPerCaseInt)
-        print('Variables to match = ',phjMatchingVariablesList)
+        # Check phjUniqueIdentifierVarName is in both dataframes
+        phjAssert('phjUniqueIdentifierVarName',phjUniqueIdentifierVarName,str,phjMustBePresentColumnList = phjCasesDF.columns.values.tolist())
+        phjAssert('phjUniqueIdentifierVarName',phjUniqueIdentifierVarName,str,phjMustBePresentColumnList = phjPotentialControlsDF.columns.values.tolist())
         
-        print('Number of potential controls = ',len(phjPotentialControlsDF.index))
+        if phjMatchingVariablesList is None:
+            # If phjMatchingVariablesList is None then an unmatched dataset will be
+            # produced with will have a column called 'case'. Check column 'case' does
+            # not already exist in dataframes
+            assert 'case' not in phjCasesDF.columns.values.tolist(), "Column 'case' cannot already exist in phjCasesDF dataframe"
+            assert 'case' not in phjPotentialControlsDF.columns.values.tolist(), "Column 'case' cannot already exist in phjPotentialControlsDF dataframe"
+            
+        else:
+            # Check that the variable names in the phjMatchingVariablesList are all contained
+            # within both phjCasesDF and phjPotentialControlDF.
+            phjAssert('phjMatchingVariablesList',phjMatchingVariablesList,(str,list),
+                      phjMustBePresentColumnList = phjCasesDF.columns.values.tolist())
+                      
+            phjAssert('phjMatchingVariablesList',phjMatchingVariablesList,(str,list),
+                      phjMustBePresentColumnList = phjPotentialControlsDF.columns.values.tolist())
+            
+            # If phjMatchingVariablesList is not None then check neither columns 'case'
+            # nor 'group' already exist in dataframes
+            assert set(['case','group']).isdisjoint(phjCasesDF.columns.values.tolist()), "Columns 'case' and 'group' cannot already exist in phjCasesDF dataframe"
+            assert set(['case','group']).isdisjoint(phjPotentialControlsDF.columns.values.tolist()), "Columns 'case' and 'group' cannot already exist in phjPotentialControlsDF dataframe"
+            
+            # If phjMatchingVariablesList is entered as a string, represent as a list
+            if isinstance(phjMatchingVariablesList,str):
+                phjMatchingVariablesList = [phjMatchingVariablesList]
+            
+        
+        phjAssert('phjControlsPerCaseInt',phjControlsPerCaseInt,int)
+    
+    
+        # Check that phjUniqueIdentifierVarName columns in both case and controls dataframe
+        # contains unique values (i.e. unique identifier should not be in both dataframes).
+        # Firstly, join unique identifier columns into a single series and then compare
+        # total length with length of unique series.
+        phjTempSeries = pd.concat([phjCasesDF[phjUniqueIdentifierVarName],phjPotentialControlsDF[phjUniqueIdentifierVarName]],axis = 0)
+        
+        assert phjTempSeries.size == phjTempSeries.unique().size, "The unique identifier variable does not contain unique values."
         
         
-    # Check on parameters passed to functions and, if OK, select datasets
-    # ===================================================================
-    # Run function phjParameterCheck() to make sure parameters passed to function make
-    # sense. If the phjParameterCheck() function returns True then go ahead and create
-    # case-control dataset. If returns False then return None.
-    if phjParameterCheck(phjCasesDF = phjCasesDF,
-                         phjPotentialControlsDF = phjPotentialControlsDF,
-                         phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                         phjMatchingVariablesList = phjMatchingVariablesList,
-                         phjControlsPerCaseInt = phjControlsPerCaseInt):
+    except AssertionError as e:
+        
+        # Define phjCaseControlDF so can return None from function if fails
+        phjTempCaseControlDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    else:
+        # Print summary of parameters passed to function
+        # ==============================================
+        if phjPrintResults == True:
+            print('\n')
+            print('*** WARNING: Setting phjPrintResults to True causes a lot of output   ***')
+            print('*** to be printed. With Jupyter-Notebook, this seems to be associated ***')
+            print('*** with losing connection with the kernel and, as such, may cause    ***')
+            print('*** the function to not complete correctly.                           ***')
+            print('\n')
+            print('Summary of parameters passed to phjSelectCaseControlDataset() function')
+            print('======================================================================')
+            with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
+                print('\n')
+                print('CASES')
+                print('-----')
+                print(phjCasesDF)
+                print('\n')
+                print('POTENTIAL CONTROLS')
+                print('------------------')
+                print(phjPotentialControlsDF)
+                print('\n')
+            print('Unique identifier variable = {}'.format(phjUniqueIdentifierVarName))
+            print('Number of controls to be selected per case = {}'.format(phjControlsPerCaseInt))
+            print('Variables to match = {}'.format(phjMatchingVariablesList))
+            print('\n')
+            print('Number of potential controls = {}'.format(len(phjPotentialControlsDF.index)))
+            print('\n')
+        
         
         if phjMatchingVariablesList is None:
             # Select UNMATCHED controls
             phjTempCaseControlDF = phjSelectUnmatchedCaseControlSubjects(phjCasesDF = phjCasesDF,
                                                                          phjPotentialControlsDF = phjPotentialControlsDF,
                                                                          phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                                                                         phjMatchingVariablesList = phjMatchingVariablesList,
+                                                                         phjMatchingVariablesList = None,
                                                                          phjControlsPerCaseInt = phjControlsPerCaseInt,
                                                                          phjPrintResults = phjPrintResults)
         
         else:
             # Select MATCHED controls
-            phjTempCaseControlDF = phjSelectMatchedCaseControlSubjects( phjCasesDF = phjCasesDF,
-                                                                        phjPotentialControlsDF = phjPotentialControlsDF,
-                                                                        phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                                                                        phjMatchingVariablesList = phjMatchingVariablesList,
-                                                                        phjControlsPerCaseInt = phjControlsPerCaseInt,
-                                                                        phjPrintResults = phjPrintResults)
-    
-    else:
-        # If phjParameterCheck() returns False then return None from this function
-        phjTempCaseControlDF = None
-    
+            phjTempCaseControlDF = phjSelectMatchedCaseControlSubjects(phjCasesDF = phjCasesDF,
+                                                                       phjPotentialControlsDF = phjPotentialControlsDF,
+                                                                       phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
+                                                                       phjMatchingVariablesList = phjMatchingVariablesList,
+                                                                       phjControlsPerCaseInt = phjControlsPerCaseInt,
+                                                                       phjPrintResults = phjPrintResults)
     
     return phjTempCaseControlDF
 
@@ -923,6 +1020,10 @@ def phjCollapseOnPatientID(phjAllDataDF,       # Dataframe containing all column
 
 # Secondary functions
 # ===================
+
+########################################################################################
+# N.B. This function is no longer required; it has been replaced by using phjAssert(). #
+########################################################################################
 def phjCheckColumns(phjDF,
                     phjDFDescriptorStr = None,      # An optional parameter used to describe the dataframe being checked in feedback
                     phjColumnsPresentList = None,
@@ -1023,10 +1124,9 @@ def phjGetVerifiedConsultationCases(phjAllDataDF,
     # If the phjCasesDF is actually any other iterable (e.g.list, array, Series) then
     # must check if cases are a subset of the rows in the full dataframe. If so, recreate
     # a verified dataframe; if not, return None. 
-    elif not isinstance(phjCasesDF,str):
+    elif isinstance(phjCasesDF,(pd.Series,list,tuple,np.ndarray)):
         
         if set(phjCasesDF).issubset(phjAllDataDF[phjConsultationIDVarName]):
-            
             phjCasesMask = phjAllDataDF[phjConsultationIDVarName].isin(phjCasesDF)
             phjVerifiedCasesDF = phjAllDataDF.loc[phjCasesMask,:]
         
@@ -1035,7 +1135,7 @@ def phjGetVerifiedConsultationCases(phjAllDataDF,
             phjVerifiedCasesDF = None
             
     else:
-        print("\nThe object containing cases is not recognised.")
+        print("\nThe object ({}) containing cases is not valid.".format(type(phjCasesDF)))
         phjVerifiedCasesDF = None
     
     
@@ -1239,63 +1339,114 @@ def phjGetPotentialControls(phjDF,                      # A pandas dataframe con
     ### phjPatientIDVarName is a string and not a list and that is contained in dataframe
     ### phjCasesPatientSer is a Pandas series not a dataframe
     
-    # Get regex used to screen for original potential cases
-    phjScreeningRegex = phjGetRegexStr(phjRegexStr = phjScreeningRegexStr,
-                                       phjRegexPathAndFileName = phjScreeningRegexPathAndFileName,
-                                       phjPrintResults = phjPrintResults)
+    try:
+        # Get regex used to screen for original potential cases
+        phjScreeningRegex = phjGetRegexStr(phjRegexStr = phjScreeningRegexStr,
+                                           phjRegexPathAndFileName = phjScreeningRegexPathAndFileName,
+                                           phjPrintResults = phjPrintResults)
     
-    if phjScreeningRegex is not None:
-        # Compile regex
-        phjRegex = re.compile(phjScreeningRegex,flags=re.I|re.X)
-        
-        # Run regex against freetext field and create a binary mask to identify all
-        # consultations that match the regex.
-        # NA values are set to FALSE.
-        phjRegexMask = phjDF[phjFreeTextVarName].str.contains(phjRegex, na = False)
-        
-        # Retrieve patient IDs for consultations where freetext field contains a match
-        phjCasesPatientID = phjDF.loc[phjRegexMask,phjPatientIDVarName]
-        
-        # Combine with Patient IDs passed to function to produce an array of all
-        # patient IDs that should not be included in potential control dataframe
-        #phjCasesPatientIDArr = phjCasesPatientID.append(phjCasesPatientIDSer).unique()
-        phjCasesPatientIDArr = phjCasesPatientID.append(phjCasesPatientIDSer).unique()
-        
-        # Create a mask of all patients that could be included in potentials control
-        # list. (This is, in fact, the inverse of the output from .isin() method)
-        phjControlConsultationsMask = ~phjDF[phjPatientIDVarName].isin(phjCasesPatientIDArr)
-        
-        # Use the mask to remove all cases patients from the dataframe
-        # Only retain the required columns variables
-        phjControlConsultationsDF = phjDF.loc[phjControlConsultationsMask,phjRequiredColumnsList].reset_index(drop = True)
-        
-        if phjControlType == 'consultation':
-            # Return the dataframe of patient IDs that have already been calculated
-            phjPotentialControlsDF = phjControlConsultationsDF
-            
-        elif phjControlType == 'patient':
-            
-            # Need to consolidate based on patient ID.
-            # Return dataframe consisting of patient ID and a variable giving the count
-            # of the consultations
-            # phjPotentialControlsDF = phjControlConsultationsDF.groupby(phjPatientIDVarName).agg('count').rename(columns = {phjConsultationIDVarName:'consultation_count'}).reset_index(drop = False)
-            phjPotentialControlsDF = phjCollapseOnPatientID(phjAllDataDF = phjControlConsultationsDF,   # Dataframe containing all columns of data to be collapsed based on patient ID
-                                                            phjPatientIDVarName = phjPatientIDVarName,
-                                                            phjConsultationIDVarName = phjConsultationIDVarName,
-                                                            phjConsultationDateVarName = phjConsultationDateVarName,
-                                                            phjFreeTextVarName = None,
-                                                            phjAggDict = phjAggDict,
-                                                            phjPrintResults = phjPrintResults)
-            
-            
-        else:
-            print("Option entered for requested control type ('{0}') is not recognised.".format(phjControlType))
-            phjPotentialControlsDF = None
-    
-    else:
-        print('Could not identify the screening regex.')
+    except AssertionError as e:
+        # Define phjPotentialControlsDF as None before returning
         phjPotentialControlsDF = None
     
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+    
+    except FileNotFoundError as e:
+        # If file can't be found then set phjPotentialControlsDF to None
+        phjPotentialControlsDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("A FileNotFoundError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                         fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An FileNotFoundError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                fname = inspect.stack()[0][3],
+                                                                                                                                callfname = inspect.stack()[1][3]))
+            
+            raise
+    
+    except re.error as e:
+        # If regex does not compile then set phjPotentialControlsDF to None
+        phjPotentialControlsDF = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("A regex error occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                         fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("A regex error occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                fname = inspect.stack()[0][3],
+                                                                                                                                callfname = inspect.stack()[1][3]))
+            
+            raise
+    
+    else:
+        if phjScreeningRegex is not None:
+            # Compile regex
+            phjRegex = re.compile(phjScreeningRegex,flags=re.I|re.X)
+        
+            # Run regex against freetext field and create a binary mask to identify all
+            # consultations that match the regex.
+            # NA values are set to FALSE.
+            phjRegexMask = phjDF[phjFreeTextVarName].str.contains(phjRegex, na = False)
+        
+            # Retrieve patient IDs for consultations where freetext field contains a match
+            phjCasesPatientID = phjDF.loc[phjRegexMask,phjPatientIDVarName]
+        
+            # Combine with Patient IDs passed to function to produce an array of all
+            # patient IDs that should not be included in potential control dataframe
+            #phjCasesPatientIDArr = phjCasesPatientID.append(phjCasesPatientIDSer).unique()
+            phjCasesPatientIDArr = phjCasesPatientID.append(phjCasesPatientIDSer).unique()
+        
+            # Create a mask of all patients that could be included in potentials control
+            # list. (This is, in fact, the inverse of the output from .isin() method)
+            phjControlConsultationsMask = ~phjDF[phjPatientIDVarName].isin(phjCasesPatientIDArr)
+        
+            # Use the mask to remove all cases patients from the dataframe
+            # Only retain the required columns variables
+            phjControlConsultationsDF = phjDF.loc[phjControlConsultationsMask,phjRequiredColumnsList].reset_index(drop = True)
+        
+            if phjControlType == 'consultation':
+                # Return the dataframe of patient IDs that have already been calculated
+                phjPotentialControlsDF = phjControlConsultationsDF
+            
+            elif phjControlType == 'patient':
+            
+                # Need to consolidate based on patient ID.
+                # Return dataframe consisting of patient ID and a variable giving the count
+                # of the consultations
+                # phjPotentialControlsDF = phjControlConsultationsDF.groupby(phjPatientIDVarName).agg('count').rename(columns = {phjConsultationIDVarName:'consultation_count'}).reset_index(drop = False)
+                phjPotentialControlsDF = phjCollapseOnPatientID(phjAllDataDF = phjControlConsultationsDF,   # Dataframe containing all columns of data to be collapsed based on patient ID
+                                                                phjPatientIDVarName = phjPatientIDVarName,
+                                                                phjConsultationIDVarName = phjConsultationIDVarName,
+                                                                phjConsultationDateVarName = phjConsultationDateVarName,
+                                                                phjFreeTextVarName = None,
+                                                                phjAggDict = phjAggDict,
+                                                                phjPrintResults = phjPrintResults)
+            
+            
+            else:
+                print("Option entered for requested control type ('{0}') is not recognised.".format(phjControlType))
+                phjPotentialControlsDF = None
+    
+        else:
+            print('Could not identify the screening regex.')
+            phjPotentialControlsDF = None
     
     return phjPotentialControlsDF
 
@@ -1313,6 +1464,9 @@ def phjPrintIndexHeading(i):
 
 
 
+####################################
+# N.B. Function no longer required #
+####################################
 def phjParameterCheck(phjCasesDF,
                       phjPotentialControlsDF,
                       phjUniqueIdentifierVarName,
@@ -1406,13 +1560,14 @@ def phjAddRecords(phjTempCaseControlDF,
         print('phjCaseValue',phjCaseValue)
         print('phjGroupVarName',phjGroupVarName)
         print('phjGroupValue',phjGroupValue)
-    
-    phjTempCaseControlDF.ix[phjTempRowCounter,phjUniqueIdentifierVarName] = phjUniqueIdentifierValue
-    phjTempCaseControlDF.ix[phjTempRowCounter,phjGroupVarName] = phjGroupValue
-    phjTempCaseControlDF.ix[phjTempRowCounter,phjCaseVarName] = phjCaseValue
+        print('\n')
+        
+    phjTempCaseControlDF.iloc[phjTempRowCounter,phjTempCaseControlDF.columns.get_loc(phjUniqueIdentifierVarName)] = phjUniqueIdentifierValue
+    phjTempCaseControlDF.iloc[phjTempRowCounter,phjTempCaseControlDF.columns.get_loc(phjGroupVarName)] = phjGroupValue
+    phjTempCaseControlDF.iloc[phjTempRowCounter,phjTempCaseControlDF.columns.get_loc(phjCaseVarName)] = phjCaseValue
     
     for phjTempVar in phjMatchingVariablesList:
-        phjTempCaseControlDF.ix[phjTempRowCounter,phjTempVar] = phjMatchingVariablesValues[phjTempVar].tolist()
+        phjTempCaseControlDF.iloc[phjTempRowCounter,phjTempCaseControlDF.columns.get_loc(phjTempVar)] = phjMatchingVariablesValues[phjTempVar].tolist()
     
     return phjTempCaseControlDF
 
@@ -1421,7 +1576,7 @@ def phjAddRecords(phjTempCaseControlDF,
 def phjSelectUnmatchedCaseControlSubjects(phjCasesDF,
                                           phjPotentialControlsDF,
                                           phjUniqueIdentifierVarName,
-                                          phjMatchingVariablesList = None,
+                                          phjMatchingVariablesList = None, # Actually, this is not used in this function but is included so list of arguments is same as for matched controls.
                                           phjControlsPerCaseInt = 1,
                                           phjPrintResults = False):
     
@@ -1468,6 +1623,8 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
     # 8. Return dataframe containing list of cases and controls. This dataframe only
     #    contains columns with unique identifier, case and group id. It will,
     #    therefore need to be merged with the full database to get all other columns.
+    # 9. Remove rows from final dataframe that contain all NaN values due to too few
+    #    controls being available.
     
     # 1. Create empty dataframe
     # -------------------------
@@ -1476,29 +1633,38 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
     # (i.e. cases x number of matched controls). The variable list is the list
     # of matched variables plus a column to signify group and a column to signify
     # whether a case or a control and the unique identifier variable.
-    phjTempCaseControlDFLength        = len(phjCasesDF.index) + (len(phjCasesDF.index) * phjControlsPerCaseInt)
-    phjTempCaseControlDFColumnsList    = [phjUniqueIdentifierVarName] + ['group','case'] + phjMatchingVariablesList
-    phjTempCaseControlDF            = pd.DataFrame( index = range(0,phjTempCaseControlDFLength),
-                                                    columns = phjTempCaseControlDFColumnsList)
+    phjTempCaseControlDFLength      = len(phjCasesDF.index) + (len(phjCasesDF.index) * phjControlsPerCaseInt)
+    phjTempCaseControlDFColumnsList = [phjUniqueIdentifierVarName] + ['group','case'] + phjMatchingVariablesList
+    phjTempCaseControlDF            = pd.DataFrame(index = range(0,phjTempCaseControlDFLength),
+                                                   columns = phjTempCaseControlDFColumnsList)
     
     if phjPrintResults == True:
-        print('Temp case-control dataframe column list = ', phjTempCaseControlDFColumnsList)
+        print('Temp case-control dataframe column list = {}'.format(phjTempCaseControlDFColumnsList))
+        print('\n')
+        print('Empty dataframe')
+        print(phjTempCaseControlDF)
+        print('\n')
         
-    # Set counter to keep track of which row to add data to.
+    # Set counter to keep track of which row to add data to:
     phjTempRowCounter = 0
     
     # 2. Step through each case in the phjCasesDF dataframe, one at a time
     # --------------------------------------------------------------------
+    ###
+    ### Consider randomising the order in which cases are processed to avoid bias
+    ###
+    
     for i in phjCasesDF.index:
+        # Print a heading for the ith case and number of potential controls
         if phjPrintResults == True:
-            # Print a heading for the ith case and number of potential controls
-            phjPrintIndexHeading(i)
-            print('\nLength of phjPotentialControls = ',phjPotentialControlsDF.index.size)
+            phjPrintIndexHeading(i)   # Prints a formatted heading to indicate case ID
+            print('Length of phjPotentialControls = {}'.format(phjPotentialControlsDF.index.size))
+            print('\n')
         
         # Reset some variables
         # --------------------
-        # Reset number of available controls to np.nan
-        phjTempNumberAvailableControls = np.nan
+        # Reset number of available matching controls to np.nan
+        phjTempNumberMatchingControls = np.nan
         
         # Clear phjTempDict (which will hold dict of case data.
         # N.B. using myDict = {} will create a new instance of myDict but other
@@ -1516,8 +1682,11 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         
         # 3. Get data from matched variables for the case
         # -----------------------------------------------
-        # Create a dict for the data held in the matching variables in each case
-        phjTempDict = phjCasesDF.ix[i,phjMatchingVariablesList].to_dict()
+        # Create a dict for the data held in the matching variables in each case.
+        # Use list comprehension and .get_loc() to pass list of column indices
+        # to .iloc. This is faster than using df.columns.get_indexer() and converting
+        # resulting index to a list.
+        phjTempDict = phjCasesDF.iloc[i,[phjCasesDF.columns.get_loc(c) for c in phjMatchingVariablesList]].to_dict()
         
         # The above dict is of the form: {'var1': 'a', 'var2': 3}. However, this needs
         # to be passed to a df.isin() function and, as such, needs to be of the form:
@@ -1527,28 +1696,30 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         phjTempDict = {key: [value] for key, value in phjTempDict.items()}
         
         if phjPrintResults == True:
-            print('\nphjTempDict =')
+            print('phjTempDict =')
             print(phjTempDict)
+            print('\n')
         
         
         # 4. Create a mask for the controls dataframe
         # -------------------------------------------
         # Create a mask for the controls dataframe to select all controls that match the cases on the matched variables
-        # phjTempMask = pd.DataFrame([phjPotentialControlsDF[key] == val for key, val in phjTempDict.items()]).T.all(axis=1)
-        phjTempMask = phjPotentialControlsDF[phjMatchingVariablesList].isin(phjTempDict).all(axis=1)
+        phjTempMask = phjPotentialControlsDF[phjMatchingVariablesList].isin(phjTempDict).all(axis = 1)
         
         
         # 5. Apply mask to controls DF and count length
         # ---------------------------------------------
         phjTempMatchingControlsDF = phjPotentialControlsDF[phjTempMask]
         
-        phjTempNumberAvailableControls = len(phjTempMatchingControlsDF.index)
+        phjTempNumberMatchingControls = len(phjTempMatchingControlsDF.index)
         
         if phjPrintResults == True:
-            print('\nNumber of available controls = ',phjTempNumberAvailableControls)
+            print('Number of matching controls = {}'.format(phjTempNumberMatchingControls))
+            print('\n')
             with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
-                print('\nMatching controls')
+                print('Matching controls')
                 print(phjTempMatchingControlsDF)
+                print('\n')
         
         
         # 6. Add cases and controls to dataframe
@@ -1560,26 +1731,28 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         
         # i. If no controls then dump case (i.e. don't add it to the dataframe)
         # - - - - - - - - - - - - - - - - 
-        if phjTempNumberAvailableControls == 0:
+        if phjTempNumberMatchingControls == 0:
             if phjPrintResults == True:
                 # Presumably don't include case in the final dataframe
                 print('Available controls = 0. Case not included in final dataframe.')
+                print('\n')
             else:
                 pass
         
         # ii. If less than (or equal to) requested number of controls then add all controls to dataframe
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        elif (phjTempNumberAvailableControls > 0) & (phjTempNumberAvailableControls <= phjControlsPerCaseInt):
+        elif (phjTempNumberMatchingControls > 0) & (phjTempNumberMatchingControls <= phjControlsPerCaseInt):
             if phjPrintResults == True:
-                print('\nAvailable controls = ', phjTempNumberAvailableControls, '. Requested number of controls = ',phjControlsPerCaseInt, '.')
+                print('Available controls = {0}. Requested number of controls = {1}.'.format(phjTempNumberMatchingControls,phjControlsPerCaseInt))
+                print('\n')
                 
             # Add case to dataframe
             # - - - - - - - - - - -
             phjTempCaseControlDF = phjAddRecords(phjTempCaseControlDF,
                                                  phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                                                 phjUniqueIdentifierValue = phjCasesDF.ix[i,phjUniqueIdentifierVarName],
+                                                 phjUniqueIdentifierValue = phjCasesDF.iat[i,phjCasesDF.columns.get_loc(phjUniqueIdentifierVarName)],   # originally used .ix but .ix deprecated in v1.0.0 and .iat is faster
                                                  phjMatchingVariablesList = phjMatchingVariablesList,
-                                                 phjMatchingVariablesValues = phjCasesDF.ix[[i],phjMatchingVariablesList],
+                                                 phjMatchingVariablesValues = phjCasesDF.iloc[[i],[phjCasesDF.columns.get_loc(c) for c in phjMatchingVariablesList]],
                                                  phjTempRowCounter = [phjTempRowCounter],
                                                  phjCaseVarName = 'case',
                                                  phjCaseValue = [1],
@@ -1588,8 +1761,10 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                                  phjPrintResults = phjPrintResults)
             
             if phjPrintResults == True:
-                print('\nCase\n----')
-                print(phjTempCaseControlDF.ix[phjTempRowCounter,:])
+                print('Case')
+                print('----')
+                print(phjTempCaseControlDF.iloc[phjTempRowCounter,:])
+                print('\n')
             
             # Increment row counter by 1
             phjTempRowCounter = phjTempRowCounter + 1
@@ -1597,48 +1772,52 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
             # Add all available controls to the final dataframe
             # - - - - - - - - - - - - - - - - - - - - - - - - -
             if phjPrintResults == True:
-                print('\nControls\n--------')
-                print('All matching controls')
+                print('Controls')
+                print('--------')
+                print('All available matching controls')
                 with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
                     print(phjTempMatchingControlsDF)
+                    print('\n')
             
             phjTempCaseControlDF = phjAddRecords(phjTempCaseControlDF,
                                                  phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
                                                  phjUniqueIdentifierValue = phjTempMatchingControlsDF[phjUniqueIdentifierVarName].tolist(),
                                                  phjMatchingVariablesList = phjMatchingVariablesList,
-                                                 phjMatchingVariablesValues = phjCasesDF.ix[[i],phjMatchingVariablesList],
-                                                 phjTempRowCounter = range(phjTempRowCounter, (phjTempRowCounter + phjTempNumberAvailableControls)),
+                                                 phjMatchingVariablesValues = phjCasesDF.iloc[[i],[phjCasesDF.columns.get_loc(c) for c in phjMatchingVariablesList]],
+                                                 phjTempRowCounter = range(phjTempRowCounter, (phjTempRowCounter + phjTempNumberMatchingControls)),
                                                  phjCaseVarName = 'case',
-                                                 phjCaseValue = [0]*phjTempNumberAvailableControls,
+                                                 phjCaseValue = [0]*phjTempNumberMatchingControls,
                                                  phjGroupVarName = 'group',
-                                                 phjGroupValue = [i]*phjTempNumberAvailableControls,
+                                                 phjGroupValue = [i]*phjTempNumberMatchingControls,
                                                  phjPrintResults = phjPrintResults)
             
             if phjPrintResults == True:
-                print('\nControls in dataframe')
+                print('Controls in dataframe')
                 print(phjTempCaseControlDF.loc[phjTempRowRange])
+                print('\n')
             
             # 7. Delete selected controls from dataframe!!!
             # ------------------------------------------
             phjPotentialControlsDF = phjPotentialControlsDF[~phjPotentialControlsDF[phjUniqueIdentifierVarName].isin(phjTempMatchingControlsDF[phjUniqueIdentifierVarName].tolist())]
             
             # Increment row counter by number of available controls
-            phjTempRowCounter = phjTempRowCounter + phjTempNumberAvailableControls
+            phjTempRowCounter = phjTempRowCounter + phjTempNumberMatchingControls
             
         
         # iii. If more than requested number of controls then add selection of controls to dataframe
         # ------------------------------------------------------------------------------------------
-        elif (phjTempNumberAvailableControls > phjControlsPerCaseInt):
+        elif (phjTempNumberMatchingControls > phjControlsPerCaseInt):
             if phjPrintResults == True:
-                print('\nAvailable controls = ', phjTempNumberAvailableControls, '. Requested number of controls = ',phjControlsPerCaseInt, '.')
-            
+                print('Available controls = ', phjTempNumberMatchingControls, '. Requested number of controls = ',phjControlsPerCaseInt, '.')
+                print('\n')
+                
             # Add case to dataframe
             # - - - - - - - - - - -
             phjTempCaseControlDF = phjAddRecords(phjTempCaseControlDF,
                                                  phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
-                                                 phjUniqueIdentifierValue = phjCasesDF.ix[i,phjUniqueIdentifierVarName],
+                                                 phjUniqueIdentifierValue = phjCasesDF.iat[i,phjCasesDF.columns.get_loc(phjUniqueIdentifierVarName)],
                                                  phjMatchingVariablesList = phjMatchingVariablesList,
-                                                 phjMatchingVariablesValues = phjCasesDF.ix[[i],phjMatchingVariablesList],
+                                                 phjMatchingVariablesValues = phjCasesDF.iloc[[i],[phjCasesDF.columns.get_loc(c) for c in phjMatchingVariablesList]],
                                                  phjTempRowCounter = [phjTempRowCounter],
                                                  phjCaseVarName = 'case',
                                                  phjCaseValue = [1],
@@ -1647,8 +1826,10 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                                  phjPrintResults = phjPrintResults)
             
             if phjPrintResults == True:
-                print('\nCase\n----')
-                print(phjTempCaseControlDF.ix[phjTempRowCounter,:])
+                print('Case')
+                print('----')
+                print(phjTempCaseControlDF.iloc[phjTempRowCounter,:])
+                print('\n')
             
             # Increment row counter by 1
             phjTempRowCounter = phjTempRowCounter + 1
@@ -1660,10 +1841,12 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                                                                 axis = 0)
             
             if phjPrintResults == True:
-                print('\nControls\n--------')
-                print('All matching controls')
+                print('Controls')
+                print('--------')
+                print('Selected matching controls')
                 with pd.option_context('display.max_rows', 6, 'display.max_columns', 6):
                     print(phjTempSampleMatchingControlsDF)
+                    print('\n')
             
             phjTempRowRange = range(phjTempRowCounter, (phjTempRowCounter + phjControlsPerCaseInt))
             
@@ -1671,7 +1854,7 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                                  phjUniqueIdentifierVarName = phjUniqueIdentifierVarName,
                                                  phjUniqueIdentifierValue = phjTempSampleMatchingControlsDF[phjUniqueIdentifierVarName].tolist(),
                                                  phjMatchingVariablesList = phjMatchingVariablesList,
-                                                 phjMatchingVariablesValues = phjCasesDF.ix[[i],phjMatchingVariablesList],
+                                                 phjMatchingVariablesValues = phjCasesDF.iloc[[i],[phjCasesDF.columns.get_loc(c) for c in phjMatchingVariablesList]],
                                                  phjTempRowCounter = range(phjTempRowCounter, (phjTempRowCounter + phjControlsPerCaseInt)),
                                                  phjCaseVarName = 'case',
                                                  phjCaseValue = [0]*phjControlsPerCaseInt,
@@ -1680,8 +1863,9 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
                                                  phjPrintResults = phjPrintResults)
             
             if phjPrintResults == True:
-                print('\nControls in dataframe')
+                print('Controls in dataframe')
                 print(phjTempCaseControlDF.loc[phjTempRowRange])
+                print('\n')
             
             # 7. Delete selected controls from dataframe!!!
             # ------------------------------------------
@@ -1696,10 +1880,27 @@ def phjSelectMatchedCaseControlSubjects(phjCasesDF,
         else:
             if phjPrintResults == True:
                 # Report that something went wrong
-                print('Something went wrong')
+                print('Something went wrong. Sorry.')
+                print('\n')
             else:
                 phjTempCaseControlDF = None
+                pass
+        
+        if phjPrintResults == True:
+            print('phjTempCaseControlDF (in progress)')
+            print(phjTempCaseControlDF)
+            print('\n')
     
+    # Remove any rows that contain all NaN values (i.e. because there were not
+    # enough control available)
+    if phjTempCaseControlDF is not None:
+        phjTempCaseControlDF = phjTempCaseControlDF.dropna(how = 'all', axis = 0)
+    
+    if phjPrintResults == True:
+        print('Final returned data')
+        print(phjTempCaseControlDF)
+        print('\n')
+        
     return phjTempCaseControlDF
 
 
@@ -1709,22 +1910,73 @@ def phjGetRegexStr(phjRegexStr = None,
                    phjAllowedAttempts = 3,
                    phjPrintResults = False):
     
-    phjTempRegex = phjGetStrFromArgOrFile(phjStr = phjRegexStr,
-                                          phjPathAndFileName = phjRegexPathAndFileName,
-                                          phjAllowedAttempts = phjAllowedAttempts,
-                                          phjPrintResults = phjPrintResults)
+    try:
+        phjTempRegex = phjGetStrFromArgOrFile(phjStr = phjRegexStr,
+                                              phjPathAndFileName = phjRegexPathAndFileName,
+                                              phjAllowedAttempts = phjAllowedAttempts,
+                                              phjPrintResults = phjPrintResults)
     
-    # Check whether regex string compiles
-    if phjTempRegex is not None:
-        try:
-            re.compile(phjTempRegex)
-        except re.error:
-            print('The regex given did not compile.')
-            phjTempRegex = None
+    except AssertionError as e:
+        # Define phjTempRegex as None before returning
+        phjTempRegex = None
     
-    if phjPrintResults == True:
-        print('\nRegex string used to screen cases:')
-        print(phjTempRegex)
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("An AssertionError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                       fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An AssertionError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                             fname = inspect.stack()[0][3],
+                                                                                                                             callfname = inspect.stack()[1][3]))
+            raise
+        
+    except FileNotFoundError as e:
+        # If file can't be found then set phjTempText to None
+        phjTempRegex = None
+        
+        # If function has been called directly, present message.
+        if inspect.stack()[1][3] == '<module>':
+            print("A FileNotFoundError occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                         fname = inspect.stack()[0][3]))
+        
+        # If function has been called by another function then modify message and re-raise exception
+        else:
+            print("An FileNotFoundError occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                fname = inspect.stack()[0][3],
+                                                                                                                                callfname = inspect.stack()[1][3]))
+            
+            raise
+    
+    else:
+    
+        # Check whether regex string compiles
+        if phjTempRegex is not None:
+            try:
+                re.compile(phjTempRegex)
+                
+            except re.error as e:
+                # If regex does not compile then set phjTempText to None
+                phjTempRegex = None
+                
+                # If function has been called directly, present message.
+                if inspect.stack()[1][3] == '<module>':
+                    print("A regex error occurred in {fname}() function. ({msg})\n".format(msg = e,
+                                                                                                 fname = inspect.stack()[0][3]))
+                
+                # If function has been called by another function then modify message and re-raise exception
+                else:
+                    print("A regex error occurred in {fname}() function when called by {callfname}() function. ({msg})\n".format(msg = e,
+                                                                                                                                        fname = inspect.stack()[0][3],
+                                                                                                                                        callfname = inspect.stack()[1][3]))
+                    
+                    raise
+            
+            else:
+                if phjPrintResults == True:
+                    print('\nRegex string used to screen cases:')
+                    print(phjTempRegex)
     
     return phjTempRegex
 
