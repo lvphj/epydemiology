@@ -44,18 +44,110 @@ def phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = None,
                                        phjMissingValue = "missing",
                                        phjHeaderRow = False,
                                        phjPrintResults = False):
+                                       
+    """
+    Function to read data from a named cell range in a Microsoft Excel spreadsheet (.xlsx).
+    
+    This function reads data from a named cell range in an Excel spreadsheet (.xlsx).
+    If the function can find the correct cell range, it reads the data and returns it in
+    the form of a Pandas DataFrame. If the cell range can't be found, it returns None.
+    
+    The function requires Pandas and Openpyxl libraries to be installed. Since 
+    Openpyxl 2.4.1, the get_named_range() function was deprecated. This function was used
+    by the original version of phjReadDataFromExcelNamedCellRange(). However, a new method
+    was required for versions of Openpyxl 2.4.1 and later.
+
+    Parameters
+    ----------
+    phjExcelPathAndFileName: str (default = None)
+                             String representing path and filename of Microsoft Excel
+                             workbook.
+    
+    phjExcelCellRangeName: str (default = None)
+                           String representing a named cell range in Excel workbook.
+    
+    phjDatetimeFormat: str (default = "%Y-%m-%d %H:%M:%S")
+                       String representing the datetime format
+    
+    phjMissingValue: str (default = "missing")
+                     String to be used to indicate missing values
+    
+    phjHeaderRow: Boolean (default = False)
+                  Indicates whether the cell range contains a header row.
+    
+    phjPrintResults: Boolean (default = False)
+                     Indicates whether interim results should be printed.
+    
+    
+    Returns
+    -------
+    phjDF : Pandas dataframe containing contents of named cell range in Excel workbook.
+    
+    Raises
+    ------
+    None
+    
+    See Also
+    --------
+    None
+    
+    Examples
+    --------
+    To test this function, a spreadsheet called "Test data.xlsx" is included in the
+    epydemiology repository containing two named cell ranges (some_test_data and
+    some_more_test_data).
+    
+    import pandas as pd
+    import openpyxl
+    import epydemiology as epy
+    
+    phjPath = "."
+    phjFileName = "Test data.xlsx"
+    
+    print("RANGE: some_test_data")
+    print("=====================")
+    myDF = epy.phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = '/'.join([phjPath,phjFileName]),
+                                                phjExcelCellRangeName = 'some_test_data',
+                                                phjDatetimeFormat = "%d%b%Y",
+                                                phjMissingValue = "missing",
+                                                phjHeaderRow = True,
+                                                phjPrintResults = True)
+    
+    print(myDF.dtypes)
+    
+    
+    RANGE: some_test_data
+    =====================
+    Worksheet name:  Sheet 1
+    Cell range name:  $A$3:$D$7
+    
+    
+    
+    First row (containing variable names) has been removed from the data.
+    var 1 :  Date
+    var 2 :  Subject
+    var 3 :  Integer
+    var 4 :  Float
+    
+    Imported data
+    -------------
+            Date Subject  Integer  Float
+    0  01Jan2019       A        5   3.34
+    1  08Jan2019       B        2   5.22
+    2  15Jan2019       C        7   6.48
+    3  22Jan2019       D        9   8.91
+    
+    
+    Date        object
+    Subject     object
+    Integer      int64
+    Float      float64
+    dtype: object
+    
+    """
     
     phjAllowedAttempts = 3
     
-    # This function reads data from a named cell range in an Excel spreadsheet (.xlsx).
-    # Input phjExcelPathAndFileName (including path to file) and phjExcelCellRangeName.
-    # Also input phjDatetimeFormat and phjPrintResults (default = False).
-    # If the function can find the correct cell range, it reads the data and returns it in
-    # the form of a pandas DataFrame. If the cell range can't be found, it returns None.
-    
-    # Since Openpyxl 2.4.1, the get_named_range() function was deprecated. This function was used by
-    # the original version of phjReadDataFromExcelNamedCellRange(). However, a new method was required
-    # for versions of Openpyxl 2.4.1 and later.
     if pkg_resources.get_distribution("openpyxl").version < '2.4.1':
     
         # OPENPYXL VERSIONS PRIOR TO 2.4.1
