@@ -148,6 +148,9 @@ def phjReadDataFromExcelNamedCellRange(phjExcelPathAndFileName = None,
     
     phjAllowedAttempts = 3
     
+    if phjPrintResults == True:
+        print("Openpyxl version = {}".format(pkg_resources.get_distribution("openpyxl").version))
+    
     if pkg_resources.get_distribution("openpyxl").version < '2.4.1':
     
         # OPENPYXL VERSIONS PRIOR TO 2.4.1
