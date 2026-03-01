@@ -673,7 +673,176 @@ def phjReverseMap(phjDF,
                   phjTreatAsRegex = False,
                   phjDropPreExisting = False,
                   phjPrintResults = False):
-
+                      
+    ```
+    A function to map a variable into standardised categories (defined as keys of a dictionary)
+    based on lists of values, which can be regular expressions.
+    
+    Description
+    -----------
+    This function can be used to categorise a variable into standardised category names. The
+    category names are defined as dictionary keys and the variation of allowed values for each
+    category is included as a list in the dictionary value.
+    
+    Function parameters
+    -------------------
+    1. phjDF
+        Pandas dataframe containing a variable to be categorised.
+    
+    2. phjMappingDict
+        Dictionary where keys represented standardised category names and values are lists of
+        allowable values (or regular expressions) for each category.
+    
+    3. phjCategoryVarName
+        Name of column in phjDF dataframe that should be recatorised.
+    
+    4. phjMappedVarName (default = 'mapped_cat')
+        Name of new column that will be created in phjDF dataframe that will contain the new
+        standardised category values.
+    
+    5. phjUnmapped (default = np.nan)
+        Value to use if existing value in phjCategoryVarName column is not matched by any
+        values in phjMappingDict.
+    
+    6. phjTreatAsRegex (default = False)
+        Indicates whether values in phjMappingDict should be considered as regular expressions.
+        When phjTreatAsRegex is set to True, the function calls phjFindRegexNamesGroups()
+        function with phjSeparateRegexGroups argument set to True. This ensures that all
+        possible matches are identified.
+    
+    7. phjDropPreExisting (default = False)
+        Column names that will be created by the function will be dropped if they already exist
+        in phjDF.
+    
+    8. phjPrintResults (default = False)
+        Indicates whether intermediate results should be printed to screen as the function progresses.
+    
+    Exceptions raised
+    -----------------
+    AssertionError
+    An AssertionError is raised if any of the parameters passed to the function is of the
+    incorrect type.
+    
+    Returns
+    -------
+    Pandas dataframe containing additional columns created by the function. If phjTreatAsRegex
+    is False, the returned dataframe will have all original columns plus an additional column
+    defined by phjMappedVarName, which contains the mapped categories. If phjTreatAsRegex is
+    True the returned dataframe will have all original columns plus a column for each key in
+    phjMappingDict (containing any regex matches), a column named numberMatches (which
+    indicates how many regexes were matched), and a column named as defined by phjMappedVarName
+    parameter (which contains either the name of the mapped group or the value defined by
+    phjUnmapped if no matches.
+     
+    Other notes
+    -----------
+    None
+    
+    Examples
+    --------
+    
+    Example 1 - exact string matches
+    
+    python
+    myDF = pd.DataFrame({'id':[1,2,3,4,5,6,7],
+                         'var':['dogg','canine','cannine','catt','felin','cot','feline']})
+    
+    print(myDF)
+    
+    d = {'dog':['dogg','canine','cannine'],
+         'cat':['catt','felin','feline']}
+    
+    myDF = epy.phjReverseMap(phjDF = myDF,
+                             phjMappingDict = d,
+                             phjCategoryVarName = 'var',
+                             phjMappedVarName = 'new',
+                             phjUnmapped = 'missing',
+                             phjDropPreExisting = True,
+                             phjTreatAsRegex = False,
+                             phjPrintResults = True)
+    
+    Produces the following output:
+    
+       id      var
+    0   1     dogg
+    1   2   canine
+    2   3  cannine
+    3   4     catt
+    4   5    felin
+    5   6      cot
+    6   7   feline
+    
+    Reversed dictionary
+    
+    {'felin': 'cat', 'cannine': 'dog', 'dogg': 'dog', 'canine': 'dog', 'feline': 'cat', 'catt': 'cat'}
+    
+       id      var      new
+    0   1     dogg      dog
+    1   2   canine      dog
+    2   3  cannine      dog
+    3   4     catt      cat
+    4   5    felin      cat
+    5   6      cot  missing
+    6   7   feline      cat
+    
+    Example 2 - regexes
+    
+    python
+    myDF = pd.DataFrame({'id':[1,2,3,4,5,6,7],
+                         'var':['dogg','canine','cannine','catt','felin','cot','feline']})
+    
+    print(myDF)
+    
+    d = {'dog':['(?:(?:dog+))','(?:can*ine)'],
+         'cat':['(?:cat+)','(?:fel+ine?)']}
+    
+    myDF = epy.phjReverseMap(phjDF = myDF,
+                             phjMappingDict = d,
+                             phjCategoryVarName = 'var',
+                             phjMappedVarName = 'new',
+                             phjUnmapped = 'missing',
+                             phjDropPreExisting = True,
+                             phjTreatAsRegex = True,
+                             phjPrintResults = True)
+    
+    Produces the following output:
+    
+       id      var
+    0   1     dogg
+    1   2   canine
+    2   3  cannine
+    3   4     catt
+    4   5    felin
+    5   6      cot
+    6   7   feline
+    
+    Full Regex string
+    (?P<cat>
+        (?:cat+)|
+        (?:fel+ine?))|
+    (?P<dog>
+        (?:(?:dog+))|
+        (?:can*ine))
+    cat ... done
+    dog ... done
+    
+    Table of number of group matches identified per description term
+    
+                       Frequency
+    Number of matches           
+    0                          1
+    1                          6
+    
+       id      var     cat      dog  numberMatches matchedgroup
+    0   1     dogg     NaN     dogg              1          dog
+    1   2   canine     NaN   canine              1          dog
+    2   3  cannine     NaN  cannine              1          dog
+    3   4     catt    catt      NaN              1          cat
+    4   5    felin   felin      NaN              1          cat
+    5   6      cot     NaN      NaN              0      missing
+    6   7   feline  feline      NaN              1          cat
+    ```
+    
     # Check whether required parameters have been set to correct type
 
     try:
