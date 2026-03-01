@@ -674,7 +674,7 @@ def phjReverseMap(phjDF,
                   phjDropPreExisting = False,
                   phjPrintResults = False):
                       
-    ```
+    """
     A function to map a variable into standardised categories (defined as keys of a dictionary)
     based on lists of values, which can be regular expressions.
     
@@ -841,7 +841,7 @@ def phjReverseMap(phjDF,
     4   5    felin   felin      NaN              1          cat
     5   6      cot     NaN      NaN              0      missing
     6   7   feline  feline      NaN              1          cat
-    ```
+    """
     
     # Check whether required parameters have been set to correct type
 
