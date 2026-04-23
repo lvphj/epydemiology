@@ -195,6 +195,7 @@ def phjParseDateVar(phjDF,
 
 
 def phjStripWhiteSpc(phjDF,
+                     phjExclColList = None,
                      phjStripSpc = True,
                      phjMultiSpc = False,
                      phjPrintResults = False):
@@ -219,16 +220,23 @@ def phjStripWhiteSpc(phjDF,
     phjDF : Pandas dataframe
             The dataframe from which white space should be stripped
 
-        phjWhiteSpc : Boolean, default: True
-                      Parameter to indicate whether leading and trailing
-                      white space should be removed. This represents the
-                      original objective of the function and is default
-                      is set as True to ensure backward compatibility.
+    phjExclColList : List, default = None
+                     By default, the function steps through all columns
+                     in the dataframe, checks if the dtype is 'object' and
+                     the removes spaces. However, there may be some 'object'
+                     columns that user wants to leave unaltered. These can
+                     be included as a list.
+                     
+    phjWhiteSpc : Boolean, default: True
+                  Parameter to indicate whether leading and trailing
+                  white space should be removed. This represents the
+                  original objective of the function and is default
+                  is set as True to ensure backward compatibility.
                   
-        phjMultiSpc : Boolean, default: False
-                      Parameter to indicate whether occurrences of multiple
-                      white space within strings should be converted to a
-                      single space.
+    phjMultiSpc : Boolean, default: False
+                  Parameter to indicate whether occurrences of multiple
+                  white space within strings should be converted to a
+                  single space.
 
     phjPrintResults : Boolean, default: False
                       Parameter to indicate whether intermediate results (if
@@ -290,9 +298,18 @@ def phjStripWhiteSpc(phjDF,
 
     
     # Add checks to ensure passed parameters are correct
+
     
+    # Create list of column names to parse
+    if phjExclColList is None:
+        # Parse all column names
+        phjColsToParseList = [c for c in phjDF.columns.to_list()]
+    else:
+        # Exclude columns named in phjExclColList parameter
+        phjColsToParseList = [c for c in phjDF.columns.to_list() if c not in phjExclColList]
+        
     # Step through list of column names
-    for c in phjDF.columns.to_list():
+    for c in phjColsToParseList:
         
         # Only select columns of type object
         if phjDF[c].dtype == 'object':
@@ -301,7 +318,7 @@ def phjStripWhiteSpc(phjDF,
             # Strip whitespace from string cells only
             if phjStripSpc == True:
                 phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.strip()
-            # Replace multiple white space
+            # Replace multiple white space from string cells only
             if phjMultiSpc == True:
                 phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.replace(r"\s+"," ",regex = True)
         
