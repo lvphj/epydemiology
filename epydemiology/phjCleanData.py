@@ -195,6 +195,7 @@ def phjParseDateVar(phjDF,
 
 
 def phjStripWhiteSpc(phjDF,
+                     phjStripWhiteSpc = True,
                      phjMultiWhiteSpc = False,
                      phjPrintResults = False):
 
@@ -292,7 +293,8 @@ def phjStripWhiteSpc(phjDF,
             # Create a mask to identify cells that contain strings
             phjStrMask = phjDF[c].apply(type) == str
             # Strip whitespace from string cells only
-            phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.strip()
+            if phjStripWhiteSpc == True:
+                phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.strip()
             # Replace multiple white space
             if phjMultiWhiteSpc == True:
                 phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.replace(r"\s+"," ",regex = True)
