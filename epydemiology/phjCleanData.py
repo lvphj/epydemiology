@@ -195,8 +195,8 @@ def phjParseDateVar(phjDF,
 
 
 def phjStripWhiteSpc(phjDF,
-                     phjStripWhiteSpc = True,
-                     phjMultiWhiteSpc = False,
+                     phjStripSpc = True,
+                     phjMultiSpc = False,
                      phjPrintResults = False):
 
     '''
@@ -219,10 +219,16 @@ def phjStripWhiteSpc(phjDF,
     phjDF : Pandas dataframe
             The dataframe from which white space should be stripped
 
-    phjMultiWhiteSpc : Boolean, default: False
-                       Parameter to indicate whether occurrences of multiple
-                       white space within strings should be converted to a
-                       single space.
+        phjWhiteSpc : Boolean, default: True
+                      Parameter to indicate whether leading and trailing
+                      white space should be removed. This represents the
+                      original objective of the function and is default
+                      is set as True to ensure backward compatibility.
+                  
+        phjMultiSpc : Boolean, default: False
+                      Parameter to indicate whether occurrences of multiple
+                      white space within strings should be converted to a
+                      single space.
 
     phjPrintResults : Boolean, default: False
                       Parameter to indicate whether intermediate results (if
