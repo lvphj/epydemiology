@@ -195,6 +195,7 @@ def phjParseDateVar(phjDF,
 
 
 def phjStripWhiteSpc(phjDF,
+                     phjMultiWhiteSpc = False,
                      phjPrintResults = False):
 
     '''
@@ -209,10 +210,18 @@ def phjStripWhiteSpc(phjDF,
     of type 'object' creates a mask that identifies all cells containing str data. The
     function then strips white space from start and end using .strip() method.
 
+    Optionally, the function can replace instances of multiple white space with single
+    space. By default, this option is set to False.
+
     Parameters
     ----------
     phjDF : Pandas dataframe
             The dataframe from which white space should be stripped
+
+    phjMultiWhiteSpc : Boolean, default: False
+                       Parameter to indicate whether occurrences of multiple
+                       white space within strings should be converted to a
+                       single space.
 
     phjPrintResults : Boolean, default: False
                       Parameter to indicate whether intermediate results (if
@@ -284,6 +293,9 @@ def phjStripWhiteSpc(phjDF,
             phjStrMask = phjDF[c].apply(type) == str
             # Strip whitespace from string cells only
             phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.strip()
+            # Replace multiple white space
+            if phjMultiWhiteSpc == True:
+	        phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.replace(r"\s+"," ",regex = True)
         
     return phjDF
 
