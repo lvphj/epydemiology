@@ -295,7 +295,7 @@ def phjStripWhiteSpc(phjDF,
             phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.strip()
             # Replace multiple white space
             if phjMultiWhiteSpc == True:
-	        phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.replace(r"\s+"," ",regex = True)
+                phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.replace(r"\s+"," ",regex = True)
         
     return phjDF
 
