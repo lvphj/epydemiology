@@ -736,7 +736,15 @@ def phjReverseMap(phjDF,
      
     Other notes
     -----------
-    None
+    The phjReverseMap() function calls the phjCreateNamedGroupRegex() function which creates a
+    regex that contains dictionary keys as names of the regex groups. However, the name of the regex
+    group can only contain limited allowable characters. As a result, a key in the dictionary
+    that defines regexes, may not be suitable for use as the regex named group if it contains
+    white space or other special characters. The phjCreateNamedGroupRegex() function therefore replaces
+    spaces with underscores and removes all other special characters. As a result, dataframe cells that
+    match a named group regex may not appear to be matching the same dictionary key. For example,
+    a dictionary key {'abc def!:''} would be changed to 'abc_def'. It is possible, in rare
+    circumstances that these changes could cause clashes if two named groups end up being identical.
     
     Examples
     --------
