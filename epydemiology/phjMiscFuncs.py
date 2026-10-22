@@ -639,7 +639,16 @@ def phjMaxLevelOfTaxonomicDetail(phjDF,
         # To overcome this problem, add a '1' to start of each string; this won't affect the calculation
         # of the rightmost set bit except in cases where all cells are empty, in which case the rightmost
         # set bit will lie outside the number of columns being considered.
-        phjDF['posFromR'] = (np.log2( ('1' + phjDF['bin']).astype(int) & -('1' + phjDF['bin']).astype(int)) + 1).astype(int)
+        # N.B. The np.log2() acts on an integer value. Setting to .astype(int) limits to 32-bit interger, which has a
+        #      maximum value of 2147483647, i.e. 10 digits. Therefore the original code would only work for 9 columns
+        #      (allowing for an additional '1' to be added at the start of the binary string). Trying to use the function
+        #      for 10 columns would cause an overflow error. To overcome temporarily, set to .astype('int64'), i.e. 64-bit
+        #      integers. The maximum value for a 64-bit int is 9223372036854775807, i.e. 19 characters. This allows for
+        #      the function to be used on 18 columns. Ideally, this part of the function should be updated to allow for
+        #      greater number of columns without having to rely of very large data types to hold a relatively small
+        #      number of bits.
+        #phjDF['posFromR'] = (np.log2( ('1' + phjDF['bin']).astype(int) & -('1' + phjDF['bin']).astype(int)) + 1).astype(int)
+        phjDF['posFromR'] = (np.log2( ('1' + phjDF['bin']).astype('int64') & -('1' + phjDF['bin']).astype('int64')) + 1).astype(int)
 
         # Count back from the last column to find the column containing the last string entry
         phjDF[phjNewColName] = phjDF.columns[phjDF.columns.get_loc(phjLastCol) - phjDF['posFromR'] + 1]
