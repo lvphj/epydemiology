@@ -307,11 +307,15 @@ def phjStripWhiteSpc(phjDF,
     else:
         # Exclude columns named in phjExclColList parameter
         phjColsToParseList = [c for c in phjDF.columns.to_list() if c not in phjExclColList]
+
+    if phjPrintResults == True:
+        print('Columns to parse = {}'.format(', '.join(phjColsToParseList)))
+        print('\n')
         
     # Step through list of column names
     for c in phjColsToParseList:
         
-        # Only select columns of type object
+        # Only select columns of type object or string
         if phjDF[c].dtype == 'object':
             # Create a mask to identify cells that contain strings
             phjStrMask = phjDF[c].apply(type) == str
@@ -321,6 +325,15 @@ def phjStripWhiteSpc(phjDF,
             # Replace multiple white space from string cells only
             if phjMultiSpc == True:
                 phjDF.loc[phjStrMask,c] = phjDF.loc[phjStrMask,c].str.replace(r"\s+"," ",regex = True)
+
+        elif phjDF[c].dtype == 'string':
+            # Strip whitespace from column
+            if phjStripSpc == True:
+                phjDF[c] = phjDF[c].str.strip()
+            # Replace multiple white space from strings
+            if phjMultiSpc == True:
+                phjDF[c] = phjDF[c].str.replace(r"\s+"," ",regex = True)
+            
         
     return phjDF
 
